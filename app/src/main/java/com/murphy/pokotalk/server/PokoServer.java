@@ -1,14 +1,19 @@
 package com.murphy.pokotalk.server;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
 
 import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
+import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.listener.AccountRegisteredListener;
+import com.murphy.pokotalk.listener.OnConnectionListener;
+import com.murphy.pokotalk.listener.OnDisconnectionListener;
+import com.murphy.pokotalk.listener.PasswordLoginListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,25 +24,30 @@ import java.util.List;
 import java.util.Map;
 
 public class PokoServer extends ServerSocket {
-    private static PokoServer pokoServer;
+    private static PokoServer pokoServer = null;
+    public boolean connected;
 
     public PokoServer() {
         super(Constants.serverURL);
+        connected = false;
     }
 
-    /* There is only one connection so we use singleton design */
-    public static PokoServer getInstance(Context context) {
-        if (pokoServer != null)
-            return pokoServer;
-
+    /* There is only one connection so we use singleton design
+    * Socket try to connect only when getInstance method is called with context not null */
+    public static PokoServer getInstance(@Nullable Context context) {
         try {
-            pokoServer = new PokoServer();
-            pokoServer.createSocket(context);
-            pokoServer.enrollOnMessageHandlers();
-            pokoServer.connect();
+            if (pokoServer == null) {
+                pokoServer = new PokoServer();
+            }
+            if (!pokoServer.connected && context != null) {
+                pokoServer.createSocket(context);
+                pokoServer.enrollOnMessageHandlers();
+                pokoServer.connect();
+                pokoServer.connected = true;
+            }
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println(e.toString());
+            Log.e("Socket error", e.toString());
             return null;
         }
 
@@ -56,7 +66,7 @@ public class PokoServer extends ServerSocket {
     }
 
     /* Socket event listener */
-    public abstract class SocketEventListener extends EventListener {
+    public static abstract class SocketEventListener extends EventListener {
         @Override
         public void call(Object... args) {
             super.call(args);
@@ -153,10 +163,12 @@ public class PokoServer extends ServerSocket {
                 });
             }
          });
+
          /* Enroll event listeners */
-        //mSocket.on(Socket.EVENT_CONNECT, onConnectListener);
-        //mSocket.on(Socket.EVENT_CONNECT_ERROR, onConnectErrorListener);
-        //mSocket.on(Socket.EVENT_DISCONNECT, onDisconnectListener);
+        mSocket.on(Socket.EVENT_CONNECT, new OnConnectionListener());
+        mSocket.on(Socket.EVENT_CONNECT_ERROR, new OnConnectionListener());
+        mSocket.on(Socket.EVENT_DISCONNECT, new OnDisconnectionListener());
         mSocket.on(Constants.accountRegisteredName, new AccountRegisteredListener());
+        mSocket.on(Constants.passwordLoginName, new PasswordLoginListener());
     }
 }

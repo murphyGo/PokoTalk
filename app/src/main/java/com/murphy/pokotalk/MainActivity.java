@@ -5,22 +5,14 @@ import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 
-enum RequestCode{
-        LOGIN(0);
-
-        public final int value;
-        RequestCode(int v) {
-            this.value = v;
-        }
-}
+import com.murphy.pokotalk.Constants.RequestCode;
+import com.murphy.pokotalk.data.Session;
 
 public class MainActivity extends AppCompatActivity {
     private ViewPager viewPager;
     private int[] layouts = {R.layout.contact_list_layout, R.layout.group_list_layout,
             R.layout.event_list_layout};
     private MpagerAdapter mPagerAdapter;
-
-    private String sessionID;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,8 +30,9 @@ public class MainActivity extends AppCompatActivity {
         mPagerAdapter = new MpagerAdapter(this, layouts);
         viewPager.setAdapter(mPagerAdapter);
 
-        /* If not logined, show login activity */
-        if (sessionID == null) {
+        /* If application has no session id to login, show login activity */
+        Session session = Session.getInstance();
+        if (!session.sessionIdExists()) {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, RequestCode.LOGIN.value);
         }
@@ -48,11 +41,17 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == RequestCode.LOGIN.value)
-                handleLoginResult(resultCode, data);
-
+            handleLoginResult(resultCode, data);
     }
 
     private void handleLoginResult(int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+
+        } else if (resultCode == RESULT_CANCELED) {
+            finish();
+        } else {
+            finish();
+        }
 
     }
 }

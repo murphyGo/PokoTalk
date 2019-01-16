@@ -14,6 +14,7 @@ import com.murphy.pokotalk.listener.AccountRegisteredListener;
 import com.murphy.pokotalk.listener.OnConnectionListener;
 import com.murphy.pokotalk.listener.OnDisconnectionListener;
 import com.murphy.pokotalk.listener.PasswordLoginListener;
+import com.murphy.pokotalk.listener.SessionLoginListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -127,7 +128,7 @@ public class PokoServer extends ServerSocket {
         data.put("email", email);
         data.put("password", password);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit("registerAccount", jsonData);
+        mSocket.emit(Constants.accountRegisteredName, jsonData);
     }
 
     public void sendPasswordLogin(String email, String password) {
@@ -135,14 +136,14 @@ public class PokoServer extends ServerSocket {
         data.put("email", email);
         data.put("password", password);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit("passwordLogin", jsonData);
+        mSocket.emit(Constants.passwordLoginName, jsonData);
     }
 
     public void sendSessionLogin(String sessionId) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("sessionId", sessionId);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit("sessionLogin", jsonData);
+        mSocket.emit(Constants.sessionLoginName, jsonData);
     }
 
     /* Methods for handling on message */
@@ -170,5 +171,6 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Socket.EVENT_DISCONNECT, new OnDisconnectionListener());
         mSocket.on(Constants.accountRegisteredName, new AccountRegisteredListener());
         mSocket.on(Constants.passwordLoginName, new PasswordLoginListener());
+        mSocket.on(Constants.sessionLoginName, new SessionLoginListener());
     }
 }

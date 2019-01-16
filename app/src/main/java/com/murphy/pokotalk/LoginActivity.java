@@ -9,6 +9,7 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -72,20 +73,11 @@ public class LoginActivity extends AppCompatActivity {
                 JSONObject data = (JSONObject) args[0];
                 try {
                     final String sessionId = data.getString("sessionId");
-                    final JSONObject userInfo = data.getJSONObject("data");
 
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), "로그인 성공 세션ID : "  + sessionId +
-                                            "\n데이터 : " + userInfo.toString(),
-                                    Toast.LENGTH_LONG).show();
-
-                            Intent intent = new Intent();
-                            intent.putExtra("login", "success");
-                            finish();
-                        }
-                    });
+                    /* Start session */
+                    Session session = Session.getInstance();
+                    session.setSessionId(sessionId);
+                    session.login(getApplicationContext());
                 } catch (JSONException e) {
                     return;
                 }
@@ -97,6 +89,44 @@ public class LoginActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         Toast.makeText(getApplicationContext(), "이메일 또는 비밀번호가 틀립니다.",
+                                Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        });
+
+        server.attachActivityCallback(Constants.sessionLoginName, new ActivityCallback() {
+            @Override
+            public void onSuccess(Status status, Object... args) {
+                try {
+                    JSONObject data = (JSONObject) args[0];
+                    final JSONObject userInfo = data.getJSONObject("data");
+                    final String sessionId = data.getString("sessionId");
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            Toast.makeText(getApplicationContext(), "세션 로그인 성공 : "  + sessionId +
+                                            "\n데이터 : " + userInfo.toString(),
+                                    Toast.LENGTH_LONG).show();
+                        }
+                    });
+
+                    Intent intent = new Intent();
+                    intent.putExtra("login", "success");
+                    setResult(RESULT_OK, intent);
+
+                    finish();
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(Status status, Object... args) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "로그인 실패...",
                                 Toast.LENGTH_LONG).show();
                     }
                 });

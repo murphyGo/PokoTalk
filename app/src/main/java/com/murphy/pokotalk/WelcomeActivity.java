@@ -7,6 +7,9 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
+import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.Session;
+
 import de.hdodenhof.circleimageview.CircleImageView;
 
 public class WelcomeActivity extends AppCompatActivity {
@@ -31,6 +34,18 @@ public class WelcomeActivity extends AppCompatActivity {
         Thread thread = new Thread() {
             @Override
             public void run() {
+                /* Temporarily thread by welcome activity does application data loading */
+                /* Load application data */
+                DataCollection model = DataCollection.getInstance();
+                model.loadSession();
+                model.loadApplicationData();
+                /* Login session */
+                Session session = Session.getInstance();
+                if (session.sessionIdExists()) {
+                    session.login(getApplicationContext());
+                }
+
+                /* Sleep sometimes and show MainActivity */
                 try{
                     sleep(splash_time);
                 } catch(InterruptedException e) {

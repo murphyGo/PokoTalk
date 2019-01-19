@@ -4,9 +4,13 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants.RequestCode;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.server.ActivityCallback;
+import com.murphy.pokotalk.server.PokoServer;
+import com.murphy.pokotalk.server.Status;
 
 public class MainActivity extends AppCompatActivity {
     private ViewPager viewPager;
@@ -26,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         } */
 
+        /* Start view pager(contact, group, event, configuration menu) */
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         mPagerAdapter = new MpagerAdapter(this, layouts);
         viewPager.setAdapter(mPagerAdapter);
@@ -36,6 +41,12 @@ public class MainActivity extends AppCompatActivity {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, RequestCode.LOGIN.value);
         }
+
+        PokoServer server = PokoServer.getInstance(this);
+
+        /* Attach event callbacks */
+        server.attachActivityCallback(Constants.getContactListName, getContactListCallback);
+
     }
 
     @Override
@@ -54,4 +65,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
     }
+
+    private ActivityCallback getContactListCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+            Toast.makeText(getApplicationContext(), "Failed to get contact list",
+                    Toast.LENGTH_LONG).show();
+        }
+    };
 }

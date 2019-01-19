@@ -11,6 +11,7 @@ import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.listener.AccountRegisteredListener;
+import com.murphy.pokotalk.listener.GetContactListListener;
 import com.murphy.pokotalk.listener.OnConnectionListener;
 import com.murphy.pokotalk.listener.OnDisconnectionListener;
 import com.murphy.pokotalk.listener.PasswordLoginListener;
@@ -172,5 +173,6 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.accountRegisteredName, new AccountRegisteredListener());
         mSocket.on(Constants.passwordLoginName, new PasswordLoginListener());
         mSocket.on(Constants.sessionLoginName, new SessionLoginListener());
+        mSocket.on(Constants.getContactListName, new GetContactListListener());
     }
 }

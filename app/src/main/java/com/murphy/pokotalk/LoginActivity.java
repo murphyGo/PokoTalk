@@ -97,28 +97,12 @@ public class LoginActivity extends AppCompatActivity {
 
         server.attachActivityCallback(Constants.sessionLoginName, new ActivityCallback() {
             @Override
-            public void onSuccess(Status status, Object... args) {
-                try {
-                    JSONObject data = (JSONObject) args[0];
-                    final JSONObject userInfo = data.getJSONObject("data");
-                    final String sessionId = data.getString("sessionId");
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), "세션 로그인 성공 : "  + sessionId +
-                                            "\n데이터 : " + userInfo.toString(),
-                                    Toast.LENGTH_LONG).show();
-                        }
-                    });
-
+            public void onSuccess(Status status, final Object... args) {
                     Intent intent = new Intent();
                     intent.putExtra("login", "success");
                     setResult(RESULT_OK, intent);
 
                     finish();
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
             }
 
             @Override

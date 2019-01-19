@@ -7,7 +7,7 @@ import com.murphy.pokotalk.server.PokoServer;
 import java.util.Calendar;
 
 public class Session {
-    private static Session session;
+    private static Session instance;
     private String sessionId;
     private Calendar sessionExpire;
     private Contact user;
@@ -19,10 +19,10 @@ public class Session {
     }
 
     public static Session getInstance() {
-        if (session == null)
-            session = new Session();
+        if (instance == null)
+            instance = new Session();
 
-        return session;
+        return instance;
     }
 
     /* Returns true if the user has logined */
@@ -85,5 +85,7 @@ public class Session {
         return user;
     }
 
-
+    public static void reset() {
+        instance = null;
+    }
 }

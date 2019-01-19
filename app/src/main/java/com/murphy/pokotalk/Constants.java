@@ -17,10 +17,52 @@ public class Constants {
     /* Event names
     * event names must not conflict to Socket's predefined event names
     * (etc. EVENT_CONNECT...)*/
+
+    /* Session event names */
     public static final String accountRegisteredName = "registerAccount";
     public static final String passwordLoginName = "passwordLogin";
     public static final String sessionLoginName = "sessionLogin";
+    public static final String logoutName = "logout";
 
+    /* Contact event names */
+    public static final String getContactListName = "getContactList";
+    public static final String getPendingContactListName = "getPendingContactList";
+    public static final String addContactName = "addContact";
+    public static final String removeContactName = "removeContact";
+    public static final String newContactName = "newContact";
+    public static final String contactDeniedName = "contactDenied";
+
+    /* Group event names */
+    public static final String getGroupListName = "getGroupList";
+    public static final String addGroupName = "addGroup";
+    public static final String contactChatRemovedName = "contactChatRemoved";
+    public static final String membersInvitedName = "membersInvited";
+    public static final String inviteGroupMembersName = "inviteGroupMembers";
+    public static final String membersExitName = "membersExit";
+    public static final String exitGroupName = "exitGroup";
+
+    /* Chat event names */
+    public static final String joinContactChatName = "joinContactChat";
+    public static final String readMessageName = "readMessage";
+    public static final String sendMessageName = "sendMessage";
+    public static final String ackMessageName = "ackMessage";
+    public static final String joinChatName = "joinChat";
+    public static final String leaveChatName = "leaveChat";
+    public static final String newMessageName = "newMessage";
+    public static final String messageAckName = "messageAck";
+
+    /* Event event names */
+    public static final String getEventListName = "getEventList";
+    public static final String createEventName = "createEvent";
+    public static final String eventCreatedName = "eventCreated";
+    public static final String eventExitName = "eventExit";
+    public static final String eventParticipantExitedName = "eventParticipantExited";
+    public static final String eventAckName = "eventAck";
+    public static final String eventStartedName = "eventStarted";
+
+    /* Event exists but not implemented yet by policy */
+    public static final String membersJoinName = "membersJoin";
+    public static final String membersLeaveName = "membersLeave";
 
     /* Request codes for activity call */
     enum RequestCode{

@@ -37,7 +37,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 /* Temporarily thread by welcome activity does application data loading */
                 /* Load application data */
                 DataCollection model = DataCollection.getInstance();
-                model.loadSession();
+                model.loadSessionData();
                 model.loadApplicationData();
                 /* Login session */
                 Session session = Session.getInstance();

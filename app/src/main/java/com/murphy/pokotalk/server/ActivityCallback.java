@@ -1,5 +1,11 @@
 package com.murphy.pokotalk.server;
 
+/* Server socket event listener for activity side.
+   More than 1 activity callbacks can be attached to a socket event.
+   If so, every attached activity callbacks are called from first to the last.
+   Activity callbacks are always called after counterpart application listener
+   in com.murphy.pokotalk.listener package.
+ */
 public abstract class ActivityCallback implements Runnable {
     private Object[] args;
     private Status status;

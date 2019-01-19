@@ -10,22 +10,21 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 
 public class DataCollection {
     private Session session;
     private String rootDirectory;
-    private ArrayList<Contact> contacts;
-    private ArrayList<Contact> pendingContacts;
-    private ArrayList<Group> groups;
-    private ArrayList<Event> events;
+    private ContactList contactList;
+    private ContactList pendingContactList;
+    private GroupList groupList;
+    private EventList eventList;
     private static DataCollection instance;
 
     public DataCollection() {
-        contacts = new ArrayList<>();
-        pendingContacts = new ArrayList<>();
-        groups = new ArrayList<>();
-        events = new ArrayList<>();
+        contactList = new ContactList();
+        pendingContactList = new ContactList();
+        groupList = new GroupList();
+        eventList = new EventList();
         session = Session.getInstance();
     }
 
@@ -43,7 +42,7 @@ public class DataCollection {
     }
 
     /* Load session data */
-    public void loadSession() {
+    public void loadSessionData() {
         String sessionId = null;
         rootDirectory = getSDCardLocation() + File.separator + Constants.rootDirectory;
         String sessionFileLocation = rootDirectory + File.separator + Constants.sessionFile;
@@ -68,7 +67,27 @@ public class DataCollection {
     /* Load application data(user data, contacts, groups...) after session is decided */
     public void loadApplicationData() {
 
+    }
+
+    public static void reset() {
+        instance = null;
+    }
 
 
+    /* Getter methods */
+    public ContactList getContactList() {
+        return contactList;
+    }
+
+    public ContactList getPendingContactList() {
+        return pendingContactList;
+    }
+
+    public GroupList getGroupList() {
+        return groupList;
+    }
+
+    public EventList getEventList() {
+        return eventList;
     }
 }

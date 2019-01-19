@@ -17,6 +17,14 @@ public class Status {
         return status == this.SUCCESS;
     }
 
+    public void setErrorCode(Object errorCode) {
+        this.errorCode = errorCode;
+    }
+
+    public void setErrorDetail(Object errorDetail) {
+        this.errorDetail = errorDetail;
+    }
+
     public Object getErrorCode() {
         return errorCode;
     }

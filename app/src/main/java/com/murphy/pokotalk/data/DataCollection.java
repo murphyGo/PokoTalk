@@ -15,14 +15,16 @@ public class DataCollection {
     private Session session;
     private String rootDirectory;
     private ContactList contactList;
-    private ContactList pendingContactList;
+    private ContactList invitedContactList;
+    private ContactList invitingContactList;
     private GroupList groupList;
     private EventList eventList;
     private static DataCollection instance;
 
     public DataCollection() {
         contactList = new ContactList();
-        pendingContactList = new ContactList();
+        invitedContactList = new ContactList();
+        invitingContactList = new ContactList();
         groupList = new GroupList();
         eventList = new EventList();
         session = Session.getInstance();
@@ -79,8 +81,12 @@ public class DataCollection {
         return contactList;
     }
 
-    public ContactList getPendingContactList() {
-        return pendingContactList;
+    public ContactList getInvitedContactList() {
+        return invitedContactList;
+    }
+
+    public ContactList getInvitingContactList() {
+        return invitingContactList;
     }
 
     public GroupList getGroupList() {

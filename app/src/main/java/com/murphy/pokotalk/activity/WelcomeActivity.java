@@ -1,4 +1,4 @@
-package com.murphy.pokotalk;
+package com.murphy.pokotalk.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
+import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 

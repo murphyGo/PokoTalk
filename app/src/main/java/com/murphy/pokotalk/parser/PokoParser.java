@@ -32,6 +32,20 @@ public class PokoParser {
         return result;
     }
 
+    public static Contact parsePendingContact(JSONObject jsonObject) throws JSONException {
+        Contact result = new Contact();
+
+        result.setUserId(jsonObject.getInt("userId"));
+        result.setEmail(jsonObject.getString("email"));
+        result.setNickname(jsonObject.getString("nickname"));
+        result.setPicture(jsonObject.getString("picture"));
+        /* Set dummy values temporarily */
+        result.setLastSeen(Calendar.getInstance());
+        result.setContactId(0);
+
+        return result;
+    }
+
     public static Group parseGroup(JSONObject jsonObject) throws JSONException {
 
         return null;
@@ -58,7 +72,7 @@ public class PokoParser {
     }
 
     public static String formatCalendar(Calendar date) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH시", Locale.KOREA);
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.KOREA);
         dateFormat.setTimeZone(TimeZone.getTimeZone("Asia/Seoul"));
 
         return dateFormat.format(date.getTime());

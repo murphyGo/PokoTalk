@@ -46,6 +46,7 @@ public class SessionLoginListener extends PokoServer.PokoListener {
 
             /* Parse last seen string to Calendar */
             Calendar lastSeen = PokoParser.parseDateString(userInfo.getString("lastSeen"));
+
             Log.v("USER DATA", userInfo.toString());
             Log.v("EXPIRE", PokoParser.formatCalendar(sessionExpire));
             Log.v("LAST SEEN", PokoParser.formatCalendar(lastSeen));

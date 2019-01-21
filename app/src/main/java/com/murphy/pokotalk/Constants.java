@@ -29,7 +29,10 @@ public class Constants {
     public static final String getPendingContactListName = "getPendingContactList";
     public static final String addContactName = "addContact";
     public static final String removeContactName = "removeContact";
+    public static final String acceptContactName = "acceptContact";
+    public static final String denyContactName = "denyContact";
     public static final String newContactName = "newContact";
+    public static final String newPendingContactName = "newPendingContact";
     public static final String contactDeniedName = "contactDenied";
 
     /* Group event names */
@@ -65,7 +68,7 @@ public class Constants {
     public static final String membersLeaveName = "membersLeave";
 
     /* Request codes for activity call */
-    enum RequestCode{
+    public enum RequestCode{
         LOGIN(0);
 
         public final int value;

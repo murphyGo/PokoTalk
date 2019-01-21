@@ -1,4 +1,4 @@
-package com.murphy.pokotalk;
+package com.murphy.pokotalk.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -9,6 +9,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 
+import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;

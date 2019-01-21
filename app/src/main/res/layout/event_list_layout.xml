@@ -4,13 +4,12 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="top"
-    android:orientation="vertical"
-    android:weightSum="100">
+    android:orientation="vertical">
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_weight="1">
+        android:layout_weight="0">
 
         <TextView
             android:id="@+id/textView"
@@ -33,18 +32,22 @@
             android:paddingRight="20dp">
 
             <Button
-                android:id="@+id/button"
-                android:layout_width="wrap_content"
+                android:id="@+id/eventAddButton"
+                android:layout_width="65dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="+" />
+                android:text="+"
+                android:textSize="20sp"
+                android:background="@null"/>
         </LinearLayout>
 
     </RelativeLayout>
 
-    <LinearLayout
+    <ListView
+        android:id="@+id/eventList"
         android:layout_width="match_parent"
-        android:layout_height="fill_parent"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:orientation="vertical"></LinearLayout>
+        android:orientation="vertical"/>
+
 </LinearLayout>

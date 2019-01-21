@@ -62,6 +62,7 @@ public abstract class ServerSocket {
             opts.sslContext = sslContext;
             opts.secure = true;
             opts.upgrade = true;
+            opts.reconnection = true;
             opts.forceNew = true;
             mSocket = IO.socket(serverURL, opts);
         } catch(URISyntaxException e) {

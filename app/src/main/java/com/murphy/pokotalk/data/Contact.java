@@ -4,8 +4,8 @@ import java.util.Calendar;
 
 public class Contact {
     private int userId;
-    private int contactId;
-    private int groupId;
+    private Integer contactId;
+    private Integer groupId;
     private String email;
     private String nickname;
     private String picture;
@@ -22,7 +22,6 @@ public class Contact {
         this.nickname = nickname;
         this.picture = picture;
         this.lastSeen = lastSeen;
-
     }
 
     @Override
@@ -61,19 +60,19 @@ public class Contact {
         return nickname;
     }
 
-    public int getContactId() {
+    public Integer getContactId() {
         return contactId;
     }
 
-    public void setContactId(int contactId) {
+    public void setContactId(Integer contactId) {
         this.contactId = contactId;
     }
 
-    public int getGroupId() {
+    public Integer getGroupId() {
         return groupId;
     }
 
-    public void setGroupId(int groupId) {
+    public void setGroupId(Integer groupId) {
         this.groupId = groupId;
     }
 

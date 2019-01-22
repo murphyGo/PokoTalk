@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.Contact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -20,6 +21,7 @@ public class ContactItem extends FrameLayout {
     private TextView nicknameView;
     private TextView emailView;
     private ImageView imageView;
+    private Contact contact;
 
     public ContactItem(Context context) {
         super(context);
@@ -46,6 +48,14 @@ public class ContactItem extends FrameLayout {
         return img;
     }
 
+    public Contact getContact() {
+        return contact;
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
+    }
+
     public void setNickname(String nickname) {
         this.nickname = nickname;
         nicknameView.setText(nickname);
@@ -58,5 +68,17 @@ public class ContactItem extends FrameLayout {
 
     public void setImg(String img) {
         this.img = img;
+    }
+
+    public TextView getNicknameView() {
+        return nicknameView;
+    }
+
+    public TextView getEmailView() {
+        return emailView;
+    }
+
+    public ImageView getImageView() {
+        return imageView;
     }
 }

@@ -11,8 +11,11 @@ import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.listener.AccountRegisteredListener;
+import com.murphy.pokotalk.listener.ContactDeniedListener;
+import com.murphy.pokotalk.listener.ContactRemovedListener;
 import com.murphy.pokotalk.listener.GetContactListListener;
 import com.murphy.pokotalk.listener.GetPendingContactListListener;
+import com.murphy.pokotalk.listener.NewContactListener;
 import com.murphy.pokotalk.listener.NewPendingContactListener;
 import com.murphy.pokotalk.listener.OnConnectionListener;
 import com.murphy.pokotalk.listener.OnDisconnectionListener;
@@ -214,5 +217,8 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.getContactListName, new GetContactListListener());
         mSocket.on(Constants.getPendingContactListName, new GetPendingContactListListener());
         mSocket.on(Constants.newPendingContactName, new NewPendingContactListener());
+        mSocket.on(Constants.newContactName, new NewContactListener());
+        mSocket.on(Constants.contactDeniedName, new ContactDeniedListener());
+        mSocket.on(Constants.contactRemovedName, new ContactRemovedListener());
     }
 }

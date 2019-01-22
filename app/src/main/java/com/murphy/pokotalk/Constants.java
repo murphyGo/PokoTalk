@@ -34,6 +34,7 @@ public class Constants {
     public static final String newContactName = "newContact";
     public static final String newPendingContactName = "newPendingContact";
     public static final String contactDeniedName = "contactDenied";
+    public static final String contactRemovedName = "contactRemoved";
 
     /* Group event names */
     public static final String getGroupListName = "getGroupList";

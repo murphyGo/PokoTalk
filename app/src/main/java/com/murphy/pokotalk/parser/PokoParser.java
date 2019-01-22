@@ -25,9 +25,18 @@ public class PokoParser {
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
         result.setPicture(jsonObject.getString("picture"));
-        result.setContactId(jsonObject.getInt("contactId"));
-        result.setGroupId(jsonObject.getInt("groupId"));
-        result.setLastSeen(parseDateString(jsonObject.getString("lastSeen")));
+        if (jsonObject.has("contactId"))
+            result.setContactId(jsonObject.getInt("contactId"));
+        else
+            result.setContactId(null);
+        if (jsonObject.has("groupId"))
+            result.setGroupId(jsonObject.getInt("groupId"));
+        else
+            result.setGroupId(null);
+        if (jsonObject.has("lastSeen"))
+            result.setLastSeen(parseDateString(jsonObject.getString("lastSeen")));
+        else
+            result.setLastSeen(null);
 
         return result;
     }
@@ -41,9 +50,14 @@ public class PokoParser {
         result.setPicture(jsonObject.getString("picture"));
         /* Set dummy values temporarily */
         result.setLastSeen(Calendar.getInstance());
-        result.setContactId(0);
+        result.setContactId(null);
+        result.setGroupId(null);
 
         return result;
+    }
+
+    public static Boolean parseContactInvitedField(JSONObject jsonObject) throws JSONException {
+        return jsonObject.getInt("invited") != 0 ? true : false;
     }
 
     public static Group parseGroup(JSONObject jsonObject) throws JSONException {

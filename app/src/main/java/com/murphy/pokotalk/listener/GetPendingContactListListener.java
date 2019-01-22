@@ -23,9 +23,11 @@ public class GetPendingContactListListener extends PokoServer.PokoListener {
     @Override
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
+        Log.v("pending contact list", data.toString());
         DataCollection collection = DataCollection.getInstance();
         ContactList invitedList = collection.getInvitedContactList();
         ContactList invitingList = collection.getInvitingContactList();
+        Log.v("pending contact list", data.toString());
         try {
             JSONArray contacts = data.getJSONArray("contacts");
             for (int i = 0; i < contacts.length(); i++) {
@@ -34,13 +36,14 @@ public class GetPendingContactListListener extends PokoServer.PokoListener {
 
                 /* Check invited field of pending contact */
                 /* 1: I was invited, 0: I invited */
-                Boolean invited = jsonObject.getBoolean("invited");
+                Boolean invited = PokoParser.parseContactInvitedField(jsonObject);
                 if (invited)
                     invitedList.updateContact(contact);
                 else
                     invitingList.updateContact(contact);
             }
         } catch (JSONException e) {
+            e.printStackTrace();
             Log.e("POKO ERROR", "Bad pending contact json data");
         }
     }

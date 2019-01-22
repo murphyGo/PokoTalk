@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.Contact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -23,6 +24,7 @@ public class PendingContactItem extends FrameLayout {
     private ImageView imageView;
     private Button acceptButton;
     private Boolean invited;
+    private Contact contact;
 
     public PendingContactItem(Context context) {
         super(context);
@@ -35,7 +37,7 @@ public class PendingContactItem extends FrameLayout {
         nicknameView = (TextView) view.findViewById(R.id.nickname);
         emailView = (TextView) view.findViewById(R.id.email);
         imageView = (CircleImageView) view.findViewById(R.id.image);
-        acceptButton = (Button) view.findViewById(R.id.contactAddButton);
+        acceptButton = (Button) view.findViewById(R.id.acceptButton);
     }
 
     public String getNickname() {
@@ -68,6 +70,14 @@ public class PendingContactItem extends FrameLayout {
         return invited;
     }
 
+    public Contact getContact() {
+        return contact;
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
+    }
+
     public void setInvited(Boolean invited) {
         this.invited = invited;
 
@@ -75,5 +85,21 @@ public class PendingContactItem extends FrameLayout {
             acceptButton.setVisibility(View.VISIBLE);
         else
             acceptButton.setVisibility(View.INVISIBLE);
+    }
+
+    public TextView getNicknameView() {
+        return nicknameView;
+    }
+
+    public TextView getEmailView() {
+        return emailView;
+    }
+
+    public ImageView getImageView() {
+        return imageView;
+    }
+
+    public Button getAcceptButton() {
+        return acceptButton;
     }
 }

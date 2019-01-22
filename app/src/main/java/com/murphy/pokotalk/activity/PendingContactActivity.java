@@ -10,11 +10,14 @@ import android.widget.Toast;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.PendingContactListAdapter;
+import com.murphy.pokotalk.adapter.ViewCreationCallback;
+import com.murphy.pokotalk.data.Contact;
 import com.murphy.pokotalk.data.ContactList;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.view.PendingContactItem;
 
 public class PendingContactActivity extends AppCompatActivity implements ContactAddDialog.ContactAddDialogListener {
     private PokoServer server;
@@ -43,6 +46,8 @@ public class PendingContactActivity extends AppCompatActivity implements Contact
         /* Create and set adapters */
         invitedListAdapter = new PendingContactListAdapter(this, invitedList.getContactList());
         invitingListAdapter = new PendingContactListAdapter(this, invitingList.getContactList());
+        invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
+        invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
         invitedListView.setAdapter(invitedListAdapter);
         invitingListView.setAdapter(invitingListAdapter);
         invitedListAdapter.setInvited(true);
@@ -50,8 +55,10 @@ public class PendingContactActivity extends AppCompatActivity implements Contact
 
         /* Get server and attach event callback */
         server = PokoServer.getInstance(this);
-        server.attachActivityCallback(Constants.getPendingContactListName, getPendingContactListCallback);
-        server.attachActivityCallback(Constants.newPendingContactName, getPendingContactListCallback);
+        server.attachActivityCallback(Constants.getPendingContactListName, refreshListCallback);
+        server.attachActivityCallback(Constants.newPendingContactName, refreshListCallback);
+        server.attachActivityCallback(Constants.newContactName, refreshListCallback);
+        server.attachActivityCallback(Constants.contactDeniedName, refreshListCallback);
         server.sendGetPendingContactList();
 
         addButton.setOnClickListener(new View.OnClickListener() {
@@ -62,7 +69,8 @@ public class PendingContactActivity extends AppCompatActivity implements Contact
         });
     }
 
-    private ActivityCallback getPendingContactListCallback = new ActivityCallback() {
+    /* Server event callback */
+    private ActivityCallback refreshListCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             invitedListAdapter.notifyDataSetChanged();
@@ -75,6 +83,41 @@ public class PendingContactActivity extends AppCompatActivity implements Contact
         }
     };
 
+    /* List item creation callback */
+    private ViewCreationCallback invitedContactCreationCallback = new ViewCreationCallback() {
+        @Override
+        public void run(View view) {
+            PendingContactItem item = (PendingContactItem) view;
+            final Contact contact = item.getContact();
+
+            Button acceptButton = item.getAcceptButton();
+            acceptButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    server.sendAcceptContact(contact.getEmail());
+                }
+            });
+
+            view.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+
+
+                    return true;
+                }
+            });
+        }
+    };
+
+    private ViewCreationCallback invitingContactCreationCallback = new ViewCreationCallback() {
+        @Override
+        public void run(View view) {
+            PendingContactItem item = (PendingContactItem) view;
+            Contact contact = item.getContact();
+        }
+    };
+
+    /* Contact add dialog functions */
     public void openContactAddDialog() {
         ContactAddDialog dialog = new ContactAddDialog();
         dialog.show(getSupportFragmentManager(), "친구 추가");

@@ -42,6 +42,6 @@ public class GetContactListListener extends PokoServer.PokoListener {
 
     @Override
     public void callError(Status status, Object... args) {
-        Log.e("POKO ERROR", "Failed to get pending contact list");
+        Log.e("POKO ERROR", "Failed to get contact list");
     }
 }

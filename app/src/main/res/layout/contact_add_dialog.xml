@@ -13,7 +13,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_margin="10dp"
-            android:hint="추가할 계정 이메일을 입력하세요."/>
+            android:hint="추가할 계정 이메일을 입력하세요."
+            android:inputType="textEmailAddress"
+            android:maxLines="1" />
 
     </LinearLayout>
 

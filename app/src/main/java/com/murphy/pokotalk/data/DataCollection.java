@@ -3,6 +3,11 @@ package com.murphy.pokotalk.data;
 import android.os.Environment;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.StrangerList;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -15,16 +20,18 @@ public class DataCollection {
     private Session session;
     private String rootDirectory;
     private ContactList contactList;
-    private ContactList invitedContactList;
-    private ContactList invitingContactList;
+    private PendingContactList invitedContactList;
+    private PendingContactList invitingContactList;
+    private StrangerList strangerList;
     private GroupList groupList;
     private EventList eventList;
     private static DataCollection instance;
 
     public DataCollection() {
         contactList = new ContactList();
-        invitedContactList = new ContactList();
-        invitingContactList = new ContactList();
+        invitedContactList = new PendingContactList();
+        invitingContactList = new PendingContactList();
+        strangerList = new StrangerList();
         groupList = new GroupList();
         eventList = new EventList();
         session = Session.getInstance();
@@ -81,13 +88,15 @@ public class DataCollection {
         return contactList;
     }
 
-    public ContactList getInvitedContactList() {
+    public PendingContactList getInvitedContactList() {
         return invitedContactList;
     }
 
-    public ContactList getInvitingContactList() {
+    public PendingContactList getInvitingContactList() {
         return invitingContactList;
     }
+
+    public StrangerList getStrangerList() { return strangerList; }
 
     public GroupList getGroupList() {
         return groupList;

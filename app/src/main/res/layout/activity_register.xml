@@ -68,7 +68,7 @@
                     android:id="@+id/textView6"
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     android:text="이름"
                     android:textSize="20dp" />
 
@@ -90,7 +90,7 @@
                     android:id="@+id/textView5"
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     android:text="email"
                     android:textSize="20dp" />
 
@@ -113,7 +113,7 @@
                     android:id="@+id/textView2"
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     android:text="비밀번호"
                     android:textSize="20dp" />
 
@@ -136,7 +136,7 @@
                     android:id="@+id/textView3"
                     android:layout_width="120dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
+                    android:layout_weight="0"
                     android:text="비밀번호 확인"
                     android:textSize="20dp" />
 

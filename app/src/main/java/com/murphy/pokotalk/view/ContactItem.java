@@ -9,7 +9,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.data.Contact;
+import com.murphy.pokotalk.data.user.Contact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 

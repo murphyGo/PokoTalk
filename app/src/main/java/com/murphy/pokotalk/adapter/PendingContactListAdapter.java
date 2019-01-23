@@ -4,15 +4,15 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.murphy.pokotalk.data.Contact;
+import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.view.PendingContactItem;
 
 import java.util.ArrayList;
 
-public class PendingContactListAdapter extends PokoListAdapter<Contact> {
+public class PendingContactListAdapter extends PokoListAdapter<PendingContact> {
     private boolean invited;
 
-    public PendingContactListAdapter(Context context, ArrayList<Contact> contacts) {
+    public PendingContactListAdapter(Context context, ArrayList<PendingContact> contacts) {
         super(context, contacts);
         invited = true;
     }
@@ -24,7 +24,7 @@ public class PendingContactListAdapter extends PokoListAdapter<Contact> {
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
-        Contact contact = items.get(position);
+        PendingContact contact = items.get(position);
         PendingContactItem item = new PendingContactItem(context);
         item.inflate();
         item.setNickname(contact.getNickname());
@@ -36,10 +36,18 @@ public class PendingContactListAdapter extends PokoListAdapter<Contact> {
     }
 
     @Override
-    public Contact getItemFromView(View view) {
+    public void refreshView(View view, PendingContact item) {
+        PendingContactItem contactView = (PendingContactItem) view;
+        contactView.setNickname(item.getNickname());
+        contactView.setImg(item.getPicture());
+    }
+
+    @Override
+    public PendingContact getItemFromView(View view) {
         return ((PendingContactItem) view).getContact();
     }
 
+    /* This adapter always set invited attribute of views in list to it */
     public void setInvited(boolean invited) {
         this.invited = invited;
     }

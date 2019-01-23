@@ -10,17 +10,18 @@ import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.listener.AccountRegisteredListener;
-import com.murphy.pokotalk.listener.ContactDeniedListener;
-import com.murphy.pokotalk.listener.ContactRemovedListener;
-import com.murphy.pokotalk.listener.GetContactListListener;
-import com.murphy.pokotalk.listener.GetPendingContactListListener;
-import com.murphy.pokotalk.listener.NewContactListener;
-import com.murphy.pokotalk.listener.NewPendingContactListener;
-import com.murphy.pokotalk.listener.OnConnectionListener;
-import com.murphy.pokotalk.listener.OnDisconnectionListener;
-import com.murphy.pokotalk.listener.PasswordLoginListener;
-import com.murphy.pokotalk.listener.SessionLoginListener;
+import com.murphy.pokotalk.listener.contact.JoinContactChatListener;
+import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
+import com.murphy.pokotalk.listener.contact.ContactDeniedListener;
+import com.murphy.pokotalk.listener.contact.ContactRemovedListener;
+import com.murphy.pokotalk.listener.contact.GetContactListListener;
+import com.murphy.pokotalk.listener.contact.GetPendingContactListListener;
+import com.murphy.pokotalk.listener.contact.NewContactListener;
+import com.murphy.pokotalk.listener.contact.NewPendingContactListener;
+import com.murphy.pokotalk.listener.connection.OnConnectionListener;
+import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
+import com.murphy.pokotalk.listener.session.PasswordLoginListener;
+import com.murphy.pokotalk.listener.session.SessionLoginListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -188,6 +189,13 @@ public class PokoServer extends ServerSocket {
         mSocket.emit(Constants.denyContactName, jsonData);
     }
 
+    public void sendJoinContactChat(String email) {
+        Map<String, String> data = new HashMap<String, String>();
+        data.put("email", email);
+        JSONObject jsonData = new JSONObject(data);
+        mSocket.emit(Constants.joinContactChatName, jsonData);
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
@@ -220,5 +228,6 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.newContactName, new NewContactListener());
         mSocket.on(Constants.contactDeniedName, new ContactDeniedListener());
         mSocket.on(Constants.contactRemovedName, new ContactRemovedListener());
+        mSocket.on(Constants.joinContactChatName, new JoinContactChatListener());
     }
 }

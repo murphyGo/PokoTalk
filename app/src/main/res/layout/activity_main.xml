@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:background="@android:color/background_light"
     android:gravity="center_vertical|center_horizontal"
-    tools:context=".activity.MainActivity">
+    tools:context=".activity.main.MainActivity">
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -23,6 +23,7 @@
     </FrameLayout>
 
     <android.support.design.widget.BottomNavigationView
+        android:id="@+id/mainNavigation"
         android:layout_width="match_parent"
         android:layout_height="60dp"
         android:background="@color/colorPrimary"

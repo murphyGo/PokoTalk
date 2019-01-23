@@ -4,14 +4,12 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.murphy.pokotalk.data.Contact;
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.view.ContactItem;
 
 import java.util.ArrayList;
 
 public class ContactListAdapter extends PokoListAdapter<Contact> {
-    private Context context;
-
     public ContactListAdapter(Context context, ArrayList<Contact> contacts) {
         super(context, contacts);
     }
@@ -30,6 +28,13 @@ public class ContactListAdapter extends PokoListAdapter<Contact> {
         item.setEmail(contact.getEmail());
         item.setImg(contact.getPicture());
         return item;
+    }
+
+    @Override
+    public void refreshView(View view, Contact item) {
+        ContactItem contactView = (ContactItem) view;
+        contactView.setNickname(item.getNickname());
+        contactView.setImg(item.getPicture());
     }
 
     @Override

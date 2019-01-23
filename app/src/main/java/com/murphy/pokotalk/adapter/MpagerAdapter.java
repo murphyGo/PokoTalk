@@ -12,7 +12,6 @@ import java.util.HashMap;
 
 /* MainActivity's slider screen adapter */
 public class MpagerAdapter extends PagerAdapter {
-
     private int[] layouts;
     private View[] views;
     private HashMap<Integer, ViewCreationCallback> callbacks;

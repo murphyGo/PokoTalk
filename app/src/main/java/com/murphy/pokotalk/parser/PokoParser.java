@@ -1,11 +1,21 @@
 package com.murphy.pokotalk.parser;
 
-import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.data.Contact;
-import com.murphy.pokotalk.data.Event;
-import com.murphy.pokotalk.data.Group;
-import com.murphy.pokotalk.data.Message;
+import android.util.Log;
 
+import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.event.Event;
+import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.PendingContact;
+import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.Stranger;
+import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.User;
+
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -21,19 +31,20 @@ public class PokoParser {
     public static Contact parseContact(JSONObject jsonObject) throws JSONException, ParseException {
         Contact result = new Contact();
 
+        Log.v("efw", jsonObject.toString());
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
         result.setPicture(jsonObject.getString("picture"));
-        if (jsonObject.has("contactId"))
+        if (jsonObject.has("contactId") && !jsonObject.isNull("contactId"))
             result.setContactId(jsonObject.getInt("contactId"));
         else
             result.setContactId(null);
-        if (jsonObject.has("groupId"))
+        if (jsonObject.has("groupId") && !jsonObject.isNull("groupId"))
             result.setGroupId(jsonObject.getInt("groupId"));
         else
             result.setGroupId(null);
-        if (jsonObject.has("lastSeen"))
+        if (jsonObject.has("lastSeen") && !jsonObject.isNull("lastSeen"))
             result.setLastSeen(parseDateString(jsonObject.getString("lastSeen")));
         else
             result.setLastSeen(null);
@@ -41,28 +52,76 @@ public class PokoParser {
         return result;
     }
 
-    public static Contact parsePendingContact(JSONObject jsonObject) throws JSONException {
-        Contact result = new Contact();
+    public static PendingContact parsePendingContact(JSONObject jsonObject) throws JSONException {
+        PendingContact result = new PendingContact();
 
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
         result.setPicture(jsonObject.getString("picture"));
-        /* Set dummy values temporarily */
-        result.setLastSeen(Calendar.getInstance());
-        result.setContactId(null);
-        result.setGroupId(null);
 
         return result;
+    }
+
+
+    public static Stranger parseStranger(JSONObject jsonObject) throws JSONException {
+        Stranger result = new Stranger();
+
+        result.setUserId(jsonObject.getInt("userId"));
+        result.setEmail(jsonObject.getString("email"));
+        result.setNickname(jsonObject.getString("nickname"));
+        result.setPicture(jsonObject.getString("picture"));
+
+        return result;
+    }
+
+    public static User parseUser(JSONObject jsonObject) throws JSONException {
+        int userId = jsonObject.getInt("userId");
+
+        DataCollection collection = DataCollection.getInstance();
+        ContactList contactList = collection.getContactList();
+        PendingContactList invitedContactList = collection.getInvitedContactList();
+        PendingContactList invitingContactList = collection.getInvitingContactList();
+        StrangerList strangerList = collection.getStrangerList();
+
+        if (contactList.getItemByKey(userId) != null) {
+
+        } else if (invitedContactList.getItemByKey(userId) != null ||
+        invitingContactList.getItemByKey(userId) != null) {
+
+        } else {
+
+        }
+
+        return null;
     }
 
     public static Boolean parseContactInvitedField(JSONObject jsonObject) throws JSONException {
         return jsonObject.getInt("invited") != 0 ? true : false;
     }
 
-    public static Group parseGroup(JSONObject jsonObject) throws JSONException {
+    public static Group parseGroup(JSONObject jsonObject) throws JSONException, ParseException {
+        Group result = new Group();
 
-        return null;
+        result.setGroupId(jsonObject.getInt("groupId"));
+        result.setGroupName(jsonObject.getString("name"));
+        result.setNbNewMessages(jsonObject.getInt("nbNewMessages"));
+        if (jsonObject.has("alias") && !jsonObject.isNull("alias"))
+            result.setAlias(jsonObject.getString("alias"));
+
+        if (jsonObject.has("members") && !jsonObject.isNull("members")) {
+            JSONArray jsonMembers = jsonObject.getJSONArray("members");
+
+            for (int i = 0; i < jsonMembers.length(); i++) {
+                JSONObject jsonMember = jsonMembers.getJSONObject(i);
+
+                Contact contact = PokoParser.parseContact(jsonMember);
+
+
+            }
+        }
+
+        return result;
     }
 
     public static Message parseMessage(JSONObject jsonObject) throws JSONException {

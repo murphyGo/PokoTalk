@@ -2,6 +2,7 @@ package com.murphy.pokotalk.data;
 
 import android.content.Context;
 
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.server.PokoServer;
 
 import java.util.Calendar;

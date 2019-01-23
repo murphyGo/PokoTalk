@@ -10,7 +10,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.data.Contact;
+import com.murphy.pokotalk.data.user.PendingContact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -24,7 +24,7 @@ public class PendingContactItem extends FrameLayout {
     private ImageView imageView;
     private Button acceptButton;
     private Boolean invited;
-    private Contact contact;
+    private PendingContact contact;
 
     public PendingContactItem(Context context) {
         super(context);
@@ -70,11 +70,11 @@ public class PendingContactItem extends FrameLayout {
         return invited;
     }
 
-    public Contact getContact() {
+    public PendingContact getContact() {
         return contact;
     }
 
-    public void setContact(Contact contact) {
+    public void setContact(PendingContact contact) {
         this.contact = contact;
     }
 

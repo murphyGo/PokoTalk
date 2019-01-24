@@ -10,22 +10,25 @@ import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.listener.contact.JoinContactChatListener;
-import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
+import com.murphy.pokotalk.listener.connection.OnConnectionListener;
+import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
 import com.murphy.pokotalk.listener.contact.ContactDeniedListener;
 import com.murphy.pokotalk.listener.contact.ContactRemovedListener;
 import com.murphy.pokotalk.listener.contact.GetContactListListener;
 import com.murphy.pokotalk.listener.contact.GetPendingContactListListener;
+import com.murphy.pokotalk.listener.contact.JoinContactChatListener;
 import com.murphy.pokotalk.listener.contact.NewContactListener;
 import com.murphy.pokotalk.listener.contact.NewPendingContactListener;
-import com.murphy.pokotalk.listener.connection.OnConnectionListener;
-import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
+import com.murphy.pokotalk.listener.group.GetGroupListListener;
+import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
 import com.murphy.pokotalk.listener.session.PasswordLoginListener;
 import com.murphy.pokotalk.listener.session.SessionLoginListener;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -196,6 +199,22 @@ public class PokoServer extends ServerSocket {
         mSocket.emit(Constants.joinContactChatName, jsonData);
     }
 
+    public void sendGetGroupList() {
+        mSocket.emit(Constants.getGroupListName);
+    }
+
+    public void sendAddGroup(String name, ArrayList<String> emails) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("name", name);
+            JSONArray jsonEmailArray = new JSONArray(emails);
+            jsonData.put("members", jsonEmailArray);
+            mSocket.emit(Constants.addGroupName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
@@ -229,5 +248,6 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.contactDeniedName, new ContactDeniedListener());
         mSocket.on(Constants.contactRemovedName, new ContactRemovedListener());
         mSocket.on(Constants.joinContactChatName, new JoinContactChatListener());
+        mSocket.on(Constants.getGroupListName, new GetGroupListListener());
     }
 }

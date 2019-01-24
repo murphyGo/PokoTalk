@@ -36,110 +36,127 @@
 
     </RelativeLayout>
 
-    <RelativeLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_below="@id/relativeLayout"
-        android:layout_alignParentLeft="true">
+        android:fillViewport="true">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingLeft="30dp"
-            android:paddingTop="50dp"
-            android:paddingRight="50dp">
-
-            <TextView
-                android:id="@+id/textView4"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="30dp"
-                android:text="포코톡을 이용하시려면 로그인하세요" />
+            android:orientation="vertical">
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_weight="0"
+                android:orientation="vertical"
+                android:paddingLeft="30dp"
+                android:paddingTop="50dp"
+                android:paddingRight="30dp">
 
                 <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="100dp"
+                    android:id="@+id/textView4"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0"
-                    android:text="email"
-                    android:textSize="20dp" />
+                    android:layout_marginBottom="30sp"
+                    android:text="포코톡을 이용하시려면 로그인하세요" />
 
-                <EditText
-                    android:id="@+id/emailText"
-                    android:layout_width="wrap_content"
+                <TableLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="15dp">
+
+                    <TableRow
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <TextView
+                            android:id="@+id/textView2"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="이메일"
+                            android:textSize="18sp" />
+
+                        <EditText
+                            android:id="@+id/emailText"
+                            android:layout_weight="1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ems="10"
+                            android:maxLines="1"
+                            android:textSize="18sp"
+                            android:inputType="textEmailAddress" />
+
+                    </TableRow>
+
+                    <TableRow>
+
+                        <TextView
+                            android:id="@+id/textView3"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="비밀번호"
+                            android:textSize="18sp" />
+
+                        <EditText
+                            android:id="@+id/pwdText"
+                            android:layout_weight="1"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:ems="10"
+                            android:maxLines="1"
+                            android:textSize="18sp"
+                            android:inputType="textPassword" />
+
+                    </TableRow>
+
+                </TableLayout>
+
+                <Button
+                    android:id="@+id/loginButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="10"
-                    android:maxLines="1"
-                    android:inputType="textEmailAddress" />
+                    android:text="로그인"
+                    android:textSize="20sp"/>
             </LinearLayout>
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:orientation="horizontal">
+                android:layout_weight="0"
+                android:orientation="vertical"
+                android:paddingLeft="30dp"
+                android:paddingRight="30dp"
+                android:paddingBottom="15dp">
 
                 <TextView
-                    android:id="@+id/textView3"
-                    android:layout_width="100dp"
+                    android:id="@+id/textView5"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="0"
-                    android:text="password"
-                    android:textSize="20dp" />
+                    android:layout_marginBottom="10sp"
+                    android:text="계정이 없으세요? 지금 가입하세요!" />
 
-                <EditText
-                    android:id="@+id/pwdText"
-                    android:layout_width="wrap_content"
+                <Button
+                    android:id="@+id/registerButton"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:ems="10"
-                    android:maxLines="1"
-                    android:inputType="textPassword" />
+                    android:text="가입하기"
+                    android:textSize="20sp"/>
+
             </LinearLayout>
-
-            <Button
-                android:id="@+id/loginButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="로그인"
-                android:textSize="20dp"/>
-
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:paddingLeft="30dp"
-            android:paddingRight="50dp"
-            android:paddingBottom="15dp"
-            android:layout_alignParentBottom="true">
-
-            <TextView
-                android:id="@+id/textView5"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="10dp"
-                android:text="계정이 없으세요? 지금 가입하세요!" />
-
-            <Button
-                android:id="@+id/registerButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="가입하기"
-                android:textSize="20dp"/>
-
-        </LinearLayout>
-    </RelativeLayout>
+    </ScrollView>
 
 
 </RelativeLayout>

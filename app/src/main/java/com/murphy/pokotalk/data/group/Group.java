@@ -4,7 +4,6 @@ import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 
 public class Group {
     private String groupName;
@@ -13,7 +12,6 @@ public class Group {
     private int nbNewMessages;
     private UserList members;
     private ArrayList<Message> messages;
-    private Calendar lastMessageDate;
 
     public Group() {
         members = new UserList();
@@ -30,14 +28,6 @@ public class Group {
 
     public void setAlias(String alias) {
         this.alias = alias;
-    }
-
-    public Calendar getLastMessageDate() {
-        return lastMessageDate;
-    }
-
-    public void setLastMessageDate(Calendar lastMessageDate) {
-        this.lastMessageDate = lastMessageDate;
     }
 
     public void setGroupName(String groupName) {

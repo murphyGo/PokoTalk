@@ -2,6 +2,7 @@ package com.murphy.pokotalk.view;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -13,7 +14,7 @@ import com.murphy.pokotalk.data.user.Contact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class ContactItem extends FrameLayout {
+public class MemberCandidateItem extends FrameLayout {
     private String nickname;
     private String email;
     private String img;
@@ -22,10 +23,12 @@ public class ContactItem extends FrameLayout {
     private TextView emailView;
     private ImageView imageView;
     private Contact contact;
+    private boolean selected;
 
-    public ContactItem(Context context) {
+    public MemberCandidateItem(Context context) {
         super(context);
         this.context = context;
+        selected = false;
     }
 
     public void inflate() {
@@ -34,6 +37,29 @@ public class ContactItem extends FrameLayout {
         nicknameView = (TextView) view.findViewById(R.id.nickname);
         emailView = (TextView) view.findViewById(R.id.email);
         imageView = (CircleImageView) view.findViewById(R.id.image);
+    }
+
+    public boolean toggle() {
+        if (selected())
+            cancelItem();
+        else
+            selectItem();
+
+        return selected();
+    }
+
+    public void selectItem() {
+        selected = true;
+        setBackgroundColor(Color.CYAN);
+    }
+
+    public void cancelItem() {
+        selected = false;
+        setBackgroundColor(Color.WHITE);
+    }
+
+    public boolean selected() {
+        return selected;
     }
 
     public String getNickname() {

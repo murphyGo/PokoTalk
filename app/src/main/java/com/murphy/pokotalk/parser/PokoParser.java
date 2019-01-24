@@ -8,12 +8,10 @@ import com.murphy.pokotalk.data.event.Event;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.Message;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
+import com.murphy.pokotalk.data.user.UserList;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -75,33 +73,20 @@ public class PokoParser {
         return result;
     }
 
-    public static User parseUser(JSONObject jsonObject) throws JSONException {
-        int userId = jsonObject.getInt("userId");
-
-        DataCollection collection = DataCollection.getInstance();
-        ContactList contactList = collection.getContactList();
-        PendingContactList invitedContactList = collection.getInvitedContactList();
-        PendingContactList invitingContactList = collection.getInvitingContactList();
-        StrangerList strangerList = collection.getStrangerList();
-
-        if (contactList.getItemByKey(userId) != null) {
-
-        } else if (invitedContactList.getItemByKey(userId) != null ||
-        invitingContactList.getItemByKey(userId) != null) {
-
-        } else {
-
-        }
-
-        return null;
-    }
-
     public static Boolean parseContactInvitedField(JSONObject jsonObject) throws JSONException {
         return jsonObject.getInt("invited") != 0 ? true : false;
     }
 
-    public static Group parseGroup(JSONObject jsonObject) throws JSONException, ParseException {
+    /** Parse group
+     * parses fields groupId, name, alias, nbNewMessages, members
+     * @param jsonObject
+     * @return
+     * @throws JSONException
+     * @throws ParseException
+     */
+    public static Group parseGroup(JSONObject jsonObject) throws JSONException {
         Group result = new Group();
+        DataCollection collection = DataCollection.getInstance();
 
         result.setGroupId(jsonObject.getInt("groupId"));
         result.setGroupName(jsonObject.getString("name"));
@@ -112,12 +97,18 @@ public class PokoParser {
         if (jsonObject.has("members") && !jsonObject.isNull("members")) {
             JSONArray jsonMembers = jsonObject.getJSONArray("members");
 
+            UserList members = result.getMembers();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);
 
-                Contact contact = PokoParser.parseContact(jsonMember);
-
-
+                /* Get existing user or create new user */
+                User member = collection.getUserById(jsonMember.getInt("userId"));
+                if (member == null) {
+                    member = parseStranger(jsonObject);
+                    collection.updateUserList(member);
+                }
+                /* Add to member */
+                members.updateItem(member);
             }
         }
 

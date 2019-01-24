@@ -16,8 +16,10 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.Constants.RequestCode;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.chat.ChatActivity;
+import com.murphy.pokotalk.activity.chat.GroupAddActivity;
 import com.murphy.pokotalk.activity.contact.PendingContactActivity;
 import com.murphy.pokotalk.adapter.ContactListAdapter;
+import com.murphy.pokotalk.adapter.GroupListAdapter;
 import com.murphy.pokotalk.adapter.MpagerAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.user.Contact;
@@ -28,6 +30,7 @@ import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.view.ContactItem;
 
 import java.util.ArrayList;
 
@@ -41,6 +44,7 @@ public class MainActivity extends AppCompatActivity
             R.layout.event_list_layout};
     private MpagerAdapter pagerAdapter;
     private ContactListAdapter contactListAdapter;
+    private GroupListAdapter groupListAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,12 +77,14 @@ public class MainActivity extends AppCompatActivity
 
         /* Attach view pager callbacks */
         pagerAdapter.enrollItemCallback(R.layout.contact_list_layout, contactListCreationCallback);
+        pagerAdapter.enrollItemCallback(R.layout.group_list_layout, groupListCreationCallback);
+        pagerAdapter.enrollItemCallback(R.layout.event_list_layout, eventListCreationCallback);
 
         /* Attach event callbacks */
         server.attachActivityCallback(Constants.getContactListName, getContactListCallback);
         server.attachActivityCallback(Constants.newContactName, newContactCallback);
         server.attachActivityCallback(Constants.contactRemovedName, contactRemovedCallback);
-        server.attachActivityCallback(Constants.joinContactChatName, contactChatJoinCallback);
+        server.attachActivityCallback(Constants.joinContactChatName, joinContactChatCallback);
     }
 
     @Override
@@ -88,7 +94,7 @@ public class MainActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.getContactListName, getContactListCallback);
         server.detachActivityCallback(Constants.newContactName, newContactCallback);
         server.detachActivityCallback(Constants.contactRemovedName, contactRemovedCallback);
-        server.detachActivityCallback(Constants.joinContactChatName, contactChatJoinCallback);
+        server.detachActivityCallback(Constants.joinContactChatName, joinContactChatCallback);
     }
 
     @Override
@@ -120,17 +126,60 @@ public class MainActivity extends AppCompatActivity
 
             /* Add button listeners */
             Button contactAddButton = view.findViewById(R.id.contactAddButton);
-            contactAddButton.setOnClickListener(contactButtonClickListener);
+            contactAddButton.setOnClickListener(contactAddButtonClickListener);
 
             server.sendGetContactList();
         }
     };
 
+    private ViewCreationCallback groupListCreationCallback = new ViewCreationCallback() {
+        @Override
+        public void run(View view) {
+            /* Contact list view settings */
+            /* Create contact list adapter */
+            ListView groupListLayout = view.findViewById(R.id.groupList);
+            ArrayList<Group> groups = DataCollection.getInstance().getGroupList().getList();
+            groupListAdapter = new GroupListAdapter(getApplicationContext(), groups);
+            groupListLayout.setAdapter(groupListAdapter);
+
+            /* Add button listeners */
+            Button groupAddButton = view.findViewById(R.id.groupAddButton);
+            groupAddButton.setOnClickListener(groupAddButtonClickListener);
+
+            server.sendGetGroupList();
+        }
+    };
+
+    private ViewCreationCallback eventListCreationCallback = new ViewCreationCallback() {
+        @Override
+        public void run(View view) {
+
+        }
+    };
+
+    private ViewCreationCallback contactCreationCallback = new ViewCreationCallback() {
+        @Override
+        public void run(View view) {
+            ContactItem contactView = (ContactItem) view;
+            Contact contact = contactView.getContact();
+
+
+        }
+    };
+
     /* User touch event listeners */
-    private View.OnClickListener contactButtonClickListener = new View.OnClickListener() {
+    private View.OnClickListener contactAddButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), PendingContactActivity.class);
+            startActivity(intent);
+        }
+    };
+
+    private View.OnClickListener groupAddButtonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), GroupAddActivity.class);
             startActivity(intent);
         }
     };
@@ -150,7 +199,14 @@ public class MainActivity extends AppCompatActivity
         } else {
             finish();
         }
+    }
 
+    private void handleGroupAddResult(int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            String name = data.getStringExtra("groupName");
+            ArrayList<String> emails = data.getStringArrayListExtra("emails");
+            server.sendAddGroup(name, emails);
+        }
     }
 
     /* Server message callbacks */
@@ -220,7 +276,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ActivityCallback contactChatJoinCallback = new ActivityCallback() {
+    private ActivityCallback joinContactChatCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             runOnUiThread(new Runnable() {

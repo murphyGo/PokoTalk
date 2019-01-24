@@ -27,6 +27,8 @@
         <activity android:name=".activity.main.LoginActivity" />
         <activity android:name=".activity.main.RegisterActivity" />
         <activity android:name=".activity.contact.PendingContactActivity" />
+        <activity android:name=".activity.chat.GroupAddActivity" />
+        <activity android:name=".activity.chat.ChatActivity" />
     </application>
 
 </manifest>

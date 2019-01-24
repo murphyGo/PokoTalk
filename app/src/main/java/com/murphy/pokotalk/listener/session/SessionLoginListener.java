@@ -34,7 +34,6 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             /* Set session login and expire date */
             Calendar sessionExpire = Calendar.getInstance();
             sessionExpire.setTimeInMillis(data.getLong("sessionExpire"));
-            session.setLogined();
             session.setSessionExpire(sessionExpire);
 
             /* Parse user data */
@@ -56,6 +55,9 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             session.setUser(user);
         } catch(Exception e) {
             e.printStackTrace();
+        } finally {
+            /* Login user */
+            session.setLogined();
         }
     }
 

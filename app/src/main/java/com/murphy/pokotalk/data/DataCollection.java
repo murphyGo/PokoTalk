@@ -5,9 +5,13 @@ import android.os.Environment;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.Stranger;
 import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.User;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -80,6 +84,55 @@ public class DataCollection {
 
     public static void reset() {
         instance = null;
+    }
+
+    /** Insert or update user on proper user list depending on user type
+     * @param user
+     * @return true if user is successfully inserted or updated, false otherwise.
+     */
+    public boolean updateUserList(User user) {
+        ContactList contactList = getContactList();
+        PendingContactList invitedContactList = getInvitedContactList();
+        PendingContactList invitingContactList = getInvitingContactList();
+        StrangerList strangerList = getStrangerList();
+
+        if (user instanceof Contact) {
+            contactList.updateItem((Contact) user);
+        } else if (user instanceof PendingContact &&
+                invitedContactList.getItemByKey(invitedContactList.
+                getKey((PendingContact) user)) != null) {
+            invitedContactList.updateItem((PendingContact) user);
+        } else if (user instanceof PendingContact &&
+                invitingContactList.getItemByKey(invitingContactList.
+                        getKey((PendingContact) user)) != null) {
+            invitingContactList.updateItem((PendingContact) user);
+        } else if (user instanceof Stranger) {
+            strangerList.updateItem((Stranger) user);
+        } else {
+            return false;
+        }
+
+        return true;
+    }
+
+    /** Find user with userId in DataCollection and returns User if exists.
+     * returns null if not found.
+     * @param userId
+     * @return User
+     */
+    public User getUserById(int userId) {
+        User result;
+
+        if ((result = getContactList().getItemByKey(userId)) != null)
+            return result;
+        else if ((result = getInvitedContactList().getItemByKey(userId)) != null)
+            return result;
+        else if ((result = getInvitingContactList().getItemByKey(userId)) != null)
+            return result;
+        else if ((result = getStrangerList().getItemByKey(userId)) != null)
+            return result;
+
+        return null;
     }
 
 

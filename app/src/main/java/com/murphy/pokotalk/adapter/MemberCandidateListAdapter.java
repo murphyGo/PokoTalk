@@ -5,7 +5,7 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.view.ContactItem;
+import com.murphy.pokotalk.view.MemberCandidateItem;
 
 import java.util.ArrayList;
 
@@ -22,7 +22,7 @@ public class MemberCandidateListAdapter extends PokoListAdapter<Contact> {
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
         Contact contact = items.get(position);
-        ContactItem item = new ContactItem(context);
+        MemberCandidateItem item = new MemberCandidateItem(context);
         item.inflate();
         item.setContact(contact);
         return item;
@@ -30,12 +30,12 @@ public class MemberCandidateListAdapter extends PokoListAdapter<Contact> {
 
     @Override
     public void refreshView(View view, Contact item) {
-        ContactItem contactView = (ContactItem) view;
+        MemberCandidateItem contactView = (MemberCandidateItem) view;
         contactView.setContact(item);
     }
 
     @Override
     public Contact getItemFromView(View view) {
-        return ((ContactItem) view).getContact();
+        return ((MemberCandidateItem) view).getContact();
     }
 }

@@ -75,9 +75,14 @@ public class RegisterActivity extends AppCompatActivity {
 
             @Override
             public void onError(Status status, Object... args) {
-                // show message
-                Toast.makeText(getApplicationContext(),
-                        "가입에 실패하였습니다. 다시 시도해주세요", Toast.LENGTH_LONG).show();
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // show message
+                        Toast.makeText(getApplicationContext(),
+                                "가입에 실패하였습니다. 다시 시도해주세요", Toast.LENGTH_LONG).show();
+                    }
+                });
             }
         });
     }

@@ -135,6 +135,55 @@ public class DataCollection {
         return null;
     }
 
+    /** Removes user with id from list and move to StrangerList
+     * If the user is Stranger, do nothing.
+     * @param userId
+     * @return Stranger user moved to StrangerList
+     */
+    public Stranger moveUserToStrangerList(int userId) {
+        String email, nickname, picture;
+        ContactList contactList = getContactList();
+        PendingContactList invitedContactList = getInvitedContactList();
+        PendingContactList invitingContactList = getInvitingContactList();
+        StrangerList strangerList = getStrangerList();
+
+        /* If the user is Stranger, do nothing */
+        Stranger stranger = strangerList.getItemByKey(userId);
+        if (stranger != null)
+            return stranger;
+
+        /* Remove contact from lists */
+        /* When the user is in Stranger list, don't have to remove */
+        Contact contact = contactList.removeItemByKey(userId);
+        PendingContact pendingContact = invitedContactList.removeItemByKey(userId);
+        PendingContact pendingContact2 = invitingContactList.removeItemByKey(userId);
+        if (contact != null) {
+            email = contact.getEmail();
+            nickname = contact.getNickname();
+            picture = contact.getPicture();
+        } else if (pendingContact != null) {
+            email = pendingContact.getEmail();
+            nickname = pendingContact.getNickname();
+            picture = pendingContact.getPicture();
+        } else if (pendingContact2 != null) {
+            email = pendingContact2.getEmail();
+            nickname = pendingContact2.getNickname();
+            picture = pendingContact2.getPicture();
+        } else {
+            return null;
+        }
+
+        /* The user now becomes stranger */
+        stranger = new Stranger();
+        stranger.setUserId(userId);
+        stranger.setEmail(email);
+        stranger.setNickname(nickname);
+        stranger.setPicture(picture);
+        strangerList.updateItem(stranger);
+
+        return stranger;
+    }
+
 
     /* Getter methods */
     public ContactList getContactList() {

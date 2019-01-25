@@ -15,29 +15,40 @@ import android.widget.Toast;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.Constants.RequestCode;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.activity.chat.ChatActivity;
 import com.murphy.pokotalk.activity.chat.GroupAddActivity;
+import com.murphy.pokotalk.activity.chat.GroupOptionDialog;
+import com.murphy.pokotalk.activity.contact.ContactDetailDialog;
+import com.murphy.pokotalk.activity.contact.ContactOptionDialog;
 import com.murphy.pokotalk.activity.contact.PendingContactActivity;
 import com.murphy.pokotalk.adapter.ContactListAdapter;
 import com.murphy.pokotalk.adapter.GroupListAdapter;
 import com.murphy.pokotalk.adapter.MpagerAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
-import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.view.ContactItem;
+import com.murphy.pokotalk.view.GroupItem;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity
         implements BottomNavigationView.OnNavigationItemSelectedListener,
-        ContactDetailDialog.contactDetailDialogListener {
+        ContactDetailDialog.ContactDetailDialogListener,
+        ContactOptionDialog.ContactOptionDialogListener,
+        GroupOptionDialog.GroupOptionDialogListener {
     private PokoServer server;
+    private Session session;
+    private DataCollection collection;
     private ViewPager viewPager;
     private BottomNavigationView navigationMenu;
     private int[] layouts = {R.layout.contact_list_layout, R.layout.group_list_layout,
@@ -59,6 +70,8 @@ public class MainActivity extends AppCompatActivity
         } */
 
         /* Start view pager(contact, group, event, configuration menu) */
+        collection = DataCollection.getInstance();
+
         viewPager = (ViewPager) findViewById(R.id.viewPager);
         pagerAdapter = new MpagerAdapter(this, layouts);
         viewPager.setAdapter(pagerAdapter);
@@ -67,7 +80,7 @@ public class MainActivity extends AppCompatActivity
         navigationMenu.setOnNavigationItemSelectedListener(this);
 
         /* If application has no session id to login, show login activity */
-        Session session = Session.getInstance();
+        session = Session.getInstance();
         if (!session.sessionIdExists()) {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, RequestCode.LOGIN.value);
@@ -81,20 +94,34 @@ public class MainActivity extends AppCompatActivity
         pagerAdapter.enrollItemCallback(R.layout.event_list_layout, eventListCreationCallback);
 
         /* Attach event callbacks */
-        server.attachActivityCallback(Constants.getContactListName, getContactListCallback);
-        server.attachActivityCallback(Constants.newContactName, newContactCallback);
-        server.attachActivityCallback(Constants.contactRemovedName, contactRemovedCallback);
+        server.attachActivityCallback(Constants.sessionLoginName, sessionLoginCallback);
+        server.attachActivityCallback(Constants.getContactListName, refreshContactListCallback);
+        server.attachActivityCallback(Constants.getPendingContactListName, refreshContactListCallback);
+        server.attachActivityCallback(Constants.newContactName, refreshContactListCallback);
+        server.attachActivityCallback(Constants.newPendingContactName, refreshContactListCallback);
+        server.attachActivityCallback(Constants.contactDeniedName, refreshContactListCallback);
+        server.attachActivityCallback(Constants.contactRemovedName, refreshContactListCallback);
         server.attachActivityCallback(Constants.joinContactChatName, joinContactChatCallback);
+        server.attachActivityCallback(Constants.getGroupListName, groupListRefreshCallback);
+        server.attachActivityCallback(Constants.addGroupName, groupListRefreshCallback);
+        server.attachActivityCallback(Constants.exitGroupName, groupListRefreshCallback);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        server.detachActivityCallback(Constants.getContactListName, getContactListCallback);
-        server.detachActivityCallback(Constants.newContactName, newContactCallback);
-        server.detachActivityCallback(Constants.contactRemovedName, contactRemovedCallback);
+        server.detachActivityCallback(Constants.sessionLoginName, sessionLoginCallback);
+        server.detachActivityCallback(Constants.getContactListName, refreshContactListCallback);
+        server.detachActivityCallback(Constants.getPendingContactListName, refreshContactListCallback);
+        server.detachActivityCallback(Constants.newContactName, refreshContactListCallback);
+        server.detachActivityCallback(Constants.newPendingContactName, refreshContactListCallback);
+        server.detachActivityCallback(Constants.contactDeniedName, refreshContactListCallback);
+        server.detachActivityCallback(Constants.contactRemovedName, refreshContactListCallback);
         server.detachActivityCallback(Constants.joinContactChatName, joinContactChatCallback);
+        server.detachActivityCallback(Constants.getGroupListName, groupListRefreshCallback);
+        server.detachActivityCallback(Constants.addGroupName, groupListRefreshCallback);
+        server.detachActivityCallback(Constants.exitGroupName, groupListRefreshCallback);
     }
 
     @Override
@@ -120,8 +147,9 @@ public class MainActivity extends AppCompatActivity
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView contactListLayout = view.findViewById(R.id.contactList);
-            ArrayList<Contact> contacts = DataCollection.getInstance().getContactList().getList();
+            ArrayList<Contact> contacts = collection.getContactList().getList();
             contactListAdapter = new ContactListAdapter(getApplicationContext(), contacts);
+            contactListAdapter.setViewCreationCallback(contactCreationCallback);
             contactListLayout.setAdapter(contactListAdapter);
 
             /* Add button listeners */
@@ -138,8 +166,9 @@ public class MainActivity extends AppCompatActivity
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView groupListLayout = view.findViewById(R.id.groupList);
-            ArrayList<Group> groups = DataCollection.getInstance().getGroupList().getList();
+            ArrayList<Group> groups = collection.getGroupList().getList();
             groupListAdapter = new GroupListAdapter(getApplicationContext(), groups);
+            groupListAdapter.setViewCreationCallback(groupCreationCallback);
             groupListLayout.setAdapter(groupListAdapter);
 
             /* Add button listeners */
@@ -161,9 +190,43 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void run(View view) {
             ContactItem contactView = (ContactItem) view;
-            Contact contact = contactView.getContact();
+            final Contact contact = contactView.getContact();
 
+            contactView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    openContactDetailDialog(contact);
+                }
+            });
+            contactView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    openContactOptionDialog(contact);
+                    return true;
+                }
+            });
+        }
+    };
 
+    private ViewCreationCallback groupCreationCallback = new ViewCreationCallback() {
+        @Override
+        public void run(View view) {
+            GroupItem groupView = (GroupItem) view;
+            final Group group = groupView.getGroup();
+
+            groupView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    startGroupChat(group);
+                }
+            });
+            groupView.setOnLongClickListener(new View.OnLongClickListener() {
+                @Override
+                public boolean onLongClick(View v) {
+                    openGroupOptionDialog(group);
+                    return true;
+                }
+            });
         }
     };
 
@@ -180,7 +243,7 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), GroupAddActivity.class);
-            startActivity(intent);
+            startActivityForResult(intent, RequestCode.GROUP_ADD.value);
         }
     };
 
@@ -189,6 +252,8 @@ public class MainActivity extends AppCompatActivity
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == RequestCode.LOGIN.value)
             handleLoginResult(resultCode, data);
+        else if (requestCode == RequestCode.GROUP_ADD.value)
+            handleGroupAddResult(resultCode, data);
     }
 
     private void handleLoginResult(int resultCode, Intent data) {
@@ -210,29 +275,21 @@ public class MainActivity extends AppCompatActivity
     }
 
     /* Server message callbacks */
-    private ActivityCallback getContactListCallback = new ActivityCallback() {
+    private ActivityCallback sessionLoginCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    /* Refresh contact list */
-                    if (contactListAdapter != null) {
-                        contactListAdapter.refreshAllExistingViews();
-                        contactListAdapter.notifyDataSetChanged();
-                    }
-                }
-            });
+            /* Get up-to-date contact and group list */
+            server.sendGetContactList();
+            server.sendGetGroupList();
         }
 
         @Override
         public void onError(Status status, Object... args) {
-            Toast.makeText(getApplicationContext(), "Failed to get contact list",
-                    Toast.LENGTH_LONG).show();
+
         }
     };
 
-    private ActivityCallback newContactCallback = new ActivityCallback() {
+    private ActivityCallback refreshContactListCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             runOnUiThread(new Runnable() {
@@ -249,72 +306,137 @@ public class MainActivity extends AppCompatActivity
 
         @Override
         public void onError(Status status, Object... args) {
-            Toast.makeText(getApplicationContext(), "Failed to get new contact",
-                    Toast.LENGTH_LONG).show();
-        }
-    };
 
-    private ActivityCallback contactRemovedCallback = new ActivityCallback() {
-        @Override
-        public void onSuccess(Status status, Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    /* Refresh contact list */
-                    if (contactListAdapter != null) {
-                        contactListAdapter.refreshAllExistingViews();
-                        contactListAdapter.notifyDataSetChanged();
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onError(Status status, Object... args) {
-            Toast.makeText(getApplicationContext(), "Failed to get removed contact",
-                    Toast.LENGTH_LONG).show();
         }
     };
 
     private ActivityCallback joinContactChatCallback = new ActivityCallback() {
         @Override
-        public void onSuccess(Status status, Object... args) {
+        public void onSuccess(Status status, final Object... args) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    JSONObject jsonObject = (JSONObject) args[0];
+                    ContactList contactList = collection.getContactList();
+                    try {
+                        int contactId = jsonObject.getInt("contactId");
+                        Contact contact = contactList.getItemByKey(contactId);
+                        /* Start group chat with contact */
+                        if (contact != null) {
+                            startGroupChat(contact.getChatGroup());
+                        }
+                    } catch (JSONException e) {
 
+                    }
                 }
             });
         }
 
         @Override
         public void onError(Status status, Object... args) {
-            Toast.makeText(getApplicationContext(), "Failed to get removed contact",
-                    Toast.LENGTH_LONG).show();
+
         }
     };
 
-    /* Dialog methods */
-    @Override
-    public void detailOptionSelect(Contact contact, int option) {
-        switch(option) {
-            case ContactDetailDialog.CONTACT_CHAT:
-                /* Start contact chat */
-                if (contact.getGroupId() == null) {
-                    server.sendJoinContactChat(contact.getEmail());
-                } else {
-                    GroupList groupList = DataCollection.getInstance().getGroupList();
-                    Group group = groupList.getItemByKey(contact.getGroupId());
-                    if (group != null) {
-                        // do something to do chat
+    private ActivityCallback groupListRefreshCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (groupListAdapter != null) {
+                        groupListAdapter.refreshAllExistingViews();
+                        groupListAdapter.notifyDataSetChanged();
                     }
                 }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    /* Activity and Dialog open methods */
+    public void openContactDetailDialog(Contact contact) {
+        ContactDetailDialog dialog = new ContactDetailDialog();
+        dialog.setContact(contact);
+        dialog.show(getSupportFragmentManager(), "친구 정보");
+    }
+
+    public void openContactOptionDialog(Contact contact) {
+        ContactOptionDialog dialog = new ContactOptionDialog();
+        dialog.setContact(contact);
+        dialog.show(getSupportFragmentManager(), "친구 옵션");
+    }
+
+    public void openGroupOptionDialog(Group group) {
+        GroupOptionDialog dialog = new GroupOptionDialog();
+        dialog.setGroup(group);
+        dialog.show(getSupportFragmentManager(), "그룹 옵션");
+    }
+
+    /* Dialog result listeners */
+    @Override
+    public void contactDetailOptionClick(Contact contact, int option) {
+        switch(option) {
+            case ContactDetailDialog.CONTACT_CHAT:
+                startContactChat(contact);
                 break;
         }
     }
 
-    public void startChat(Group group) {
+    @Override
+    public void contactOptionClick(Contact contact, int option) {
+        switch(option) {
+            case ContactOptionDialog.CHAT:
+                startContactChat(contact);
+                break;
+            case ContactOptionDialog.REMOVE_CONTACT:
+                server.sendRemoveContact(contact.getEmail());
+                break;
+        }
+    }
+
+    @Override
+    public void groupOptionClick(Group group, int option) {
+        switch(option) {
+            case GroupOptionDialog.CHAT:
+                startGroupChat(group);
+                break;
+            case GroupOptionDialog.INVITE_CONTACT:
+                break;
+            case GroupOptionDialog.EXIT_GROUP:
+                break;
+        }
+    }
+
+    /* Chat methods */
+    public void startContactChat(Contact contact) {
+        /* Start contact chat */
+        if (contact.getGroupId() == null) {
+            server.sendJoinContactChat(contact.getEmail());
+        } else {
+            GroupList groupList = DataCollection.getInstance().getGroupList();
+            Group group = groupList.getItemByKey(contact.getGroupId());
+            if (group != null) {
+                startGroupChat(group);
+            }
+        }
+    }
+
+    public void startGroupChat(final Group group) {
+        // do something to do chat
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                Toast.makeText(getApplicationContext(),
+                        "그룹 " + group.getGroupId() + " 채팅 시작", Toast.LENGTH_SHORT).show();
+            }
+        });
+        /*
         Intent intent = new Intent(this, ChatActivity.class);
-        startActivity(intent);
+        startActivity(intent);*/
     }
 }

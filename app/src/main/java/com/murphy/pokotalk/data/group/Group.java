@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.data.group;
 
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 
@@ -12,10 +13,12 @@ public class Group {
     private int nbNewMessages;
     private UserList members;
     private ArrayList<Message> messages;
+    private Contact contact;
 
     public Group() {
         members = new UserList();
         messages = new ArrayList<>();
+        nbNewMessages = 0;
     }
 
     public String getGroupName() {
@@ -62,7 +65,7 @@ public class Group {
         this.members.add(member);
     }
 
-    public boolean removeMember(User member) {
+    public User removeMember(User member) {
         return this.members.removeItemByKey(this.members.getKey(member));
     }
 
@@ -72,5 +75,13 @@ public class Group {
 
     public void setMessages(ArrayList<Message> messages) {
         this.messages = messages;
+    }
+
+    public Contact getContact() {
+        return contact;
+    }
+
+    public void setContact(Contact contact) {
+        this.contact = contact;
     }
 }

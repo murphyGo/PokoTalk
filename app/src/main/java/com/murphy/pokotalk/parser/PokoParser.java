@@ -90,10 +90,10 @@ public class PokoParser {
 
         result.setGroupId(jsonObject.getInt("groupId"));
         result.setGroupName(jsonObject.getString("name"));
-        result.setNbNewMessages(jsonObject.getInt("nbNewMessages"));
+        if (jsonObject.has("nbNewMessages") && !jsonObject.isNull("nbNewMessages"))
+            result.setNbNewMessages(jsonObject.getInt("nbNewMessages"));
         if (jsonObject.has("alias") && !jsonObject.isNull("alias"))
             result.setAlias(jsonObject.getString("alias"));
-
         if (jsonObject.has("members") && !jsonObject.isNull("members")) {
             JSONArray jsonMembers = jsonObject.getJSONArray("members");
 
@@ -102,11 +102,14 @@ public class PokoParser {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);
 
                 /* Get existing user or create new user */
-                User member = collection.getUserById(jsonMember.getInt("userId"));
-                if (member == null) {
-                    member = parseStranger(jsonObject);
+                User member = parseStranger(jsonMember);
+                User exist = collection.getUserById(member.getUserId());
+                if (exist == null) {
                     collection.updateUserList(member);
+                } else {
+                    member = exist;
                 }
+
                 /* Add to member */
                 members.updateItem(member);
             }

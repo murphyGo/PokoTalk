@@ -12,6 +12,7 @@ import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.listener.connection.OnConnectionListener;
 import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
+import com.murphy.pokotalk.listener.contact.ContactChatRemovedListener;
 import com.murphy.pokotalk.listener.contact.ContactDeniedListener;
 import com.murphy.pokotalk.listener.contact.ContactRemovedListener;
 import com.murphy.pokotalk.listener.contact.GetContactListListener;
@@ -19,7 +20,11 @@ import com.murphy.pokotalk.listener.contact.GetPendingContactListListener;
 import com.murphy.pokotalk.listener.contact.JoinContactChatListener;
 import com.murphy.pokotalk.listener.contact.NewContactListener;
 import com.murphy.pokotalk.listener.contact.NewPendingContactListener;
+import com.murphy.pokotalk.listener.group.AddGroupListener;
+import com.murphy.pokotalk.listener.group.ExitGroupListener;
 import com.murphy.pokotalk.listener.group.GetGroupListListener;
+import com.murphy.pokotalk.listener.group.MembersExitListener;
+import com.murphy.pokotalk.listener.group.MembersInvitedListener;
 import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
 import com.murphy.pokotalk.listener.session.PasswordLoginListener;
 import com.murphy.pokotalk.listener.session.SessionLoginListener;
@@ -113,11 +118,13 @@ public class PokoServer extends ServerSocket {
                     return;
                 }
 
+                Log.v("SERVER DATA", data.toString());
                 /* Start application callback */
-                if (status.isSuccess())
+                if (status.isSuccess()) {
                     callSuccess(status, args);
-                else
+                } else {
                     callError(status, args);
+                }
 
                 /* Start callbacks given by activities */
                 PokoServer.getInstance(null).startActivityCallbacks(getEventName(), status, args);
@@ -215,6 +222,16 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendExitGroup(int groupId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            mSocket.emit(Constants.exitGroupName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
@@ -248,6 +265,11 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.contactDeniedName, new ContactDeniedListener());
         mSocket.on(Constants.contactRemovedName, new ContactRemovedListener());
         mSocket.on(Constants.joinContactChatName, new JoinContactChatListener());
+        mSocket.on(Constants.contactChatRemovedName, new ContactChatRemovedListener());
         mSocket.on(Constants.getGroupListName, new GetGroupListListener());
+        mSocket.on(Constants.addGroupName, new AddGroupListener());
+        mSocket.on(Constants.exitGroupName, new ExitGroupListener());
+        mSocket.on(Constants.membersInvitedName, new MembersInvitedListener());
+        mSocket.on(Constants.membersExitName, new MembersExitListener());
     }
 }

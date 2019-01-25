@@ -21,7 +21,7 @@ import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.view.PendingContactItem;
 
 public class PendingContactActivity extends AppCompatActivity implements ContactAddDialog.ContactAddDialogListener,
-ContactOptionDialog.ContactOptionDialogListener {
+PendingContactOptionDialog.PendingContactOptionDialogListener {
     private PokoServer server;
     private Button addButton;
     private ListView invitedListView;
@@ -58,9 +58,11 @@ ContactOptionDialog.ContactOptionDialogListener {
 
         /* Get server and attach event callback */
         server = PokoServer.getInstance(this);
+        server.attachActivityCallback(Constants.getContactListName, refreshListCallback);
         server.attachActivityCallback(Constants.getPendingContactListName, refreshListCallback);
         server.attachActivityCallback(Constants.newPendingContactName, refreshListCallback);
         server.attachActivityCallback(Constants.newContactName, refreshListCallback);
+        server.attachActivityCallback(Constants.contactRemovedName, refreshListCallback);
         server.attachActivityCallback(Constants.contactDeniedName, refreshListCallback);
         server.sendGetPendingContactList();
 
@@ -76,9 +78,11 @@ ContactOptionDialog.ContactOptionDialogListener {
     protected void onDestroy() {
         super.onDestroy();
 
+        server.detachActivityCallback(Constants.getContactListName, refreshListCallback);
         server.detachActivityCallback(Constants.getPendingContactListName, refreshListCallback);
         server.detachActivityCallback(Constants.newPendingContactName, refreshListCallback);
         server.detachActivityCallback(Constants.newContactName, refreshListCallback);
+        server.detachActivityCallback(Constants.contactRemovedName, refreshListCallback);
         server.detachActivityCallback(Constants.contactDeniedName, refreshListCallback);
     }
 
@@ -143,7 +147,7 @@ ContactOptionDialog.ContactOptionDialogListener {
     }
 
     public void openContactOptionDialog(PendingContact contact) {
-        ContactOptionDialog dialog = new ContactOptionDialog();
+        PendingContactOptionDialog dialog = new PendingContactOptionDialog();
         dialog.setContact(contact);
         dialog.show(getSupportFragmentManager(), "친구 요청 응답 옵션");
     }
@@ -156,12 +160,12 @@ ContactOptionDialog.ContactOptionDialogListener {
     }
 
     @Override
-    public void contactOptionClick(int option, PendingContact contact) {
+    public void pendingContactOptionClick(int option, PendingContact contact) {
         switch (option) {
-            case ContactOptionDialog.ACCEPT_CONTACT:
+            case PendingContactOptionDialog.ACCEPT_CONTACT:
                 server.sendAcceptContact(contact.getEmail());
                 break;
-            case ContactOptionDialog.DENY_CONTACT:
+            case PendingContactOptionDialog.DENY_CONTACT:
                 server.sendDenyContact(contact.getEmail());
                 break;
         }

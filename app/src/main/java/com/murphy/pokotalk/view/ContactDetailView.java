@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
@@ -12,7 +13,7 @@ import com.murphy.pokotalk.data.user.Contact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class ContactItem extends FrameLayout {
+public class ContactDetailView extends FrameLayout {
     private String nickname;
     private String email;
     private String img;
@@ -20,19 +21,21 @@ public class ContactItem extends FrameLayout {
     private TextView nicknameView;
     private TextView emailView;
     private CircleImageView imageView;
+    private Button chatButton;
     private Contact contact;
 
-    public ContactItem(Context context) {
+    public ContactDetailView(Context context) {
         super(context);
         this.context = context;
     }
 
     public void inflate() {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.contact_item, this, true);
+        View view = inflater.inflate(R.layout.contact_detail_dialog, this, true);
         nicknameView = (TextView) view.findViewById(R.id.nickname);
         emailView = (TextView) view.findViewById(R.id.email);
         imageView = (CircleImageView) view.findViewById(R.id.image);
+        chatButton = (Button) view.findViewById(R.id.contactChatButton);
     }
 
     public String getNickname() {
@@ -82,5 +85,9 @@ public class ContactItem extends FrameLayout {
 
     public CircleImageView getImageView() {
         return imageView;
+    }
+
+    public Button getChatButton() {
+        return chatButton;
     }
 }

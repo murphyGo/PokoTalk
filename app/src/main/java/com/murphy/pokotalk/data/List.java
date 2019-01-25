@@ -27,13 +27,13 @@ public abstract class List<K, V> {
         return true;
     }
 
-    public boolean removeItemByKey(K k) {
+    public V removeItemByKey(K k) {
         V v = hashMap.get(k);
         if (v == null)
-            return false;
+            return null;
 
         arrayList.remove(hashMap.remove(k));
-        return true;
+        return v;
     }
 
     public V getItemByKey(K key) {

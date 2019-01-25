@@ -42,4 +42,12 @@ public class Contact extends User {
     public void setLastSeen(Calendar lastSeen) {
         this.lastSeen = lastSeen;
     }
+
+    public Group getChatGroup() {
+        return chatGroup;
+    }
+
+    public void setChatGroup(Group chatGroup) {
+        this.chatGroup = chatGroup;
+    }
 }

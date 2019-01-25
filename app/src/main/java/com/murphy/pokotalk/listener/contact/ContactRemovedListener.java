@@ -3,7 +3,6 @@ package com.murphy.pokotalk.listener.contact;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -21,12 +20,10 @@ public class ContactRemovedListener extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        ContactList contactList = collection.getContactList();
         try {
-            JSONObject jsonObject = data.getJSONObject("contact");
-            int userId = jsonObject.getInt("userId");
-
-            contactList.removeItemByKey(userId);
+            /* The user becomes now stranger */
+            int userId = data.getInt("userId");
+            collection.moveUserToStrangerList(userId);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad removed contact json data");
         }

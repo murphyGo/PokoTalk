@@ -5,7 +5,6 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
@@ -29,7 +28,7 @@ public class GroupItem extends FrameLayout {
     private TextView nbMemberView;
     private TextView nbNewMessageView;
     private TextView lastMessageDateView;
-    private ImageView imageView;
+    private CircleImageView imageView;
     private Group group;
 
     public GroupItem(Context context) {
@@ -172,7 +171,7 @@ public class GroupItem extends FrameLayout {
         return lastMessageDateView;
     }
 
-    public ImageView getImageView() {
+    public CircleImageView getImageView() {
         return imageView;
     }
 }

@@ -18,7 +18,7 @@
                 android:id="@+id/backspaceButton"
                 android:layout_width="30dp"
                 android:layout_height="30dp"
-                android:style="@style/BackButton" />
+                style="@style/BackButton" />
 
         </RelativeLayout>
 
@@ -26,8 +26,8 @@
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toRightOf="@id/FrameLayout"
-            android:style="@style/Title"
+            android:layout_toEndOf="@id/FrameLayout"
+            style="@style/Title"
             android:text="채팅방 만들기" />
 
     </RelativeLayout>

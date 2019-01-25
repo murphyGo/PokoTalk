@@ -70,7 +70,8 @@ public class Constants {
 
     /* Request codes for activity call */
     public enum RequestCode{
-        LOGIN(0);
+        LOGIN(0),
+        GROUP_ADD(1);
 
         public final int value;
         RequestCode(int v) {

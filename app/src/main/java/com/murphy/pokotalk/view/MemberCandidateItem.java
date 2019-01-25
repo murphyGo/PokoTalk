@@ -6,7 +6,6 @@ import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
@@ -21,9 +20,10 @@ public class MemberCandidateItem extends FrameLayout {
     private Context context;
     private TextView nicknameView;
     private TextView emailView;
-    private ImageView imageView;
+    private CircleImageView imageView;
     private Contact contact;
     private boolean selected;
+    private int originalPadding;
 
     public MemberCandidateItem(Context context) {
         super(context);
@@ -37,6 +37,7 @@ public class MemberCandidateItem extends FrameLayout {
         nicknameView = (TextView) view.findViewById(R.id.nickname);
         emailView = (TextView) view.findViewById(R.id.email);
         imageView = (CircleImageView) view.findViewById(R.id.image);
+        originalPadding = getPaddingLeft();
     }
 
     public boolean toggle() {
@@ -51,11 +52,15 @@ public class MemberCandidateItem extends FrameLayout {
     public void selectItem() {
         selected = true;
         setBackgroundColor(Color.CYAN);
+        float scale = getResources().getDisplayMetrics().density;
+        int dpInPixels = (int) (20*scale + 0.5f);
+        setPadding(originalPadding + dpInPixels, getPaddingTop(), getPaddingRight(), getPaddingBottom());
     }
 
     public void cancelItem() {
         selected = false;
-        setBackgroundColor(Color.WHITE);
+        setBackgroundColor(Color.TRANSPARENT);
+        setPadding(originalPadding, getPaddingTop(), getPaddingRight(), getPaddingBottom());
     }
 
     public boolean selected() {
@@ -107,7 +112,7 @@ public class MemberCandidateItem extends FrameLayout {
         return emailView;
     }
 
-    public ImageView getImageView() {
+    public CircleImageView getImageView() {
         return imageView;
     }
 }

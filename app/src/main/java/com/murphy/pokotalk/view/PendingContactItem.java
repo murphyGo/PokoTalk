@@ -6,7 +6,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
@@ -21,7 +20,7 @@ public class PendingContactItem extends FrameLayout {
     private Context context;
     private TextView nicknameView;
     private TextView emailView;
-    private ImageView imageView;
+    private CircleImageView imageView;
     private Button acceptButton;
     private Boolean invited;
     private PendingContact contact;
@@ -95,7 +94,7 @@ public class PendingContactItem extends FrameLayout {
         return emailView;
     }
 
-    public ImageView getImageView() {
+    public CircleImageView getImageView() {
         return imageView;
     }
 

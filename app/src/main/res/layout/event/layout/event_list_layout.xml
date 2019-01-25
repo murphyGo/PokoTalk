@@ -43,12 +43,19 @@
 
     </RelativeLayout>
 
-    <ListView
-        android:id="@+id/eventList"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:orientation="vertical"/>
+        android:fillViewport="true"
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/eventList"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"/>
+
+    </ScrollView>
 
 
 </LinearLayout>

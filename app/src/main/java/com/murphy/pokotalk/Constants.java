@@ -68,10 +68,16 @@ public class Constants {
     public static final String membersJoinName = "membersJoin";
     public static final String membersLeaveName = "membersLeave";
 
+    /* Chat constants */
+    public static final int nbMessageRead = 100;   // Maximum number of messages for chat
+    public static final String unknownUserNickname = "알 수 없는 유저";
+    public static final String unknownUserEmail = "???";
+
     /* Request codes for activity call */
-    public enum RequestCode{
+    public enum RequestCode {
         LOGIN(0),
-        GROUP_ADD(1);
+        GROUP_ADD(1),
+        GROUP_CHAT(2);
 
         public final int value;
         RequestCode(int v) {

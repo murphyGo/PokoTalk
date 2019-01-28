@@ -4,6 +4,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
+/** ItemList adds functionality updating whole list so that
+ *  each updated items are marked and unmarked items are removed
+ *  at the end of update.
+ */
 public abstract class ItemList<K, V> extends List<K, V> {
     protected HashMap<K, V> updatedItems;
     private boolean updateListStarted;

@@ -8,8 +8,11 @@ import com.murphy.pokotalk.data.event.Event;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.Message;
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
+import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.data.user.Stranger;
+import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 
@@ -34,10 +37,6 @@ public class PokoParser {
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
         result.setPicture(jsonObject.getString("picture"));
-        if (jsonObject.has("contactId") && !jsonObject.isNull("contactId"))
-            result.setContactId(jsonObject.getInt("contactId"));
-        else
-            result.setContactId(null);
         if (jsonObject.has("groupId") && !jsonObject.isNull("groupId"))
             result.setGroupId(jsonObject.getInt("groupId"));
         else
@@ -118,9 +117,63 @@ public class PokoParser {
         return result;
     }
 
-    public static Message parseMessage(JSONObject jsonObject) throws JSONException {
+    public static Message parseMessage(JSONObject jsonObject) throws JSONException, ParseException {
+        Message result = new Message();
+        DataCollection collection = DataCollection.getInstance();
+        ContactList contactList = collection.getContactList();
+        PendingContactList invitedList = collection.getInvitedContactList();
+        PendingContactList invitingList = collection.getInvitingContactList();
+        StrangerList strangerList = collection.getStrangerList();
 
-        return null;
+        result.setMessageId(jsonObject.getInt("messageId"));
+        result.setContent(jsonObject.getString("content"));
+        result.setImportanceLevel(
+                parseMessageImportanceLevel(jsonObject.getInt("importance")));
+        result.setNbNotReadUser(jsonObject.getInt("nbread"));
+        result.setDate(parseDateString(jsonObject.getString("date")));
+        result.setMessageType(Message.MESSAGE);
+        int userId = jsonObject.getInt("userId");
+        User writer;
+
+        User user1 = contactList.getItemByKey(userId);
+        User user2 = invitedList.getItemByKey(userId);
+        User user3 = invitingList.getItemByKey(userId);
+        User user4 = strangerList.getItemByKey(userId);
+
+        if (user1 != null) {
+            writer = user1;
+        } else if (user2 != null) {
+            writer = user2;
+        } else if (user3 != null) {
+            writer = user3;
+        } else if (user4 != null) {
+            writer = user4;
+        } else {
+            /* If writer is unknown, create temporary unknown user */
+            Stranger stranger = new Stranger();
+            stranger.setUserId(userId);
+            stranger.setNickname(Constants.unknownUserNickname);
+            stranger.setEmail(Constants.unknownUserEmail);
+            strangerList.updateItem(stranger);
+            writer = stranger;
+        }
+
+        result.setWriter(writer);
+
+        return result;
+    }
+
+    public static int parseMessageImportanceLevel(int level) throws ParseException {
+        switch (level) {
+            case 0:
+                return Message.NORMAL;
+            case 1:
+                return Message.IMPORTANT;
+            case 2:
+                return Message.VERY_IMPORTANT;
+            default:
+                throw new ParseException("Unknown importance level", 1);
+        }
     }
 
     public static Event parseEvent(JSONObject jsonObject) throws JSONException {

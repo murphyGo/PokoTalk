@@ -10,11 +10,11 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.Constants.RequestCode;
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.activity.chat.ChatActivity;
 import com.murphy.pokotalk.activity.chat.GroupAddActivity;
 import com.murphy.pokotalk.activity.chat.GroupOptionDialog;
 import com.murphy.pokotalk.activity.contact.ContactDetailDialog;
@@ -27,7 +27,6 @@ import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.server.ActivityCallback;
@@ -323,7 +322,7 @@ public class MainActivity extends AppCompatActivity
                         Contact contact = contactList.getItemByKey(contactId);
                         /* Start group chat with contact */
                         if (contact != null) {
-                            startGroupChat(contact.getChatGroup());
+                            startGroupChat(contact.getContactGroup());
                         }
                     } catch (JSONException e) {
 
@@ -408,35 +407,25 @@ public class MainActivity extends AppCompatActivity
             case GroupOptionDialog.INVITE_CONTACT:
                 break;
             case GroupOptionDialog.EXIT_GROUP:
+                server.sendExitGroup(group.getGroupId());
                 break;
         }
     }
 
     /* Chat methods */
     public void startContactChat(Contact contact) {
+        Group contactChatGroup = contact.getContactGroup();
         /* Start contact chat */
-        if (contact.getGroupId() == null) {
+        if (contactChatGroup == null) {
             server.sendJoinContactChat(contact.getEmail());
         } else {
-            GroupList groupList = DataCollection.getInstance().getGroupList();
-            Group group = groupList.getItemByKey(contact.getGroupId());
-            if (group != null) {
-                startGroupChat(group);
-            }
+            startGroupChat(contactChatGroup);
         }
     }
 
     public void startGroupChat(final Group group) {
-        // do something to do chat
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getApplicationContext(),
-                        "그룹 " + group.getGroupId() + " 채팅 시작", Toast.LENGTH_SHORT).show();
-            }
-        });
-        /*
         Intent intent = new Intent(this, ChatActivity.class);
-        startActivity(intent);*/
+        intent.putExtra("groupId", group.getGroupId());
+        startActivityForResult(intent, RequestCode.GROUP_CHAT.value);
     }
 }

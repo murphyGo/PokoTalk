@@ -1,14 +1,13 @@
 package com.murphy.pokotalk.data.user;
 
+import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 
 import java.util.Calendar;
 
 public class Contact extends User {
-    private Integer contactId;
-    private Integer groupId;
     private Calendar lastSeen;
-    private Group chatGroup;
+    private Integer groupId;      /**NOTE: data duplication, but needed to indicate contact group */
 
     public Contact() {
         super();
@@ -19,12 +18,11 @@ public class Contact extends User {
         this.lastSeen = lastSeen;
     }
 
-    public Integer getContactId() {
-        return contactId;
-    }
+    public void update(Contact contact) {
+        super.update(contact);
 
-    public void setContactId(Integer contactId) {
-        this.contactId = contactId;
+        setGroupId(contact.getGroupId());
+        setLastSeen(contact.getLastSeen());
     }
 
     public Integer getGroupId() {
@@ -43,11 +41,7 @@ public class Contact extends User {
         this.lastSeen = lastSeen;
     }
 
-    public Group getChatGroup() {
-        return chatGroup;
-    }
-
-    public void setChatGroup(Group chatGroup) {
-        this.chatGroup = chatGroup;
+    public Group getContactGroup() {
+        return DataCollection.getInstance().getGroupList().getItemByKey(groupId);
     }
 }

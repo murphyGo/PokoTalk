@@ -23,10 +23,8 @@ public class ContactList extends ItemList<Integer, Contact> {
             add(contact);
         } else {
             exist.setNickname(contact.getNickname());
-            exist.setGroupId(contact.getGroupId());
             exist.setPicture(contact.getPicture());
             exist.setLastSeen(contact.getLastSeen());
-            exist.setContactId(contact.getContactId());
         }
     }
 }

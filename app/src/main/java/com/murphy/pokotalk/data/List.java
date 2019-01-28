@@ -18,17 +18,21 @@ public abstract class List<K, V> {
     public abstract K getKey(V v);
 
     public boolean add(V v) {
-        V exist = hashMap.get(getKey(v));
+        V exist = getItemByKey(getKey(v));
         if (exist != null)
             return false;
 
-        hashMap.put(getKey(v), v);
-        arrayList.add(v);
+        addHashMapAndArrayList(arrayList.size(), v);
         return true;
     }
 
+    protected void addHashMapAndArrayList(int index, V v) {
+        hashMap.put(getKey(v), v);
+        arrayList.add(index, v);
+    }
+
     public V removeItemByKey(K k) {
-        V v = hashMap.get(k);
+        V v = getItemByKey(k);
         if (v == null)
             return null;
 

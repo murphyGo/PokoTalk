@@ -33,6 +33,12 @@ public class User {
         return userId;
     }
 
+    public void update(User user) {
+        setEmail(user.getEmail());
+        setNickname(user.getNickname());
+        setPicture(user.getPicture());
+    }
+
     public int getUserId() {
         return userId;
     }

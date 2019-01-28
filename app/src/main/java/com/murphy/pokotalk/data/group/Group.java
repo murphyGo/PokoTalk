@@ -4,20 +4,18 @@ import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 
-import java.util.ArrayList;
-
 public class Group {
     private String groupName;
     private String alias;
     private int groupId;
     private int nbNewMessages;
     private UserList members;
-    private ArrayList<Message> messages;
+    private MessageList messageList;
     private Contact contact;
 
     public Group() {
         members = new UserList();
-        messages = new ArrayList<>();
+        messageList = new MessageList();
         nbNewMessages = 0;
     }
 
@@ -69,12 +67,12 @@ public class Group {
         return this.members.removeItemByKey(this.members.getKey(member));
     }
 
-    public ArrayList<Message> getMessages() {
-        return messages;
+    public MessageList getMessageList() {
+        return messageList;
     }
 
-    public void setMessages(ArrayList<Message> messages) {
-        this.messages = messages;
+    public void setMessageList(MessageList messages) {
+        this.messageList = messages;
     }
 
     public Contact getContact() {

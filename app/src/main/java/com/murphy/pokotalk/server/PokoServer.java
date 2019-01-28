@@ -10,6 +10,10 @@ import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.listener.chat.MessageAckListener;
+import com.murphy.pokotalk.listener.chat.NewMessageListener;
+import com.murphy.pokotalk.listener.chat.ReadMessageListener;
+import com.murphy.pokotalk.listener.chat.SendMessageListener;
 import com.murphy.pokotalk.listener.connection.OnConnectionListener;
 import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
 import com.murphy.pokotalk.listener.contact.ContactChatRemovedListener;
@@ -232,6 +236,31 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendNewMessage(int groupId, int sendId, String content,
+                            @Nullable Integer importanceLevel) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("sendId", sendId);
+            jsonData.put("content", content);
+            jsonData.put("importance", importanceLevel);
+            mSocket.emit(Constants.sendMessageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendReadMessage(int groupId, int nbMessageMax) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("nbMessageMax", nbMessageMax);
+            mSocket.emit(Constants.readMessageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
@@ -271,5 +300,9 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.exitGroupName, new ExitGroupListener());
         mSocket.on(Constants.membersInvitedName, new MembersInvitedListener());
         mSocket.on(Constants.membersExitName, new MembersExitListener());
+        mSocket.on(Constants.readMessageName, new ReadMessageListener());
+        mSocket.on(Constants.sendMessageName, new SendMessageListener());
+        mSocket.on(Constants.newMessageName, new NewMessageListener());
+        mSocket.on(Constants.messageAckName, new MessageAckListener());
     }
 }

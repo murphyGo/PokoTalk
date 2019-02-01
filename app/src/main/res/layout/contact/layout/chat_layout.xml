@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -16,9 +17,9 @@
             android:id="@+id/backspaceButton"
             android:layout_width="20dp"
             android:layout_height="20dp"
-            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
             android:layout_centerVertical="true"
-            android:layout_marginRight="10dp"
+            android:layout_marginEnd="10dp"
             style="@style/BackButton" />
 
         <TextView
@@ -31,54 +32,69 @@
             android:textSize="20sp"
             android:maxLines="1"/>
 
-        <ImageView
-            android:id="@+id/menuButton"
-            android:layout_width="30dp"
-            android:layout_height="20sp"
-            android:layout_gravity="center_vertical"
-            android:layout_alignParentRight="true"
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/slideMenuButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
-            android:src="@drawable/three_dot_menu"
-            android:adjustViewBounds="true"/>
+            android:background="@null">
+        </android.support.v7.widget.Toolbar>
 
     </RelativeLayout>
 
-    <ScrollView
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawerLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
-        android:fillViewport="true">
+        android:layout_height="match_parent">
 
-        <ListView
-            android:id="@+id/messageList"
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/chat_background2"/>
+            android:layout_height="match_parent"
+            android:orientation="vertical">
 
-    </ScrollView>
+            <ScrollView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:fillViewport="true">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_weight="0"
-        android:background="@drawable/shape2">
+                <ListView
+                    android:id="@+id/messageList"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/chat_background2"
+                    android:divider="@null"/>
 
-        <EditText
-            android:id="@+id/messageInputText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="메시지를 입력하세요"/>
+            </ScrollView>
 
-        <Button
-            android:id="@+id/sendMessageButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0"
-            android:text="보내기">
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_weight="0"
+                android:background="@drawable/shape2">
 
-        </Button>
+                <EditText
+                    android:id="@+id/messageInputText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:hint="메시지를 입력하세요"/>
 
-    </LinearLayout>
+                <Button
+                    android:id="@+id/sendMessageButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="0"
+                    android:text="보내기">
+
+                </Button>
+
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </android.support.v4.widget.DrawerLayout>
 </LinearLayout>
+

@@ -5,7 +5,7 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.parser.PokoParser;
@@ -15,8 +15,6 @@ import com.murphy.pokotalk.server.Status;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.ArrayList;
 
 public class MembersExitListener extends PokoServer.PokoListener {
     @Override
@@ -40,7 +38,7 @@ public class MembersExitListener extends PokoServer.PokoListener {
             }
 
             UserList userList = group.getMembers();
-            ArrayList<Message> messages = group.getMessages();
+            MessageList messages = group.getMessageList();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);
                 User exitedUser = PokoParser.parseStranger(jsonMember);
@@ -48,7 +46,7 @@ public class MembersExitListener extends PokoServer.PokoListener {
                 if (realUser == null) {
                     Log.e("POKO ERROR", "Member cannot exit since there is no such user");
                 }
-                //TODO: remove messaes from the user must be removed
+                //TODO: messages from the user must be removed??
 
             }
         } catch (JSONException e) {

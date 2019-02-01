@@ -122,7 +122,7 @@ public class PokoServer extends ServerSocket {
                     return;
                 }
 
-                Log.v("SERVER DATA", data.toString());
+                Log.v("SERVER DATA " + getEventName(), data.toString());
                 /* Start application callback */
                 if (status.isSuccess()) {
                     callSuccess(status, args);

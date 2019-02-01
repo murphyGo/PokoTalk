@@ -29,8 +29,8 @@ public class JoinContactChatListener extends PokoServer.PokoListener {
         GroupList groupList = collection.getGroupList();
         try {
             JSONObject jsonObject = data.getJSONObject("group");
-            int contactId = data.getInt("contactId");
-            Contact contact = contactList.getItemByKey(contactId);
+            int userId = data.getInt("userId");
+            Contact contact = contactList.getItemByKey(userId);
 
             if (contact == null) {
                 Log.e("POKO ERROR", "Cannot add contact chat since no such contact");
@@ -38,8 +38,8 @@ public class JoinContactChatListener extends PokoServer.PokoListener {
             }
 
             Group group = PokoParser.parseGroup(jsonObject);
-            groupList.updateItem(group);
             group.setContact(contact);
+            groupList.updateItem(group);
             contact.setGroupId(group.getGroupId());
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad removed contact json data");

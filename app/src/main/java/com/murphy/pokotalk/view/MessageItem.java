@@ -92,7 +92,7 @@ public class MessageItem extends FrameLayout {
 
     public void setNbNotReadUser(int nbNotReadUser) {
         this.nbNotReadUser = nbNotReadUser;
-        nbNotReadUserView.setText(nbNotReadUser);
+        nbNotReadUserView.setText(Integer.toString(nbNotReadUser));
     }
 
     public TextView getMessageView() {

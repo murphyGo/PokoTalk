@@ -1,14 +1,21 @@
 package com.murphy.pokotalk.activity.chat;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.Toolbar;
+import android.util.TypedValue;
+import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -31,14 +38,19 @@ public class ChatActivity extends AppCompatActivity
     private PokoServer server;
     private TextView groupNameView;
     private Button backspaceButton;
-    private ImageView menuButton;
     private ListView messageListView;
+    private Toolbar slideMenuButton;
     private EditText messageInputView;
     private Button sendMessageButton;
+    private DrawerLayout drawerLayout;
+    private LinearLayout slideMenuLayout;
+    private ActionBarDrawerToggle slideMenuToggle;
     private MessageListAdapter messageListAdapter;
     private Group group;
     private int sendId;
     private Session session;
+
+    private final static int slideMenuWidthDP = 250;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -49,10 +61,11 @@ public class ChatActivity extends AppCompatActivity
 
         groupNameView = findViewById(R.id.groupName);
         backspaceButton = findViewById(R.id.backspaceButton);
-        menuButton = findViewById(R.id.menuButton);
+        slideMenuButton = findViewById(R.id.slideMenuButton);
         messageListView =  findViewById(R.id.messageList);
         messageInputView = findViewById(R.id.messageInputText);
         sendMessageButton = findViewById(R.id.sendMessageButton);
+        drawerLayout = findViewById(R.id.drawerLayout);
 
         Intent intent = getIntent();
         if (getIntent() == null) {
@@ -78,12 +91,57 @@ public class ChatActivity extends AppCompatActivity
 
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
-        menuButton.setOnClickListener(menuButtonClickListener);
         sendMessageButton.setOnClickListener(messageSendButtonListener);
 
         /* Attach server event callbacks */
         server.attachActivityCallback(Constants.sendMessageName, messageListChangedListener);
         server.attachActivityCallback(Constants.readMessageName, messageListChangedListener);
+
+        /* Create slide menu */
+        LayoutInflater inflater = getLayoutInflater();
+        slideMenuLayout = (LinearLayout) inflater.inflate(R.layout.chat_slide_menu_layout,
+                null, false);
+        DrawerLayout.LayoutParams params = new DrawerLayout.LayoutParams
+                ((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, slideMenuWidthDP,
+                        getResources().getDisplayMetrics()),
+                DrawerLayout.LayoutParams.MATCH_PARENT);
+        params.gravity = Gravity.END;
+        drawerLayout.addView(slideMenuLayout, params);
+
+        /* Add slide menu toggle */
+        slideMenuToggle = new ActionBarDrawerToggle(this, drawerLayout,
+                R.string.drawer_open, R.string.drawer_close);
+        setSupportActionBar(slideMenuButton);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        slideMenuToggle.setDrawerIndicatorEnabled(true);
+        drawerLayout.addDrawerListener(slideMenuToggle);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item != null && item.getItemId() == android.R.id.home) {
+            if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
+                drawerLayout.closeDrawer(Gravity.RIGHT);
+            }
+            else {
+                drawerLayout.openDrawer(Gravity.RIGHT);
+            }
+        }
+        return false;
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        if (slideMenuToggle != null)
+            slideMenuToggle.syncState();
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        if (slideMenuToggle != null)
+            slideMenuToggle.onConfigurationChanged(newConfig);
     }
 
     @Override
@@ -119,13 +177,6 @@ public class ChatActivity extends AppCompatActivity
         }
     };
 
-    private View.OnClickListener menuButtonClickListener = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-            open_menu(v);
-        }
-    };
-
     private View.OnClickListener messageSendButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -135,8 +186,8 @@ public class ChatActivity extends AppCompatActivity
                         Toast.LENGTH_SHORT).show();
                 return;
             }
-            server.sendNewMessage(group.getGroupId(), ++sendId, content, null);
-            Message message = createSentMessage(sendId, content, null);
+            server.sendNewMessage(group.getGroupId(), ++sendId, content, Message.NORMAL);
+            Message message = createSentMessage(sendId, content, Message.NORMAL);
             group.getMessageList().addSentMessage(message);
         }
     };
@@ -145,8 +196,13 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback messageListChangedListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            messageListAdapter.refreshAllExistingViews();
-            messageListAdapter.notifyDataSetChanged();
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    messageListAdapter.refreshAllExistingViews();
+                    messageListAdapter.notifyDataSetChanged();
+                }
+            });
         }
 
         @Override

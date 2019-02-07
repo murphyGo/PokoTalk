@@ -261,6 +261,18 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendInviteGroupMembers(int groupId, ArrayList<String> emails) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            JSONArray jsonEmailArray = new JSONArray(emails);
+            jsonData.put("members", jsonEmailArray);
+            mSocket.emit(Constants.inviteGroupMembersName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */

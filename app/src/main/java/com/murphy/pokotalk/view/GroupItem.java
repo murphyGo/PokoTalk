@@ -100,7 +100,7 @@ public class GroupItem extends FrameLayout {
             nbNewMessageView.setVisibility(View.INVISIBLE);
         } else {
             nbNewMessageView.setVisibility(View.VISIBLE);
-            nbNewMessageView.setText(nbNewMessage);
+            nbNewMessageView.setText(Integer.toString(nbNewMessage));
         }
     }
 

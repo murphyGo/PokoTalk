@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.MemberCandidateListAdapter;
@@ -74,11 +73,12 @@ public class GroupAddActivity extends AppCompatActivity {
             if (groupName.length() == 0) {
                 groupName = null;
             }
+            /*
             if (members.size() == 0) {
                 Toast.makeText(getApplicationContext(),
                         "친구를 1명 이상 선택해 주세요!", Toast.LENGTH_SHORT).show();
                 return;
-            }
+            }*/
             ArrayList<String> emails = new ArrayList<>();
             for (Contact contact : members) {
                 emails.add(contact.getEmail());

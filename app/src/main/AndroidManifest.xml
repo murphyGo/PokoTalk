@@ -29,6 +29,7 @@
         <activity android:name=".activity.contact.PendingContactActivity" />
         <activity android:name=".activity.chat.GroupAddActivity" />
         <activity android:name=".activity.chat.ChatActivity" />
+        <activity android:name=".activity.chat.GroupMemberInvitationActivity" />
     </application>
 
 </manifest>

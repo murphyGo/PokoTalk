@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_toEndOf="@id/FrameLayout"
             style="@style/Title"
-            android:text="채팅방 만들기" />
+            android:text="친구 초대" />
 
     </RelativeLayout>
 
@@ -38,12 +38,14 @@
         android:orientation="vertical"
         android:padding="15dp">
 
-        <EditText
-            android:id="@+id/groupName"
+        <LinearLayout
+            android:id="@+id/selectedMemberList"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="0"
-            android:hint="채팅방 이름"/>
+            android:orientation="horizontal">
+        </LinearLayout>
+
 
         <TextView
             android:layout_width="wrap_content"
@@ -63,16 +65,15 @@
             <ListView
                 android:id="@+id/memberCandidateList"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"/>
+                android:layout_height="wrap_content"/>
 
         </ScrollView>
 
         <Button
-            android:id="@+id/createGroupButton"
+            android:id="@+id/inviteMemberButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="만들기"
+            android:text="초대하기"
             android:textSize="20sp"/>
 
     </LinearLayout>

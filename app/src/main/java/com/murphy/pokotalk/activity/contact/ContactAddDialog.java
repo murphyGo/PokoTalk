@@ -25,19 +25,19 @@ public class ContactAddDialog extends AppCompatDialogFragment {
 
         builder.setView(view)
                 .setTitle("친구 추가")
+                .setPositiveButton("추가", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        String email = emailText.getText().toString();
+                        listener.contactAdd(email);
+                    }
+                })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
 
                     }
-                })
-        .setPositiveButton("추가", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                String email = emailText.getText().toString();
-                listener.contactAdd(email);
-            }
-        });
+                });
 
         emailText = view.findViewById(R.id.contactAddEmail);
 

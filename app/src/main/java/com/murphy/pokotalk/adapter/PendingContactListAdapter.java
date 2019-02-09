@@ -5,15 +5,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.murphy.pokotalk.data.user.PendingContact;
+import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.view.PendingContactItem;
-
-import java.util.ArrayList;
 
 public class PendingContactListAdapter extends PokoListAdapter<PendingContact> {
     private boolean invited;
 
-    public PendingContactListAdapter(Context context, ArrayList<PendingContact> contacts) {
-        super(context, contacts);
+    public PendingContactListAdapter(Context context) {
+        super(context);
+        setPokoList(new PendingContactList());
         invited = true;
     }
 

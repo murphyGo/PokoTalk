@@ -5,13 +5,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.view.MessageItem;
 
-import java.util.ArrayList;
-
 public class MessageListAdapter extends PokoListAdapter<Message> {
-    public MessageListAdapter(Context context, ArrayList<Message> messages) {
-        super(context, messages);
+    public MessageListAdapter(Context context) {
+        super(context);
+        setPokoList(new MessageList());
     }
 
     @Override

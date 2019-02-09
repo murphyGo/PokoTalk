@@ -17,6 +17,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 public class MembersInvitedListener extends PokoServer.PokoListener {
     @Override
     public String getEventName() {
@@ -41,20 +43,26 @@ public class MembersInvitedListener extends PokoServer.PokoListener {
             DataCollection collection = DataCollection.getInstance();
             StrangerList strangerList = collection.getStrangerList();
             UserList memberList = group.getMembers();
+            ArrayList<User> members = new ArrayList<>();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);
-                Stranger invitedUser = PokoParser.parseStranger(jsonMember);
-                User existingUser = collection.getUserById(invitedUser.getUserId());
+                Stranger invitedStranger = PokoParser.parseStranger(jsonMember);
+                User existingUser = collection.getUserById(invitedStranger.getUserId());
                 /* If the user exists just add to member list */
                 if (existingUser != null) {
                     memberList.updateItem(existingUser);
+                    members.add(existingUser);
                     return;
                 } else {
                     /* Add Stranger to Stranger and member list */
-                    memberList.updateItem(invitedUser);
-                    strangerList.updateItem(invitedUser);
+                    memberList.updateItem(invitedStranger);
+                    strangerList.updateItem(invitedStranger);
+                    members.add(invitedStranger);
                 }
             }
+
+            putData("group", group);
+            putData("members", members);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad invited member json data");
 

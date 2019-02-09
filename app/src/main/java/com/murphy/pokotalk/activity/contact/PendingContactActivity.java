@@ -13,6 +13,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.PendingContactListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.server.ActivityCallback;
@@ -47,10 +48,12 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         invitingList = data.getInvitingContactList();
 
         /* Create and set adapters */
-        invitedListAdapter = new PendingContactListAdapter(this, invitedList.getList());
-        invitingListAdapter = new PendingContactListAdapter(this, invitingList.getList());
+        invitedListAdapter = new PendingContactListAdapter(this);
+        invitingListAdapter = new PendingContactListAdapter(this);
         invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
         invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
+        invitedListAdapter.getPokoList().copyFromPokoList(invitedList);
+        invitingListAdapter.getPokoList().copyFromPokoList(invitingList);
         invitedListView.setAdapter(invitedListAdapter);
         invitingListView.setAdapter(invitingListAdapter);
         invitedListAdapter.setInvited(true);
@@ -58,12 +61,12 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
 
         /* Get server and attach event callback */
         server = PokoServer.getInstance(this);
-        server.attachActivityCallback(Constants.getContactListName, refreshListCallback);
-        server.attachActivityCallback(Constants.getPendingContactListName, refreshListCallback);
-        server.attachActivityCallback(Constants.newPendingContactName, refreshListCallback);
-        server.attachActivityCallback(Constants.newContactName, refreshListCallback);
-        server.attachActivityCallback(Constants.contactRemovedName, refreshListCallback);
-        server.attachActivityCallback(Constants.contactDeniedName, refreshListCallback);
+        server.attachActivityCallback(Constants.getContactListName, getPendingContactListCallback);
+        server.attachActivityCallback(Constants.getPendingContactListName, getPendingContactListCallback);
+        server.attachActivityCallback(Constants.newPendingContactName, addPendingContactCallback);
+        server.attachActivityCallback(Constants.newContactName, removePendingContactCallback);
+        server.attachActivityCallback(Constants.contactRemovedName, removePendingContactCallback);
+        server.attachActivityCallback(Constants.contactDeniedName, removePendingContactCallback);
         server.sendGetPendingContactList();
 
         addButton.setOnClickListener(new View.OnClickListener() {
@@ -76,25 +79,81 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
+        server.detachActivityCallback(Constants.getContactListName, getPendingContactListCallback);
+        server.detachActivityCallback(Constants.getPendingContactListName, getPendingContactListCallback);
+        server.detachActivityCallback(Constants.newPendingContactName, addPendingContactCallback);
+        server.detachActivityCallback(Constants.newContactName, removePendingContactCallback);
+        server.detachActivityCallback(Constants.contactRemovedName, removePendingContactCallback);
+        server.detachActivityCallback(Constants.contactDeniedName, removePendingContactCallback);
 
-        server.detachActivityCallback(Constants.getContactListName, refreshListCallback);
-        server.detachActivityCallback(Constants.getPendingContactListName, refreshListCallback);
-        server.detachActivityCallback(Constants.newPendingContactName, refreshListCallback);
-        server.detachActivityCallback(Constants.newContactName, refreshListCallback);
-        server.detachActivityCallback(Constants.contactRemovedName, refreshListCallback);
-        server.detachActivityCallback(Constants.contactDeniedName, refreshListCallback);
+        super.onDestroy();
     }
 
     /* Server event callback */
-    private ActivityCallback refreshListCallback = new ActivityCallback() {
+    private ActivityCallback getPendingContactListCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    invitedListAdapter.refreshAllExistingViews();
-                    invitingListAdapter.refreshAllExistingViews();
+                    invitedListAdapter.getPokoList().copyFromPokoList(invitedList);
+                    invitingListAdapter.getPokoList().copyFromPokoList(invitingList);
+                    invitedListAdapter.notifyDataSetChanged();
+                    invitingListAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback addPendingContactCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Boolean invited = (Boolean) getData("invited");
+                    PendingContact pendingContact = (PendingContact) getData("pendingContact");
+                    if (invited == null || pendingContact == null) {
+                        return;
+                    }
+                    if (invited) {
+                        invitedListAdapter.getPokoList().updateItem(pendingContact);
+                        invitedListAdapter.notifyDataSetChanged();
+                    } else {
+                        invitingListAdapter.getPokoList().updateItem(pendingContact);
+                        invitingListAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback removePendingContactCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Integer userId = (Integer) getData("userId");
+                    if (userId != null) {
+                        invitedListAdapter.getPokoList().removeItemByKey(userId);
+                        invitingListAdapter.getPokoList().removeItemByKey(userId);
+                    }
+                    Contact contact = (Contact) getData("contact");
+                    if (contact != null) {
+                        invitedListAdapter.getPokoList().removeItemByKey(contact.getUserId());
+                        invitingListAdapter.getPokoList().removeItemByKey(contact.getUserId());
+                    }
                     invitedListAdapter.notifyDataSetChanged();
                     invitingListAdapter.notifyDataSetChanged();
                 }

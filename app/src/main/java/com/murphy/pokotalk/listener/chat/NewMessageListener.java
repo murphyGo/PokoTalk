@@ -39,22 +39,21 @@ public class NewMessageListener extends PokoServer.PokoListener {
                 return;
             }
 
-            /* Parse message and add sorted by time */
+            /* Parse message and add sorted by message id */
             MessageList messageList = group.getMessageList();
             Message message = PokoParser.parseMessage(jsonMessage);
-            messageList.addMessageSortedByTime(message);
+            messageList.addMessageSortedById(message);
 
             /* Add NbNewMessage number */
             collection.acquireGroupSemaphore();
             /* Increment new message number only when the user is not chatting for this group */
             if (collection.getChattingGroup() != group) {
                 group.setNbNewMessages(group.getNbNewMessages() + 1);
-                Log.v("NBNEWMESSAGE", group.getNbNewMessages() + "");
             }
             collection.releaseGroupSemaphore();
 
             putData("group", group);
-            putData("message", message);
+            putData("message", messageList.getItemByKey(message.getMessageId()));
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad new message json data");
         } catch (ParseException e){

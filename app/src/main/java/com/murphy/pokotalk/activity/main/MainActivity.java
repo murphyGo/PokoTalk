@@ -27,8 +27,10 @@ import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -94,35 +96,35 @@ public class MainActivity extends AppCompatActivity
 
         /* Attach event callbacks */
         server.attachActivityCallback(Constants.sessionLoginName, sessionLoginCallback);
-        server.attachActivityCallback(Constants.getContactListName, refreshContactListCallback);
-        server.attachActivityCallback(Constants.getPendingContactListName, refreshContactListCallback);
-        server.attachActivityCallback(Constants.newContactName, refreshContactListCallback);
-        server.attachActivityCallback(Constants.newPendingContactName, refreshContactListCallback);
-        server.attachActivityCallback(Constants.contactDeniedName, refreshContactListCallback);
-        server.attachActivityCallback(Constants.contactRemovedName, refreshContactListCallback);
+        server.attachActivityCallback(Constants.getContactListName, getContactListCallback);
+        server.attachActivityCallback(Constants.getPendingContactListName, getContactListCallback);
+        server.attachActivityCallback(Constants.newContactName, addContactCallback);
+        server.attachActivityCallback(Constants.newPendingContactName, removeContactCallback);
+        server.attachActivityCallback(Constants.contactDeniedName, removeContactCallback);
+        server.attachActivityCallback(Constants.contactRemovedName, removeContactCallback);
         server.attachActivityCallback(Constants.joinContactChatName, joinContactChatCallback);
-        server.attachActivityCallback(Constants.getGroupListName, groupListRefreshCallback);
-        server.attachActivityCallback(Constants.addGroupName, groupListRefreshCallback);
-        server.attachActivityCallback(Constants.exitGroupName, groupListRefreshCallback);
+        server.attachActivityCallback(Constants.getGroupListName, getGroupListCallback);
+        server.attachActivityCallback(Constants.addGroupName, addGroupCallback);
+        server.attachActivityCallback(Constants.exitGroupName, removeGroupCallback);
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
     }
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         server.detachActivityCallback(Constants.sessionLoginName, sessionLoginCallback);
-        server.detachActivityCallback(Constants.getContactListName, refreshContactListCallback);
-        server.detachActivityCallback(Constants.getPendingContactListName, refreshContactListCallback);
-        server.detachActivityCallback(Constants.newContactName, refreshContactListCallback);
-        server.detachActivityCallback(Constants.newPendingContactName, refreshContactListCallback);
-        server.detachActivityCallback(Constants.contactDeniedName, refreshContactListCallback);
-        server.detachActivityCallback(Constants.contactRemovedName, refreshContactListCallback);
+        server.detachActivityCallback(Constants.getContactListName, getContactListCallback);
+        server.detachActivityCallback(Constants.getPendingContactListName, getContactListCallback);
+        server.detachActivityCallback(Constants.newContactName, addContactCallback);
+        server.detachActivityCallback(Constants.newPendingContactName, removeContactCallback);
+        server.detachActivityCallback(Constants.contactDeniedName, removeContactCallback);
+        server.detachActivityCallback(Constants.contactRemovedName, removeContactCallback);
         server.detachActivityCallback(Constants.joinContactChatName, joinContactChatCallback);
-        server.detachActivityCallback(Constants.getGroupListName, groupListRefreshCallback);
-        server.detachActivityCallback(Constants.addGroupName, groupListRefreshCallback);
-        server.detachActivityCallback(Constants.exitGroupName, groupListRefreshCallback);
+        server.detachActivityCallback(Constants.getGroupListName, getGroupListCallback);
+        server.detachActivityCallback(Constants.addGroupName, addGroupCallback);
+        server.detachActivityCallback(Constants.exitGroupName, removeGroupCallback);
         server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
+
+        super.onDestroy();
     }
 
     @Override
@@ -148,9 +150,10 @@ public class MainActivity extends AppCompatActivity
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView contactListLayout = view.findViewById(R.id.contactList);
-            ArrayList<Contact> contacts = collection.getContactList().getList();
-            contactListAdapter = new ContactListAdapter(getApplicationContext(), contacts);
+            ContactList contactList = collection.getContactList();
+            contactListAdapter = new ContactListAdapter(getApplicationContext());
             contactListAdapter.setViewCreationCallback(contactCreationCallback);
+            contactListAdapter.getPokoList().copyFromPokoList(contactList);
             contactListLayout.setAdapter(contactListAdapter);
 
             /* Add button listeners */
@@ -167,9 +170,10 @@ public class MainActivity extends AppCompatActivity
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView groupListLayout = view.findViewById(R.id.groupList);
-            ArrayList<Group> groups = collection.getGroupList().getList();
-            groupListAdapter = new GroupListAdapter(getApplicationContext(), groups);
+            GroupList groupList = collection.getGroupList();
+            groupListAdapter = new GroupListAdapter(getApplicationContext());
             groupListAdapter.setViewCreationCallback(groupCreationCallback);
+            groupListAdapter.getPokoList().copyFromPokoList(groupList);
             groupListLayout.setAdapter(groupListAdapter);
 
             /* Add button listeners */
@@ -308,7 +312,7 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ActivityCallback refreshContactListCallback = new ActivityCallback() {
+    private ActivityCallback getContactListCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             runOnUiThread(new Runnable() {
@@ -316,7 +320,64 @@ public class MainActivity extends AppCompatActivity
                 public void run() {
                     /* Refresh contact list */
                     if (contactListAdapter != null) {
-                        contactListAdapter.refreshAllExistingViews();
+                        ContactList contactList = collection.getContactList();
+                        ContactList adapterList = (ContactList) contactListAdapter.getPokoList();
+                        adapterList.copyFromPokoList(contactList);
+                        contactListAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback addContactCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    /* Refresh contact list */
+                    if (contactListAdapter != null) {
+                        Contact contact = (Contact) getData("contact");
+                        if (contact != null) {
+                            contactListAdapter.getPokoList().updateItem(contact);
+                            contactListAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback removeContactCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    /* Refresh contact list */
+                    if (contactListAdapter != null) {
+                        Integer userId = (Integer) getData("userId");
+                        if (userId != null) {
+                            contactListAdapter.getPokoList().removeItemByKey(userId);
+                        }
+                        PendingContact pendingContact =
+                                (PendingContact) getData("pendingContact");
+                        if (pendingContact != null) {
+                            contactListAdapter.getPokoList().
+                                    removeItemByKey(pendingContact.getUserId());
+                        }
+
                         contactListAdapter.notifyDataSetChanged();
                     }
                 }
@@ -357,14 +418,59 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ActivityCallback groupListRefreshCallback = new ActivityCallback() {
+    private ActivityCallback getGroupListCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (groupListAdapter != null) {
-                        groupListAdapter.refreshAllExistingViews();
+                        GroupList groupList = collection.getGroupList();
+                        groupListAdapter.getPokoList().copyFromPokoList(groupList);
+                        groupListAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback addGroupCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (groupListAdapter != null) {
+                        Group group = (Group) getData("group");
+                        if (group != null) {
+                            groupListAdapter.getPokoList().updateItem(group);
+                            groupListAdapter.notifyDataSetChanged();
+                        }
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback removeGroupCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (groupListAdapter != null) {
+                        Integer groupId = (Integer) getData("groupId");
+                        groupListAdapter.getPokoList().removeItemByKey(groupId);
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }
@@ -386,7 +492,6 @@ public class MainActivity extends AppCompatActivity
                 @Override
                 public void run() {
                     if (groupListAdapter != null) {
-                        //groupListAdapter.refreshView(group);
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }

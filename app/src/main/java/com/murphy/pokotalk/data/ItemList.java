@@ -57,4 +57,24 @@ public abstract class ItemList<K, V> extends List<K, V> {
 
         updateListStarted = false;
     }
+
+    public void copyFromPokoList(ItemList<K, V> list) {
+        startUpdateList();
+        for (V item : list.arrayList) {
+            updateItem(item);
+        }
+        endUpdateList();
+    }
+
+    public void updateAll(ArrayList<V> items) {
+        for (V item : items) {
+            updateItem(item);
+        }
+    }
+
+    public void removeAll(ArrayList<V> items) {
+        for (V item : items) {
+            removeItemByKey(getKey(item));
+        }
+    }
 }

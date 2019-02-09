@@ -5,13 +5,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.murphy.pokotalk.data.user.User;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.view.ChatMemberItem;
 
-import java.util.ArrayList;
-
 public class GroupMemberListAdapter extends PokoListAdapter<User> {
-    public GroupMemberListAdapter(Context context, ArrayList<User> users) {
-        super(context, users);
+    public GroupMemberListAdapter(Context context) {
+        super(context);
+        setPokoList(new UserList());
     }
 
     @Override

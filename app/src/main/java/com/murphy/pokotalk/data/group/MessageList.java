@@ -52,7 +52,7 @@ public class MessageList extends ItemList<Integer, Message> {
 
         Message message = getItemByKey(getKey(item));
         if (message == null) {
-            add(item);
+            addMessageSortedById(item);
             return false;
         } else {
             message.setNbNotReadUser(item.getNbNotReadUser());
@@ -83,7 +83,7 @@ public class MessageList extends ItemList<Integer, Message> {
         sentMessage.setMessageId(messageId);
         sentMessage.setDate(date);
         sentMessage.setNbNotReadUser(nbread);
-        return addMessageSortedByTime(sentMessage);
+        return addMessageSortedById(sentMessage);
     }
 
     /* Acknowledges message method from fromId to toId inclusive. */
@@ -169,7 +169,7 @@ public class MessageList extends ItemList<Integer, Message> {
     }
 
     /* Message add sorted and sort method */
-    public boolean addMessageSortedByTime(Message message) {
+    public boolean addMessageSortedById(Message message) {
         Message exist = getItemByKey(getKey(message));
         if (exist != null)
             return false;

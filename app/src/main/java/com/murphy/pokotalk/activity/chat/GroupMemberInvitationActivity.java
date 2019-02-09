@@ -16,6 +16,7 @@ import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.view.MemberCandidateItem;
@@ -66,16 +67,18 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
 
         /* Filter contact that is already a member */
         ArrayList<Contact> contactList = DataCollection.getInstance().getContactList().getList();
-        ArrayList<Contact> nonMemberContactList = new ArrayList<>();
+        ContactList nonMemberContactList = new ContactList();
         UserList groupMemberList = group.getMembers();
         for (Contact contact : contactList) {
             if (groupMemberList.getItemByKey(groupMemberList.getKey(contact)) == null) {
                 nonMemberContactList.add(contact);
             }
         }
+
         /* Create adapter and set to ListView */
-        candidateListAdapter = new MemberCandidateListAdapter(this, nonMemberContactList);
+        candidateListAdapter = new MemberCandidateListAdapter(this);
         candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
+        candidateListAdapter.getPokoList().copyFromPokoList(nonMemberContactList);
         candidateListView.setAdapter(candidateListAdapter);
 
         /* Button listeners */

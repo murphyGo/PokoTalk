@@ -38,6 +38,7 @@ public class NewPendingContactListener extends PokoServer.PokoListener {
             Boolean invited = PokoParser.parseContactInvitedField(jsonObject);
             if (invited) {
                 invitedContactList.updateItem(contact);
+                contact = invitedContactList.getItemByKey(contact.getUserId());
 
                 /* Remove from other user lists */
                 contactList.removeItemByKey(contact.getUserId());
@@ -45,12 +46,16 @@ public class NewPendingContactListener extends PokoServer.PokoListener {
                 strangerList.removeItemByKey(contact.getUserId());
             } else {
                 invitingContactList.updateItem(contact);
+                contact = invitingContactList.getItemByKey(contact.getUserId());
 
                 /* Remove from other user lists */
                 contactList.removeItemByKey(contact.getUserId());
                 invitedContactList.removeItemByKey(contact.getUserId());
                 strangerList.removeItemByKey(contact.getUserId());
             }
+
+            putData("invited", invited);
+            putData("pendingContact", contact);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad pending contact json data");
         }

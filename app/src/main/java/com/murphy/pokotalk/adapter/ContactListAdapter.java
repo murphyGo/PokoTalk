@@ -5,13 +5,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.view.ContactItem;
 
-import java.util.ArrayList;
-
 public class ContactListAdapter extends PokoListAdapter<Contact> {
-    public ContactListAdapter(Context context, ArrayList<Contact> contacts) {
-        super(context, contacts);
+    public ContactListAdapter(Context context) {
+        super(context);
+        setPokoList(new ContactList());
     }
 
     @Override

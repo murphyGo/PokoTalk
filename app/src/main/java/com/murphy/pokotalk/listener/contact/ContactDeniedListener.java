@@ -27,6 +27,8 @@ public class ContactDeniedListener extends PokoServer.PokoListener {
             PendingContact contact = PokoParser.parsePendingContact(jsonObject);
             /* The user becomes now stranger */
             collection.moveUserToStrangerList(contact.getUserId());
+
+            putData("userId", contact.getUserId());
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad new contact json data");
         }

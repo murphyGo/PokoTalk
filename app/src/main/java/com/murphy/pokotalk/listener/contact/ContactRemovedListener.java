@@ -24,6 +24,8 @@ public class ContactRemovedListener extends PokoServer.PokoListener {
             /* The user becomes now stranger */
             int userId = data.getInt("userId");
             collection.moveUserToStrangerList(userId);
+
+            putData("userId", userId);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad removed contact json data");
         }

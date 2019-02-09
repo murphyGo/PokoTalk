@@ -40,6 +40,8 @@ public class NewContactListener extends PokoServer.PokoListener {
             invitedContactList.removeItemByKey(contact.getUserId());
             invitingContactList.removeItemByKey(contact.getUserId());
             strangerList.removeItemByKey(contact.getUserId());
+
+            putData("contact", contactList.getItemByKey(contact.getUserId()));
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad new contact json data");
         } catch (ParseException e) {

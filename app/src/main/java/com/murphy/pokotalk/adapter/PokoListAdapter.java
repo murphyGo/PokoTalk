@@ -6,6 +6,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
+import com.murphy.pokotalk.data.ItemList;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,10 +18,10 @@ public abstract class PokoListAdapter<T> extends BaseAdapter {
     protected Context context;
     protected HashMap<Long, View> views;
     protected ViewCreationCallback viewCreationCallback;
+    protected ItemList pokoList;
 
-    public PokoListAdapter(Context context, ArrayList<T> items) {
+    public PokoListAdapter(Context context) {
         this.context = context;
-        this.items = items;
         this.views = new HashMap<>();
     }
 
@@ -93,5 +95,14 @@ public abstract class PokoListAdapter<T> extends BaseAdapter {
 
     public View getView(long key) {
         return views.get(key);
+    }
+
+    public ItemList getPokoList() {
+        return pokoList;
+    }
+
+    protected void setPokoList(ItemList pokoList) {
+        this.pokoList = pokoList;
+        this.items = pokoList.getList();
     }
 }

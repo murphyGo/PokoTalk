@@ -5,6 +5,7 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.parser.PokoParser;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -38,11 +39,15 @@ public class SendMessageListener extends PokoServer.PokoListener {
                 return;
             }
 
-            if (!group.getMessageList().
-                    moveSentMessageToMessageList(sendId, messageId, nbread, date)) {
+            MessageList messageList = group.getMessageList();
+            if (!messageList.moveSentMessageToMessageList(
+                    sendId, messageId, nbread, date)) {
                 Log.e("POKO ERROR", "Failed to send message to message list");
                 return;
             }
+
+            putData("group", group);
+            putData("message", messageList.getItemByKey(messageId));
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad send message json data");
         } catch (ParseException e){

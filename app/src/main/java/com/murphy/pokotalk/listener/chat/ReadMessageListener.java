@@ -54,6 +54,7 @@ public class ReadMessageListener extends PokoServer.PokoListener {
 
             messageList.sortMessagesByMessageId();
 
+            putData("group", group);
             putData("messages", readMessages);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad read message json data");

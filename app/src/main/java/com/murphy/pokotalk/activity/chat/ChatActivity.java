@@ -33,6 +33,8 @@ import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.Message;
 import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.user.User;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -103,9 +105,6 @@ public class ChatActivity extends AppCompatActivity
         /* Set group name */
         groupNameView.setText(group.getGroupName());
 
-        messageListAdapter = new MessageListAdapter(this, group.getMessageList().getList());
-        messageListView.setAdapter(messageListAdapter);
-
         server = PokoServer.getInstance(this);
         session = Session.getInstance();
 
@@ -133,18 +132,23 @@ public class ChatActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         /* Member list */
-        memberListAdapter = new GroupMemberListAdapter(this, group.getMembers().getList());
+        memberListAdapter = new GroupMemberListAdapter(this);
+        memberListAdapter.getPokoList().copyFromPokoList(group.getMembers());
         memberListView = drawerLayout.findViewById(R.id.memberList);
         memberListView.setAdapter(memberListAdapter);
+
+        messageListAdapter = new MessageListAdapter(this);
+        messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
+        messageListView.setAdapter(messageListAdapter);
 
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
         sendMessageButton.setOnClickListener(messageSendButtonListener);
 
         /* Attach server event callbacks */
-        server.attachActivityCallback(Constants.sendMessageName, sendMessageListener);
+        server.attachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.attachActivityCallback(Constants.readMessageName, readMessageListener);
-        server.attachActivityCallback(Constants.newMessageName, newMessageListener);
+        server.attachActivityCallback(Constants.newMessageName, addMessageListener);
         server.attachActivityCallback(Constants.messageAckName, messageAckListener);
         server.attachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.attachActivityCallback(Constants.membersExitName, memberExitListener);
@@ -158,9 +162,9 @@ public class ChatActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
 
-        server.detachActivityCallback(Constants.sendMessageName, sendMessageListener);
+        server.detachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
-        server.detachActivityCallback(Constants.newMessageName, newMessageListener);
+        server.detachActivityCallback(Constants.newMessageName, addMessageListener);
         server.detachActivityCallback(Constants.messageAckName, messageAckListener);
         server.detachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
@@ -314,9 +318,21 @@ public class ChatActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
+                    /* Ack unacked messages */
                     ackUnackedMessages();
-                    messageListAdapter.refreshAllExistingViews();
-                    messageListAdapter.notifyDataSetChanged();
+                    /* Update all messages */
+                    Group readGroup = (Group) getData("group");
+                    ArrayList<Message> messages = (ArrayList<Message>) getData("messages");
+                    if (readGroup == null || messages == null)
+                        return;
+
+                    if (readGroup.getGroupId() == group.getGroupId()) {
+                        for (Message message : messages) {
+                            MessageList adapterList = (MessageList) messageListAdapter.getPokoList();
+                            adapterList.addMessageSortedById(message);
+                        }
+                        messageListAdapter.notifyDataSetChanged();
+                    }
                 }
             });
         }
@@ -327,22 +343,29 @@ public class ChatActivity extends AppCompatActivity
         }
     };
 
-    /* Server event listeners */
-    private ActivityCallback newMessageListener = new ActivityCallback() {
+    private ActivityCallback addMessageListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            /* Ack new message */
-            Message newMessage = (Message) getData("message");
-            int messageId = newMessage.getMessageId();
-            if (!newMessage.isAcked()) {
-                server.sendAckMessage(group.getGroupId(), messageId, messageId);
-            }
-
             /* Refresh message list */
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    messageListAdapter.notifyDataSetChanged();
+                    Group readGroup = (Group) getData("group");
+                    Message newMessage = (Message) getData("message");
+                    if (readGroup == null || newMessage == null)
+                        return;
+
+                    if (readGroup.getGroupId() == group.getGroupId()) {
+                        /* Ack if it is a new message */
+                        int messageId = newMessage.getMessageId();
+                        if (!newMessage.isAcked() && newMessage.getNbNotReadUser() > 0
+                                && session.getUser() != newMessage.getWriter()) {
+                            server.sendAckMessage(group.getGroupId(), messageId, messageId);
+                        }
+
+                        messageListAdapter.getPokoList().updateItem(newMessage);
+                        messageListAdapter.notifyDataSetChanged();
+                    }
                 }
             });
         }
@@ -356,13 +379,10 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback messageAckListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            final int fromId = (Integer) getData("fromId"), toId = (Integer) getData("toId");
-            Log.v("MESSAGE ACK", fromId + " to " + toId);
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     /* Refresh NbNotReadUser number */
-                    messageListAdapter.refreshViewsNbNotReadUser(fromId, toId);
                     messageListAdapter.notifyDataSetChanged();
                 }
             });
@@ -380,10 +400,20 @@ public class ChatActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    memberListAdapter.refreshAllExistingViews();
-                    memberListAdapter.notifyDataSetChanged();
+                    Group readGroup = (Group) getData("group");
+                    ArrayList<User> members = (ArrayList<User>) getData("members");
+                    if (readGroup == null || members == null)
+                        return;
+
+                    if (readGroup.getGroupId() == group.getGroupId()) {
+                        UserList memberList = (UserList) memberListAdapter.getPokoList();
+                        for (User member : members) {
+                            memberList.updateItem(member);
+                        }
+                        memberListAdapter.notifyDataSetChanged();
+                    }
                 }
-            });
+           });
         }
 
         @Override
@@ -398,8 +428,18 @@ public class ChatActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    memberListAdapter.refreshAllExistingViews();
-                    memberListAdapter.notifyDataSetChanged();
+                    Group readGroup = (Group) getData("group");
+                    ArrayList<User> members = (ArrayList<User>) getData("members");
+                    if (readGroup == null || members == null)
+                        return;
+
+                    if (readGroup.getGroupId() == group.getGroupId()) {
+                        UserList memberList = (UserList) memberListAdapter.getPokoList();
+                        for (User member : members) {
+                            memberList.removeItemByKey(member.getUserId());
+                        }
+                        memberListAdapter.notifyDataSetChanged();
+                    }
                 }
             });
         }

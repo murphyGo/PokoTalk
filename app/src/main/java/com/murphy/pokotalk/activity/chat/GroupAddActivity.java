@@ -42,8 +42,9 @@ public class GroupAddActivity extends AppCompatActivity {
         backspaceButton.setOnClickListener(backspaceButtonListener);
 
         DataCollection collection = DataCollection.getInstance();
-        adapter = new MemberCandidateListAdapter(this, collection.getContactList().getList());
+        adapter = new MemberCandidateListAdapter(this);
         adapter.setViewCreationCallback(candidateCallback);
+        adapter.getPokoList().copyFromPokoList(collection.getContactList());
         memberCandidateListView.setAdapter(adapter);
     }
 

@@ -79,10 +79,11 @@ public class PokoServer extends ServerSocket {
         protected HashMap<String, Object> data;
         private String eventName;
 
+        public EventListener() {
+            data = new HashMap<>();
+        }
+
         public void putData(String key, Object value) {
-            if (data == null) {
-                data = new HashMap<>();
-            }
             data.put(key, value);
         }
 

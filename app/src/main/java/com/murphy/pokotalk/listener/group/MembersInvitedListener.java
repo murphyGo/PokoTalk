@@ -52,7 +52,6 @@ public class MembersInvitedListener extends PokoServer.PokoListener {
                 if (existingUser != null) {
                     memberList.updateItem(existingUser);
                     members.add(existingUser);
-                    return;
                 } else {
                     /* Add Stranger to Stranger and member list */
                     memberList.updateItem(invitedStranger);

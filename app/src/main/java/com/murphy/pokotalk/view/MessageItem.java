@@ -92,11 +92,12 @@ public class MessageItem extends FrameLayout {
 
     public void setNbNotReadUser(int nbNotReadUser) {
         this.nbNotReadUser = nbNotReadUser;
+        nbNotReadUserView.clearAnimation();
         nbNotReadUserView.setText(Integer.toString(nbNotReadUser));
 
         /* Number will not be shown if all user has seen the message */
         if (nbNotReadUser <= 0) {
-            nbNotReadUserView.setVisibility(View.INVISIBLE);
+            nbNotReadUserView.setVisibility(View.GONE);
         } else {
             nbNotReadUserView.setVisibility(View.VISIBLE);
         }

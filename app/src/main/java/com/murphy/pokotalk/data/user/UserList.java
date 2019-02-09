@@ -15,15 +15,17 @@ public class UserList extends ItemList<Integer, User> {
     /* If contact not exists, add contact.
        If exists, update contact information. */
     @Override
-    public void updateItem(User user) {
+    public boolean updateItem(User user) {
         super.updateItem(user);
 
         User exist = getItemByKey(getKey(user));
         if (exist == null) {
             add(user);
+            return false;
         } else {
             exist.setNickname(user.getNickname());
             exist.setPicture(user.getPicture());
+            return true;
         }
     }
 }

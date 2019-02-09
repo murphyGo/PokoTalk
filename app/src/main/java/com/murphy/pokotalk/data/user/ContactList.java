@@ -15,16 +15,18 @@ public class ContactList extends ItemList<Integer, Contact> {
     /* If contact not exists, add contact.
        If exists, update contact information. */
     @Override
-    public void updateItem(Contact contact) {
+    public boolean updateItem(Contact contact) {
         super.updateItem(contact);
 
         Contact exist = getItemByKey(getKey(contact));
         if (exist == null) {
             add(contact);
+            return false;
         } else {
             exist.setNickname(contact.getNickname());
             exist.setPicture(contact.getPicture());
             exist.setLastSeen(contact.getLastSeen());
+            return true;
         }
     }
 }

@@ -94,7 +94,7 @@ public abstract class ServerSocket {
     }
 
     /* Call activity callbacks at the end of Emitter.Listener run */
-    protected void startActivityCallbacks(String name, Status status, Object... args) {
+    protected void startActivityCallbacks(String name, Status status, HashMap<String, Object> data, Object... args) {
         ArrayList<ActivityCallback> callbacks = activityHandlers.get(name);
         if (callbacks == null)
             return;
@@ -102,7 +102,7 @@ public abstract class ServerSocket {
         Iterator iter = callbacks.iterator();
         while (iter.hasNext()) {
             ActivityCallback callback = (ActivityCallback) iter.next();
-            callback.setArgs(status, args);
+            callback.setArgs(status, data, args);
             callback.run();
         }
     }

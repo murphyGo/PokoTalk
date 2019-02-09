@@ -2,6 +2,7 @@ package com.murphy.pokotalk.view;
 
 import android.app.Activity;
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -97,10 +98,11 @@ public class GroupItem extends FrameLayout {
     public void setNbNewMessage(int nbNewMessage) {
         this.nbNewMessage = nbNewMessage;
         if (nbNewMessage <= 0) {
-            nbNewMessageView.setVisibility(View.INVISIBLE);
+            nbNewMessageView.setVisibility(View.GONE);
         } else {
             nbNewMessageView.setVisibility(View.VISIBLE);
             nbNewMessageView.setText(Integer.toString(nbNewMessage));
+            Log.v("SET TEXT VIEW", Integer.toString(nbNewMessage));
         }
     }
 

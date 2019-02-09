@@ -104,6 +104,7 @@ public class MainActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.getGroupListName, groupListRefreshCallback);
         server.attachActivityCallback(Constants.addGroupName, groupListRefreshCallback);
         server.attachActivityCallback(Constants.exitGroupName, groupListRefreshCallback);
+        server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
     }
 
     @Override
@@ -121,6 +122,7 @@ public class MainActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.getGroupListName, groupListRefreshCallback);
         server.detachActivityCallback(Constants.addGroupName, groupListRefreshCallback);
         server.detachActivityCallback(Constants.exitGroupName, groupListRefreshCallback);
+        server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
     }
 
     @Override
@@ -253,6 +255,8 @@ public class MainActivity extends AppCompatActivity
             handleLoginResult(resultCode, data);
         else if (requestCode == RequestCode.GROUP_ADD.value)
             handleGroupAddResult(resultCode, data);
+        else if (requestCode == RequestCode.GROUP_CHAT.value)
+            handleGroupChatResult(resultCode, data);
     }
 
     private void handleLoginResult(int resultCode, Intent data) {
@@ -270,6 +274,22 @@ public class MainActivity extends AppCompatActivity
             String name = data.getStringExtra("groupName");
             ArrayList<String> emails = data.getStringArrayListExtra("emails");
             server.sendAddGroup(name, emails);
+        }
+    }
+
+    private void handleGroupChatResult(int resultCode, Intent data) {
+        if (resultCode == RESULT_OK) {
+            /* Refresh group item the user chatted */
+            if (data == null)
+                return;
+            int groupId = data.getIntExtra("groupId", -1);
+            if (groupId < 0)
+                return;
+            Group group = collection.getGroupList().getItemByKey(groupId);
+            if (group == null)
+                return;
+            groupListAdapter.refreshView(group);
+            groupListAdapter.notifyDataSetChanged();
         }
     }
 
@@ -357,6 +377,28 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
+    private ActivityCallback newMessageCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            final Group group = (Group) getData("group");
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (groupListAdapter != null) {
+                        //groupListAdapter.refreshView(group);
+                        groupListAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
     /* Activity and Dialog open methods */
     public void openContactDetailDialog(Contact contact) {
         ContactDetailDialog dialog = new ContactDetailDialog();
@@ -424,6 +466,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void startGroupChat(final Group group) {
+        /* Start group chat */
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("groupId", group.getGroupId());
         startActivityForResult(intent, RequestCode.GROUP_CHAT.value);

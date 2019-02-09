@@ -25,6 +25,8 @@ public class ExitGroupListener extends PokoServer.PokoListener {
             int groupId = data.getInt("groupId");
             if (groupList.removeItemByKey(groupId) != null)
                 Log.e("POKO ERROR", "No such group to remove with this group id");
+
+            putData("groupId", groupId);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad group exit json data");
         }

@@ -8,8 +8,8 @@ public class EventList extends ItemList<Integer, Event> {
     }
 
     @Override
-    public void updateItem(Event item) {
-        super.updateItem(item);
+    public boolean updateItem(Event item) {
+        return super.updateItem(item);
     }
 
     @Override

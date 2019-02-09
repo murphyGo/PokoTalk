@@ -4,6 +4,7 @@ import android.os.Environment;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
@@ -19,6 +20,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.concurrent.Semaphore;
 
 public class DataCollection {
     private Session session;
@@ -30,6 +32,8 @@ public class DataCollection {
     private GroupList groupList;
     private EventList eventList;
     private static DataCollection instance;
+    private Group chattingGroup;
+    private Semaphore groupSemaphore;
 
     public DataCollection() {
         contactList = new ContactList();
@@ -39,6 +43,7 @@ public class DataCollection {
         groupList = new GroupList();
         eventList = new EventList();
         session = Session.getInstance();
+        groupSemaphore = new Semaphore(1);
     }
 
     public static DataCollection getInstance() {
@@ -184,6 +189,31 @@ public class DataCollection {
         return stranger;
     }
 
+    /* Group access semaphore
+     * One must acquire this semaphore when
+      * 1. Writes NbNotReadUser of Group
+      * 2. Accesses chattingGroup property */
+    public void acquireGroupSemaphore() throws InterruptedException {
+        groupSemaphore.acquire(1);
+    }
+
+    public void releaseGroupSemaphore() {
+        groupSemaphore.release();
+    }
+
+    /* Chat methods */
+    public void startChat(Group group) {
+        setChattingGroup(group);
+        group.setNbNewMessages(0);
+    }
+
+    public void endChat() {
+        setChattingGroup(null);
+    }
+
+    public boolean isChatting() {
+        return getChattingGroup() != null;
+    }
 
     /* Getter methods */
     public ContactList getContactList() {
@@ -206,5 +236,14 @@ public class DataCollection {
 
     public EventList getEventList() {
         return eventList;
+    }
+
+    public Group getChattingGroup() {
+        return chattingGroup;
+    }
+
+    /* Setter methods*/
+    public void setChattingGroup(Group chattingGroup) {
+        this.chattingGroup = chattingGroup;
     }
 }

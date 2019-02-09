@@ -19,9 +19,11 @@ public abstract class ItemList<K, V> extends List<K, V> {
 
     /** Mark the item updated.
      * Child classes must override this and call super.updateItem
+     * @Return true if item was updated, false if item does not exist and is added
      */
-    public void updateItem(V item) {
+    public boolean updateItem(V item) {
         updatedItems.put(getKey(item), item);
+        return true;
     }
 
     /** Starts updating whole items in list.

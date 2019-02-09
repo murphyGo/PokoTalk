@@ -25,6 +25,10 @@ public class Message {
     public static final int IMPORTANT = 1;
     public static final int VERY_IMPORTANT = 2;
 
+    public Message() {
+        setAcked(false);
+    }
+
     public void update(Message message) {
         setContent(message.getContent());
         setDate(message.getDate());

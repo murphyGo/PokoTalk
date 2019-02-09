@@ -55,7 +55,7 @@ public class RegisterActivity extends AppCompatActivity {
             @Override
             public void onSuccess(Status status, Object... args) {
 
-                final JSONObject data = (JSONObject) args[0];
+                final JSONObject jsonObject = (JSONObject) args[0];
 
                 runOnUiThread(new Runnable() {
                     @Override

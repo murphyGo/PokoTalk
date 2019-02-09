@@ -10,6 +10,7 @@ import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.listener.chat.AckMessageListener;
 import com.murphy.pokotalk.listener.chat.MessageAckListener;
 import com.murphy.pokotalk.listener.chat.NewMessageListener;
 import com.murphy.pokotalk.listener.chat.ReadMessageListener;
@@ -75,7 +76,19 @@ public class PokoServer extends ServerSocket {
     }
 
     private static abstract class EventListener implements Emitter.Listener {
+        protected HashMap<String, Object> data;
         private String eventName;
+
+        public void putData(String key, Object value) {
+            if (data == null) {
+                data = new HashMap<>();
+            }
+            data.put(key, value);
+        }
+
+        public Object getData(String key) {
+            return data.get(key);
+        }
 
         @Override
         public void call(Object... args) {
@@ -95,7 +108,7 @@ public class PokoServer extends ServerSocket {
             Status status = new Status(Status.SUCCESS);
 
             call(status, args);
-            PokoServer.getInstance(null).startActivityCallbacks(getEventName(), status, args);
+            PokoServer.getInstance(null).startActivityCallbacks(getEventName(), status, data, args);
         }
 
         public abstract void call(Status status, Object... args);
@@ -131,7 +144,8 @@ public class PokoServer extends ServerSocket {
                 }
 
                 /* Start callbacks given by activities */
-                PokoServer.getInstance(null).startActivityCallbacks(getEventName(), status, args);
+                PokoServer.getInstance(null).
+                        startActivityCallbacks(getEventName(), status, this.data, args);
             } catch(JSONException e) {
                 Log.e("Poko", "Bad json status data");
                 return;
@@ -273,6 +287,18 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendAckMessage(int groupId, int fromId, int toId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("ackStart", fromId);
+            jsonData.put("ackEnd", toId);
+            mSocket.emit(Constants.ackMessageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
@@ -316,5 +342,6 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.sendMessageName, new SendMessageListener());
         mSocket.on(Constants.newMessageName, new NewMessageListener());
         mSocket.on(Constants.messageAckName, new MessageAckListener());
+        mSocket.on(Constants.ackMessageName, new AckMessageListener());
     }
 }

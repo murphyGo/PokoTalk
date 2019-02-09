@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 
 public class ReadMessageListener extends PokoServer.PokoListener {
     @Override
@@ -42,14 +43,18 @@ public class ReadMessageListener extends PokoServer.PokoListener {
 
             /* Parse all message and sort in time */
             MessageList messageList = group.getMessageList();
+            ArrayList<Message> readMessages = new ArrayList<>();
+
             for (int i = 0; i < messages.length(); i++) {
                 JSONObject jsonMessage = messages.getJSONObject(i);
                 Message message = PokoParser.parseMessage(jsonMessage);
                 messageList.updateItem(message);
+                readMessages.add(messageList.getItemByKey(messageList.getKey(message)));
             }
 
-            messageList.sortMessagesByTime();
+            messageList.sortMessagesByMessageId();
 
+            putData("messages", readMessages);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad read message json data");
         } catch (ParseException e){

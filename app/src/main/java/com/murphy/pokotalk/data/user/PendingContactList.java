@@ -15,15 +15,17 @@ public class PendingContactList extends ItemList<Integer, PendingContact> {
     /* If contact not exists, add contact.
        If exists, update contact information. */
     @Override
-    public void updateItem(PendingContact contact) {
+    public boolean updateItem(PendingContact contact) {
         super.updateItem(contact);
 
         PendingContact exist = getItemByKey(getKey(contact));
         if (exist == null) {
             add(contact);
+            return false;
         } else {
             exist.setNickname(contact.getNickname());
             exist.setPicture(contact.getPicture());
+            return true;
         }
     }
 }

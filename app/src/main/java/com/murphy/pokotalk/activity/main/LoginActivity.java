@@ -71,9 +71,9 @@ public class LoginActivity extends AppCompatActivity {
         server.attachActivityCallback(Constants.passwordLoginName, new ActivityCallback() {
             @Override
             public void onSuccess(Status status, Object... args) {
-                JSONObject data = (JSONObject) args[0];
+                JSONObject jsonObject = (JSONObject) args[0];
                 try {
-                    final String sessionId = data.getString("sessionId");
+                    final String sessionId = jsonObject.getString("sessionId");
 
                     /* Start session */
                     Session session = Session.getInstance();

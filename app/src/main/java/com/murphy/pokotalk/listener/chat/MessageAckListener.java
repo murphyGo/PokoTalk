@@ -27,9 +27,8 @@ public class MessageAckListener extends PokoServer.PokoListener {
         try {
             JSONObject jsonMessage = data.getJSONObject("message");
             int groupId = jsonMessage.getInt("groupId");
-            int userId = jsonMessage.getInt("userId"); // don't use
-            int ackStartId = jsonMessage.getInt("ackStart");
-            int ackEndId = jsonMessage.getInt("ackEnd");
+            int fromId = jsonMessage.getInt("ackStart");
+            int toId = jsonMessage.getInt("ackEnd");
 
             Group group = groupList.getItemByKey(groupId);
             if (group == null) {
@@ -37,9 +36,12 @@ public class MessageAckListener extends PokoServer.PokoListener {
                 return;
             }
 
+            /* Decrement nbNotReadUser of acked messages */
             MessageList messageList = group.getMessageList();
-            messageList.ackMessages(ackStartId, ackEndId);
+            messageList.ackMessages(fromId, toId, true,false);
 
+            putData("fromId", fromId);
+            putData("toId", toId);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad message ack json data");
         }

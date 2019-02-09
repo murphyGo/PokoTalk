@@ -34,6 +34,19 @@ public class MessageListAdapter extends PokoListAdapter<Message> {
         messageView.setMessage(item);
     }
 
+    public void refreshViewsNbNotReadUser(int fromId, int toId) {
+        if (fromId > toId)
+            return;
+
+        for (int i = fromId; i <= toId; i++) {
+            MessageItem messageView = (MessageItem) getView(i);
+            if (messageView == null)
+                continue;
+            Message message = getItemFromView(messageView);
+            messageView.setNbNotReadUser(message.getNbNotReadUser());
+        }
+    }
+
     @Override
     public Message getItemFromView(View view) {
         return ((MessageItem) view).getMessage();

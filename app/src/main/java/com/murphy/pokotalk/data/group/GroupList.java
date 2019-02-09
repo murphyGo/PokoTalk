@@ -8,17 +8,19 @@ public class GroupList extends ItemList<Integer, Group> {
     }
 
     @Override
-    public void updateItem(Group item) {
+    public boolean updateItem(Group item) {
         super.updateItem(item);
 
         Group group = getItemByKey(getKey(item));
         if (group == null) {
             add(item);
+            return false;
         } else {
             group.setGroupName(item.getGroupName());
             group.setAlias(item.getAlias());
             group.setNbNewMessages(item.getNbNewMessages());
             group.setMembers(item.getMembers());
+            return true;
         }
     }
 

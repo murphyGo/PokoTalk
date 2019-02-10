@@ -5,9 +5,11 @@ import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Message;
 import com.murphy.pokotalk.data.user.User;
 
@@ -19,6 +21,7 @@ public class MessageItem extends FrameLayout {
     private String content;
     private int nbNotReadUser;
     private Context context;
+    private LinearLayout messageLayout;
     private TextView nicknameView;
     private CircleImageView imageView;
     private TextView messageView;
@@ -33,6 +36,7 @@ public class MessageItem extends FrameLayout {
     public void inflate() {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.message_item, this, true);
+        messageLayout = view.findViewById(R.id.messageLayout);
         nicknameView = view.findViewById(R.id.userName);
         imageView = view.findViewById(R.id.userImage);
         messageView = view.findViewById(R.id.message);
@@ -58,6 +62,17 @@ public class MessageItem extends FrameLayout {
         setImg(writer.getPicture());
         setContent(message.getContent());
         setNbNotReadUser(message.getNbNotReadUser());
+
+        Session session = Session.getInstance();
+        /* If it is my message, use rtl direction, ltr otherwise */
+        if (session.getUser().getUserId() == writer.getUserId()) {
+            messageLayout.setLayoutDirection(View.LAYOUT_DIRECTION_RTL);
+            nicknameView.setVisibility(View.GONE);
+            imageView.setVisibility(View.GONE);
+        } else {
+            messageLayout.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
+            nicknameView.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+        }
     }
 
     public void setNickname(String nickname) {

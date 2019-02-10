@@ -9,29 +9,25 @@
     android:background="#ffffff">
 
     <android.support.design.widget.NavigationView
-        android:id="@+id/chatSlideMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:menu="@menu/chat_menu"
-        android:background="@drawable/bottom_line">
-    </android.support.design.widget.NavigationView>
-
-
-    <android.support.design.widget.NavigationView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_weight="0"
         app:menu="@menu/chat_menu2"
         android:background="@drawable/shape">
     </android.support.design.widget.NavigationView>
 
-    <ScrollView
+    <ListView
+        android:id="@+id/memberList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_weight="1"/>
 
-        <ListView
-            android:id="@+id/memberList"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </ScrollView>
+    <android.support.design.widget.NavigationView
+        android:id="@+id/chatSlideMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        app:menu="@menu/chat_menu"
+        android:background="@drawable/shape2">
+    </android.support.design.widget.NavigationView>
 </LinearLayout>

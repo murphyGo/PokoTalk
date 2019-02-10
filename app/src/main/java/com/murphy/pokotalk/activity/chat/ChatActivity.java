@@ -38,6 +38,7 @@ import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.view.ListViewDetectable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class ChatActivity extends AppCompatActivity
     private DataCollection collection;
     private TextView groupNameView;
     private Button backspaceButton;
-    private ListView messageListView;
+    private ListViewDetectable messageListView;
     private ListView memberListView;
     private Toolbar slideMenuButton;
     private EditText messageInputView;
@@ -140,6 +141,11 @@ public class ChatActivity extends AppCompatActivity
         messageListAdapter = new MessageListAdapter(this);
         messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
         messageListView.setAdapter(messageListAdapter);
+        messageListView.setKeepVerticalPosition(true);
+
+        /* Focus to message list */
+        messageInputView.clearFocus();
+        messageListView.requestFocus();
 
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
@@ -289,24 +295,7 @@ public class ChatActivity extends AppCompatActivity
             Message message = createSentMessage(sendId, content, Message.NORMAL);
             server.sendNewMessage(group.getGroupId(), sendId, content, Message.NORMAL);
             group.getMessageList().addSentMessage(message);
-        }
-    };
-
-    /* Server event listeners */
-    private ActivityCallback sendMessageListener = new ActivityCallback() {
-        @Override
-        public void onSuccess(Status status, Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    messageListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-
-        @Override
-        public void onError(Status status, Object... args) {
-
+            messageInputView.setText("");
         }
     };
 
@@ -332,6 +321,7 @@ public class ChatActivity extends AppCompatActivity
                             adapterList.addMessageSortedById(message);
                         }
                         messageListAdapter.notifyDataSetChanged();
+                        messageListView.postScrollToBottom();
                     }
                 }
             });
@@ -361,6 +351,12 @@ public class ChatActivity extends AppCompatActivity
                         if (!newMessage.isAcked() && newMessage.getNbNotReadUser() > 0
                                 && session.getUser() != newMessage.getWriter()) {
                             server.sendAckMessage(group.getGroupId(), messageId, messageId);
+                        }
+
+                        /* If it's my message scroll down */
+                        if (newMessage.isMyMessage(session)
+                                || messageListView.isFullyAtBottom()) {
+                            messageListView.postScrollToBottom();
                         }
 
                         messageListAdapter.getPokoList().updateItem(newMessage);
@@ -468,6 +464,16 @@ public class ChatActivity extends AppCompatActivity
 
         }
     };
+
+    /* Scrolls message list to bottom */
+    private void messageListScrollToBottom() {
+        messageListView.post(new Runnable() {
+            @Override
+            public void run() {
+                messageListView.setSelection(messageListView.getCount() - 1);
+            }
+        });
+    }
 
     /* Popup menu code */
     private void open_menu(View v) {

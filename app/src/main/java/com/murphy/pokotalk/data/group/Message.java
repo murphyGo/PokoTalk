@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.data.group;
 
+import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.User;
 
 import java.util.Calendar;
@@ -112,5 +113,9 @@ public class Message {
 
     public void setAcked(boolean acked) {
         this.acked = acked;
+    }
+
+    public boolean isMyMessage(Session session) {
+        return session.getUser().getUserId() == writer.getUserId();
     }
 }

@@ -7,6 +7,7 @@
     android:orientation="horizontal">
 
     <LinearLayout
+        android:id="@+id/messageLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layoutDirection="ltr"
@@ -56,7 +57,7 @@
                 android:id="@+id/nbNotReadUser"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@id/message"
+                android:layout_toEndOf="@id/message"
                 android:layout_alignBottom="@id/message"
                 android:padding="5dp"
                 android:text="1"

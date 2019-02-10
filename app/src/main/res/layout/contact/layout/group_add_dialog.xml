@@ -6,7 +6,8 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape">
 
         <RelativeLayout
             android:id="@+id/FrameLayout"
@@ -54,19 +55,14 @@
             android:layout_marginBottom="5dp"
             android:text="초대할 친구를 모두 선택해 주세요."/>
 
-        <ScrollView
+
+        <ListView
+            android:id="@+id/memberCandidateList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true"
-            android:layout_weight="1">
+            android:layout_weight="1"
+            android:orientation="vertical"/>
 
-            <ListView
-                android:id="@+id/memberCandidateList"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"/>
-
-        </ScrollView>
 
         <Button
             android:id="@+id/createGroupButton"

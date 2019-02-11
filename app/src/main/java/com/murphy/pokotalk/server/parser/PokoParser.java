@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.parser;
+package com.murphy.pokotalk.server.parser;
 
 import android.util.Log;
 
@@ -182,7 +182,7 @@ public class PokoParser {
     }
 
     public static Calendar parseDateString(String dateStr) throws ParseException {
-        SimpleDateFormat lastSeenFormat = new SimpleDateFormat(Constants.dateFormat, Locale.KOREA);
+        SimpleDateFormat lastSeenFormat = new SimpleDateFormat(Constants.serverDateFormat, Locale.KOREA);
         lastSeenFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
         Date lastSeenDate = lastSeenFormat.parse(dateStr);
         Calendar result = Calendar.getInstance();

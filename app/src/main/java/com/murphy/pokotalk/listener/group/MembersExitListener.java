@@ -7,7 +7,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
-import com.murphy.pokotalk.parser.PokoParser;
+import com.murphy.pokotalk.server.parser.PokoParser;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 

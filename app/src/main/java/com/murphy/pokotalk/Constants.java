@@ -2,7 +2,7 @@ package com.murphy.pokotalk;
 
 public class Constants {
     public static final String serverURL = "https://192.168.0.2:4000";    /* Server Address */
-    public static final String dateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 
     /* Location for saved session and application data */
     public static final String rootDirectory = "PokoTalk";   // Root directory
@@ -12,6 +12,11 @@ public class Constants {
     public static final String eventFile = "event.dat";
     public static final String imagesDirectory = "img";
     public static final String attchedFileDirectory = "attach";
+
+    /* Permission request code */
+    public static final int ALL_PERMISSION = 2;
+    public static final int READ_EXTERNAL_STORAGE = 0;
+    public static final int WRITE_EXTERNAL_STORAGE = 1;
 
 
     /* Event names

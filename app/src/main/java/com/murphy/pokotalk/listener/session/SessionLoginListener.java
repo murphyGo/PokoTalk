@@ -4,9 +4,10 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.parser.PokoParser;
+import com.murphy.pokotalk.server.parser.PokoParser;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -53,6 +54,10 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             /* Create user object and give to session */
             Contact user = new Contact(userId, email, nickname, picture, lastSeen);
             session.setUser(user);
+
+            /* Save session data */
+            FileManager fileManager = FileManager.getInstance();
+            fileManager.saveSession();
         } catch(Exception e) {
             e.printStackTrace();
         } finally {

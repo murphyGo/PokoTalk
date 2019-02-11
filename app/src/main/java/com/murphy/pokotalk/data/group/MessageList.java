@@ -1,7 +1,5 @@
 package com.murphy.pokotalk.data.group;
 
-import android.util.Log;
-
 import com.murphy.pokotalk.data.ItemList;
 
 import java.util.ArrayList;
@@ -137,7 +135,6 @@ public class MessageList extends ItemList<Integer, Message> {
             if (markAcked && !curMessage.isAcked()) {
                 curMessage.setAcked(true);
                 unackedMessages.remove(curMessage);
-                Log.v("ACK MESSAGE", Integer.toString(curMessage.getMessageId()));
             }
         } while (--curIndex >= 0);
     }

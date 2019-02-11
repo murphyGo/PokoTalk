@@ -10,7 +10,6 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -220,7 +219,6 @@ public class ChatActivity extends AppCompatActivity
             ArrayList<Integer> messageIds = new ArrayList<>();
             for (Message message : unackedMessages) {
                 messageIds.add(message.getMessageId());
-                Log.v("UNACKED", Integer.toString(message.getMessageId()));
             }
 
             int fromId = Collections.min(messageIds), toId = Collections.max(messageIds);

@@ -292,8 +292,10 @@ public class MainActivity extends AppCompatActivity
             Group group = collection.getGroupList().getItemByKey(groupId);
             if (group == null)
                 return;
-            groupListAdapter.refreshView(group);
-            groupListAdapter.notifyDataSetChanged();
+            if (groupListAdapter != null) {
+                groupListAdapter.refreshView(group);
+                groupListAdapter.notifyDataSetChanged();
+            }
         }
     }
 

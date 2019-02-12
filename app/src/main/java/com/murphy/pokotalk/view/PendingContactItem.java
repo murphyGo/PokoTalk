@@ -23,7 +23,7 @@ public class PendingContactItem extends FrameLayout {
     private CircleImageView imageView;
     private Button acceptButton;
     private Boolean invited;
-    private PendingContact contact;
+    private PendingContact pendingContact;
 
     public PendingContactItem(Context context) {
         super(context);
@@ -37,6 +37,13 @@ public class PendingContactItem extends FrameLayout {
         emailView = (TextView) view.findViewById(R.id.email);
         imageView = (CircleImageView) view.findViewById(R.id.image);
         acceptButton = (Button) view.findViewById(R.id.acceptButton);
+    }
+
+    public void setPendingContact(PendingContact pendingContact) {
+        this.pendingContact = pendingContact;
+        setNickname(pendingContact.getNickname());
+        setEmail(pendingContact.getEmail());
+        setImg(pendingContact.getPicture());
     }
 
     public String getNickname() {
@@ -69,12 +76,8 @@ public class PendingContactItem extends FrameLayout {
         return invited;
     }
 
-    public PendingContact getContact() {
-        return contact;
-    }
-
-    public void setContact(PendingContact contact) {
-        this.contact = contact;
+    public PendingContact getPendingContact() {
+        return pendingContact;
     }
 
     public void setInvited(Boolean invited) {

@@ -8,7 +8,7 @@ import java.util.Iterator;
  *  each updated items are marked and unmarked items are removed
  *  at the end of update.
  */
-public abstract class ItemList<K, V> extends List<K, V> {
+public abstract class ItemList<K, V extends Item> extends List<K, V> {
     protected HashMap<K, V> updatedItems;
     private boolean updateListStarted;
 
@@ -22,8 +22,18 @@ public abstract class ItemList<K, V> extends List<K, V> {
      * @Return true if item was updated, false if item does not exist and is added
      */
     public boolean updateItem(V item) {
-        updatedItems.put(getKey(item), item);
-        return true;
+        if (updateListStarted) {
+            updatedItems.put(getKey(item), item);
+        }
+
+        V found = getItemByKey(getKey(item));
+        if (found == null) {
+            add(item);
+            return false;
+        } else {
+            found.update(item);
+            return true;
+        }
     }
 
     /** Starts updating whole items in list.

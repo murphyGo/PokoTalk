@@ -24,27 +24,23 @@ public class PendingContactListAdapter extends PokoListAdapter<PendingContact> {
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
-        PendingContact contact = items.get(position);
-        PendingContactItem item = new PendingContactItem(context);
-        item.inflate();
-        item.setNickname(contact.getNickname());
-        item.setEmail(contact.getEmail());
-        item.setImg(contact.getPicture());
+        PendingContact pendingContact = items.get(position);
+        PendingContactItem item;
+        if (convertView == null) {
+            item = new PendingContactItem(context);
+            item.inflate();
+        } else {
+            item = (PendingContactItem) convertView;
+        }
+        item.setPendingContact(pendingContact);
         item.setInvited(invited);
-        item.setContact(contact);
+
         return item;
     }
 
     @Override
-    public void refreshView(View view, PendingContact item) {
-        PendingContactItem contactView = (PendingContactItem) view;
-        contactView.setNickname(item.getNickname());
-        contactView.setImg(item.getPicture());
-    }
-
-    @Override
     public PendingContact getItemFromView(View view) {
-        return ((PendingContactItem) view).getContact();
+        return ((PendingContactItem) view).getPendingContact();
     }
 
     /* This adapter always set invited attribute of views in list to it */

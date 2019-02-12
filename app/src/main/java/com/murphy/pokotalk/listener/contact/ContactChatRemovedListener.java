@@ -4,9 +4,7 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -29,21 +27,11 @@ public class ContactChatRemovedListener extends PokoServer.PokoListener {
         try {
             int userId = data.getInt("userId");
             int groupId = data.getInt("groupId");
-            Contact contact = contactList.getItemByKey(userId);
-            Group group = groupList.getItemByKey(groupId);
-
-            if (group == null) {
-                Log.e("POKO ERROR", "Cannot remove contact chat since no such group");
-            } else {
-                group.setContact(null);
+            ContactList.ContactGroupRelation relation =
+                    contactList.removeContactGroupRelationByUserId(userId);
+            if (relation == null) {
+                Log.e("POKO ERROR", "Failed to remove contact group relation");
             }
-
-            if (contact == null) {
-                Log.e("POKO ERROR", "Cannot remove contact chat since no such contact");
-            } else {
-                contact.setGroupId(null);
-            }
-
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad removed contact json data");
         }

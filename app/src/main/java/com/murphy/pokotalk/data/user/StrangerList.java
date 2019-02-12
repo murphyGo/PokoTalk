@@ -11,21 +11,4 @@ public class StrangerList extends ItemList<Integer, Stranger> {
     public Integer getKey(Stranger user) {
         return user.getUserId();
     }
-
-    /* If contact not exists, add contact.
-       If exists, update contact information. */
-    @Override
-    public boolean updateItem(Stranger user) {
-        super.updateItem(user);
-
-        Stranger exist = getItemByKey(getKey(user));
-        if (exist == null) {
-            add(user);
-            return false;
-        } else {
-            exist.setNickname(user.getNickname());
-            exist.setPicture(user.getPicture());
-            return true;
-        }
-    }
 }

@@ -1,11 +1,12 @@
 package com.murphy.pokotalk.data.group;
 
+import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.User;
 
 import java.util.Calendar;
 
-public class Message {
+public class Message extends Item {
     private int messageId;
     private int sendId;
     private User writer;
@@ -30,7 +31,8 @@ public class Message {
         setAcked(false);
     }
 
-    public void update(Message message) {
+    public void update(Item item) {
+        Message message = (Message) item;
         setContent(message.getContent());
         setDate(message.getDate());
         setMessageType(message.getMessageType());

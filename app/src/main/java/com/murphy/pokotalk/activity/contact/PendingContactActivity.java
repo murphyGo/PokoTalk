@@ -171,7 +171,7 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         @Override
         public void run(View view) {
             PendingContactItem item = (PendingContactItem) view;
-            final PendingContact contact = item.getContact();
+            final PendingContact contact = item.getPendingContact();
 
             Button acceptButton = item.getAcceptButton();
             acceptButton.setOnClickListener(new View.OnClickListener() {
@@ -195,7 +195,7 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         @Override
         public void run(View view) {
             PendingContactItem item = (PendingContactItem) view;
-            PendingContact contact = item.getContact();
+            PendingContact contact = item.getPendingContact();
         }
     };
 

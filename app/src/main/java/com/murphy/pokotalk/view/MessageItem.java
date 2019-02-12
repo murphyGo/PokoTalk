@@ -72,6 +72,8 @@ public class MessageItem extends FrameLayout {
         } else {
             messageLayout.setLayoutDirection(View.LAYOUT_DIRECTION_LTR);
             nicknameView.setTextAlignment(View.TEXT_ALIGNMENT_TEXT_START);
+            nicknameView.setVisibility(View.VISIBLE);
+            imageView.setVisibility(View.VISIBLE);
         }
     }
 
@@ -107,7 +109,6 @@ public class MessageItem extends FrameLayout {
 
     public void setNbNotReadUser(int nbNotReadUser) {
         this.nbNotReadUser = nbNotReadUser;
-        nbNotReadUserView.clearAnimation();
         nbNotReadUserView.setText(Integer.toString(nbNotReadUser));
 
         /* Number will not be shown if all user has seen the message */

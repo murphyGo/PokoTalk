@@ -316,7 +316,7 @@ public class ChatActivity extends AppCompatActivity
                     if (readGroup.getGroupId() == group.getGroupId()) {
                         for (Message message : messages) {
                             MessageList adapterList = (MessageList) messageListAdapter.getPokoList();
-                            adapterList.addMessageSortedById(message);
+                            adapterList.updateItem(message);
                         }
                         messageListAdapter.notifyDataSetChanged();
                         messageListView.postScrollToBottom();
@@ -351,12 +351,11 @@ public class ChatActivity extends AppCompatActivity
                             server.sendAckMessage(group.getGroupId(), messageId, messageId);
                         }
 
-                        /* If it's my message scroll down */
-                        if (newMessage.isMyMessage(session)
-                                || messageListView.isFullyAtBottom()) {
+                        /* If it's my message and at bottom, scroll down */
+                        if (newMessage.isMyMessage(session) &&
+                                messageListView.isFullyAtBottom()) {
                             messageListView.postScrollToBottom();
                         }
-
                         messageListAdapter.getPokoList().updateItem(newMessage);
                         messageListAdapter.notifyDataSetChanged();
                     }

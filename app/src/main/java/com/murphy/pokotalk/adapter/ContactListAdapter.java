@@ -21,17 +21,17 @@ public class ContactListAdapter extends PokoListAdapter<Contact> {
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
-        Contact contact = items.get(position);
-        ContactItem item = new ContactItem(context);;
-        item.inflate();
+        Contact contact = items.get(position);;
+        ContactItem item;
+        if (convertView == null) {
+            item = new ContactItem(context);
+            item.inflate();
+        } else {
+            item = (ContactItem) convertView;
+        }
         item.setContact(contact);
-        return item;
-    }
 
-    @Override
-    public void refreshView(View view, Contact item) {
-        ContactItem contactView = (ContactItem) view;
-        contactView.setContact(item);
+        return item;
     }
 
     @Override

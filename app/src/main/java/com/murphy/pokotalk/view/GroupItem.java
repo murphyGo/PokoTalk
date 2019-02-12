@@ -9,7 +9,12 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -19,7 +24,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class GroupItem extends FrameLayout {
     private String groupName;
     private String alias;
-    private String lastMessage;
+    private Message lastMessage;
     private int nbMembers;
     private int nbNewMessage;
     private Calendar lastMessageDate;
@@ -40,12 +45,12 @@ public class GroupItem extends FrameLayout {
     public void inflate() {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.group_item, this, true);
-        groupNameView = (TextView) view.findViewById(R.id.groupName);
-        lastMessageView = (TextView) view.findViewById(R.id.lastMessage);
-        nbNewMessageView = (TextView) view.findViewById(R.id.nbNewMessage);
-        nbMemberView = (TextView) view.findViewById(R.id.nbMember);
-        lastMessageView = (TextView) view.findViewById(R.id.lastMessageDate);
-        imageView = (CircleImageView) view.findViewById(R.id.image);
+        groupNameView = view.findViewById(R.id.groupName);
+        lastMessageView = view.findViewById(R.id.lastMessage);
+        nbNewMessageView = view.findViewById(R.id.nbNewMessage);
+        nbMemberView = view.findViewById(R.id.nbMember);
+        lastMessageDateView = view.findViewById(R.id.lastMessageDate);
+        imageView = view.findViewById(R.id.image);
     }
 
     /** Get last message date string from calendar */
@@ -82,7 +87,20 @@ public class GroupItem extends FrameLayout {
             setGroupName(group.getAlias());
         setNbMembers(group.getMembers().getList().size());
         setNbNewMessage(group.getNbNewMessages());
-        //TODO: last message and last message date
+        setLastMessage(group.getMessageList());
+
+        /* Get contact, group relation */
+        DataCollection collection = DataCollection.getInstance();
+        ContactList contactList = collection.getContactList();
+        ContactList.ContactGroupRelation relation =
+                contactList.getContactGroupRelationByGroupId(group.getGroupId());
+        /* If group is for contact chat */
+        if (relation != null) {
+            Contact contact = contactList.getItemByKey(relation.getContactUserId());
+            if (contact != null) {
+                setGroupName(contact.getNickname());
+            }
+        }
     }
 
     public void setGroupName(String groupName) {
@@ -116,9 +134,15 @@ public class GroupItem extends FrameLayout {
         }
     }
 
-    public void setLastMessage(String lastMessage) {
-        this.lastMessage = lastMessage;
-        lastMessageView.setText(lastMessage);
+    public void setLastMessage(MessageList messages) {
+        lastMessage = messages.getLastMessage();
+        if (lastMessage == null) {
+            lastMessageView.setText("");
+            lastMessageDateView.setText("");
+        } else {
+            lastMessageView.setText(lastMessage.getContent());
+            lastMessageDateView.setText(getLastMessageDateString(lastMessage.getDate()));
+        }
     }
 
     public void setLastMessageDate(Calendar lastMessageDate) {
@@ -135,7 +159,7 @@ public class GroupItem extends FrameLayout {
     }
 
 
-    public String getLastMessage() {
+    public Message getLastMessage() {
         return lastMessage;
     }
 

@@ -1,14 +1,13 @@
 package com.murphy.pokotalk.data.group;
 
-import com.murphy.pokotalk.data.ItemList;
+import com.murphy.pokotalk.data.ListSorter;
+import com.murphy.pokotalk.data.SortingList;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 
-public class MessageList extends ItemList<Integer, Message> {
+public class MessageList extends SortingList<Integer, Message> {
     private HashMap<Integer, Message> sentMessages;
     private ArrayList<Message> unackedMessages;
 
@@ -16,6 +15,26 @@ public class MessageList extends ItemList<Integer, Message> {
         super();
         sentMessages = new HashMap<>();
         unackedMessages = new ArrayList<>();
+    }
+
+    @Override
+    public Integer getKey(Message message) {
+        return message.getMessageId();
+    }
+
+    @Override
+    public ListSorter getListSorter() {
+        return new ListSorter<Integer, Message>(getList()) {
+            @Override
+            public Integer getKey(Message item) {
+                return item.getMessageId();
+            }
+
+            @Override
+            public int compareKey(Integer key1, Integer key2) {
+                return key1.compareTo(key2);
+            }
+        };
     }
 
     public ArrayList<Message> getUnackedMessages() {
@@ -37,28 +56,18 @@ public class MessageList extends ItemList<Integer, Message> {
     }
 
     @Override
+    protected void addHashMapAndArrayList(Message message) {
+        if (!message.isAcked())
+            unackedMessages.add(message);
+        super.addHashMapAndArrayList(message);
+    }
+
+    @Override
     public Message removeItemByKey(Integer key) {
         Message message = hashMap.get(key);
         if (message != null)
             unackedMessages.remove(message);
         return super.removeItemByKey(key);
-    }
-
-    @Override
-    public boolean updateItem(Message item) {
-        super.updateItem(item);
-
-        Message message = getItemByKey(getKey(item));
-        if (message == null) {
-            addMessageSortedById(item);
-            return false;
-        } else {
-            message.setNbNotReadUser(item.getNbNotReadUser());
-            message.setDate(item.getDate());
-            message.setContent(item.getContent());
-            message.setMessageType(item.getMessageType());
-            return true;
-        }
     }
 
     /** Sent messages are messages sent by user but not acknowledged by server yet.
@@ -81,7 +90,7 @@ public class MessageList extends ItemList<Integer, Message> {
         sentMessage.setMessageId(messageId);
         sentMessage.setDate(date);
         sentMessage.setNbNotReadUser(nbread);
-        return addMessageSortedById(sentMessage);
+        return add(sentMessage);
     }
 
     /* Acknowledges message method from fromId to toId inclusive. */
@@ -113,7 +122,8 @@ public class MessageList extends ItemList<Integer, Message> {
             }
 
             if (!found) {
-                toIndex = findPositionWithBinarySearch(toId);
+                toIndex = listSorter.findAddPositionWithBS(toId) - 1;
+                toIndex = toIndex < 0 ? 0 : toIndex;
             }
         } else {
             toIndex = arrayList.indexOf(toMessage);
@@ -139,71 +149,7 @@ public class MessageList extends ItemList<Integer, Message> {
         } while (--curIndex >= 0);
     }
 
-    private int findPositionWithBinarySearch(int toId) {
-        int size = arrayList.size();
-        int start = 0, end = size - 1;
-        int curIndex, properIndex = 0;
-        while (start <= end) {
-            curIndex = (start + end) / 2;
-            Message curMessage = arrayList.get(curIndex);
-            int curId = curMessage.getMessageId();
-            if (curId == toId) {
-                return curIndex;
-            } else if (curId < toId) {
-                start = curIndex + 1;
-                properIndex = start - 1;
-            } else {
-                end = curIndex - 1;
-                properIndex = end;
-            }
-        }
-
-        return properIndex < 0 ? 0 : properIndex;
-    }
-
     private boolean inRange(int fromId, int toId, int targetId) {
         return fromId <= targetId && toId >= targetId;
-    }
-
-    /* Message add sorted and sort method */
-    public boolean addMessageSortedById(Message message) {
-        Message exist = getItemByKey(getKey(message));
-        if (exist != null)
-            return false;
-
-        // TODO: Improve with binary search when it takes long to find location
-        for (int i = arrayList.size() - 1; i >= 0; i--) {
-            Message curMessage = arrayList.get(i);
-            if (curMessage.getDate().compareTo(message.getDate()) <= 0) {
-                addHashMapAndArrayList(i + 1, message);
-                return true;
-            }
-        }
-
-        addHashMapAndArrayList(0, message);
-        return true;
-    }
-
-    public void sortMessagesByMessageId() {
-        Collections.sort(arrayList, new MessageComparator());
-    }
-
-    @Override
-    public Integer getKey(Message message) {
-        return message.getMessageId();
-    }
-
-    /* Comparator class for sorting message by messageId */
-    class MessageComparator implements Comparator<Message> {
-        @Override
-        public int compare(Message o1, Message o2) {
-            int id1 = o1.getMessageId(), id2 = o2.getMessageId();
-            if (id1 < id2)
-                return -1;
-            else if (id1 > id2)
-                return 1;
-            else
-                return 0;
-        }
     }
 }

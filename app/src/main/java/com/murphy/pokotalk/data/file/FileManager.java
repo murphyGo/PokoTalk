@@ -44,6 +44,20 @@ public class FileManager {
         }
     }
 
+    public boolean loadSession() {
+        try {
+            SessionFile sessionFile = new SessionFile();
+            sessionFile.openReader();
+            sessionFile.read();
+            sessionFile.closeReader();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
+    }
+
     public boolean saveSession() {
         try {
             SessionFile sessionFile = new SessionFile();
@@ -59,18 +73,35 @@ public class FileManager {
         return true;
     }
 
-    public boolean loadSession() {
-        try {
-            SessionFile sessionFile = new SessionFile();
-            sessionFile.openReader();
-            sessionFile.read();
-            sessionFile.closeReader();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-
-        return true;
+    public boolean loadContactList() {
+        return false;
     }
 
+    public boolean pendingContactList() {
+        return false;
+    }
+
+    public boolean loadGroupList() {
+        return false;
+    }
+
+    public boolean loadMessagesForGroup() {
+        return false;
+    }
+
+    public boolean saveContactList() {
+        return false;
+    }
+
+    public boolean savePendingContactList() {
+        return false;
+    }
+
+    public boolean saveGroupList() {
+        return false;
+    }
+
+    public boolean saveMessagesForGroup() {
+        return false;
+    }
 }

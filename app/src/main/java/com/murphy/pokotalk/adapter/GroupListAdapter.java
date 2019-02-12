@@ -5,13 +5,13 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupListUI;
 import com.murphy.pokotalk.view.GroupItem;
 
 public class GroupListAdapter extends PokoListAdapter<Group> {
     public GroupListAdapter(Context context) {
         super(context);
-        setPokoList(new GroupList());
+        setPokoList(new GroupListUI());
     }
 
     @Override
@@ -21,17 +21,17 @@ public class GroupListAdapter extends PokoListAdapter<Group> {
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
+        GroupItem item;
         Group group = items.get(position);
-        GroupItem item = new GroupItem(context);
-        item.inflate();
+        if (convertView == null) {
+            item = new GroupItem(context);
+            item.inflate();
+        } else {
+            item = (GroupItem) convertView;
+        }
         item.setGroup(group);
-        return item;
-    }
 
-    @Override
-    public void refreshView(View view, Group item) {
-        GroupItem groupView = (GroupItem) view;
-        groupView.setGroup(item);
+        return item;
     }
 
     @Override

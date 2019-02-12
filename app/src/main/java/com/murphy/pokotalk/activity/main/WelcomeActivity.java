@@ -47,6 +47,7 @@ public class WelcomeActivity extends AppCompatActivity {
 
         ArrayList<String> permissions = new ArrayList<>();
 
+        // TODO: Explain user for permission if the user denied the permission
         if (!writePermission) {
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 

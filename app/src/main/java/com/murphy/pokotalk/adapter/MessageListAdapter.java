@@ -22,29 +22,16 @@ public class MessageListAdapter extends PokoListAdapter<Message> {
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
         Message message = items.get(position);
-        MessageItem item = new MessageItem(context);;
-        item.inflate();
-        item.setMessage(message);
-        return item;
-    }
-
-    @Override
-    public void refreshView(View view, Message item) {
-        MessageItem messageView = (MessageItem) view;
-        messageView.setMessage(item);
-    }
-
-    public void refreshViewsNbNotReadUser(int fromId, int toId) {
-        if (fromId > toId)
-            return;
-
-        for (int i = fromId; i <= toId; i++) {
-            MessageItem messageView = (MessageItem) getView(i);
-            if (messageView == null)
-                continue;
-            Message message = getItemFromView(messageView);
-            messageView.setNbNotReadUser(message.getNbNotReadUser());
+        MessageItem item;
+        if (convertView == null) {
+            item = new MessageItem(context);
+            item.inflate();
+        } else {
+            item = (MessageItem) convertView;
         }
+        item.setMessage(message);
+
+        return item;
     }
 
     @Override

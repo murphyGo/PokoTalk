@@ -1,13 +1,21 @@
 package com.murphy.pokotalk.data.user;
 
-public class User {
+import com.murphy.pokotalk.data.Item;
+import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.Message;
+
+import java.util.ArrayList;
+
+public class User extends Item {
     protected int userId;
     protected String email;
     protected String nickname;
     protected String picture;
+    protected ArrayList<Message> messageList;
+    protected ArrayList<Group> groupList;
 
     public User() {
-
+        initList();
     }
 
     public User(int id, String email, String nickname, String picture) {
@@ -15,6 +23,12 @@ public class User {
         this.email = email;
         this.nickname = nickname;
         this.picture = picture;
+        initList();
+    }
+
+    protected void initList() {
+        messageList = new ArrayList<>();
+        groupList = new ArrayList<>();
     }
 
     @Override
@@ -33,8 +47,9 @@ public class User {
         return userId;
     }
 
-    public void update(User user) {
-        setEmail(user.getEmail());
+    @Override
+    public void update(Item item) {
+        User user = (User) item;
         setNickname(user.getNickname());
         setPicture(user.getPicture());
     }

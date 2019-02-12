@@ -22,16 +22,16 @@ public class MemberCandidateListAdapter extends PokoListAdapter<Contact> {
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
         Contact contact = items.get(position);
-        MemberCandidateItem item = new MemberCandidateItem(context);
-        item.inflate();
+        MemberCandidateItem item;
+        if (convertView == null) {
+            item = new MemberCandidateItem(context);
+            item.inflate();
+        } else {
+            item = (MemberCandidateItem) convertView;
+        }
         item.setContact(contact);
-        return item;
-    }
 
-    @Override
-    public void refreshView(View view, Contact item) {
-        MemberCandidateItem contactView = (MemberCandidateItem) view;
-        contactView.setContact(item);
+        return item;
     }
 
     @Override

@@ -29,18 +29,24 @@ import java.util.TimeZone;
 
 /* Parse JSONObject and String data from PokoTalk server */
 public class PokoParser {
+    public static DataCollection collection = DataCollection.getInstance();
+
     public static Contact parseContact(JSONObject jsonObject) throws JSONException, ParseException {
         Contact result = new Contact();
+        ContactList contactList = collection.getContactList();
 
         Log.v("efw", jsonObject.toString());
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
         result.setPicture(jsonObject.getString("picture"));
-        if (jsonObject.has("groupId") && !jsonObject.isNull("groupId"))
-            result.setGroupId(jsonObject.getInt("groupId"));
-        else
-            result.setGroupId(null);
+        if (jsonObject.has("groupId") && !jsonObject.isNull("groupId")) {
+            contactList.putContactGroupRelation(result.getUserId(), jsonObject.getInt("groupId"));
+        } else {
+            if (contactList.getContactGroupRelationByUserId(result.getUserId()) != null) {
+                contactList.removeContactGroupRelationByUserId(result.getUserId());
+            }
+        }
         if (jsonObject.has("lastSeen") && !jsonObject.isNull("lastSeen"))
             result.setLastSeen(parseDateString(jsonObject.getString("lastSeen")));
         else

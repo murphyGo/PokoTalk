@@ -38,9 +38,12 @@ public class JoinContactChatListener extends PokoServer.PokoListener {
             }
 
             Group group = PokoParser.parseGroup(jsonObject);
-            group.setContact(contact);
             groupList.updateItem(group);
-            contact.setGroupId(group.getGroupId());
+
+            contactList.putContactGroupRelation(contact.getUserId(), group.getGroupId());
+
+            putData("contact", contact);
+            putData("group", groupList.getItemByKey(groupList.getKey(group)));
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad removed contact json data");
         }

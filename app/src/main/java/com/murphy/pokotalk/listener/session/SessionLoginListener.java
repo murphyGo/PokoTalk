@@ -62,7 +62,9 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             e.printStackTrace();
         } finally {
             /* Login user */
-            session.setLogined();
+            if (!session.hasLogined()) {
+                session.setLogined();
+            }
         }
     }
 

@@ -52,7 +52,7 @@ public class ReadMessageListener extends PokoServer.PokoListener {
                 readMessages.add(messageList.getItemByKey(messageList.getKey(message)));
             }
 
-            messageList.sortMessagesByMessageId();
+            messageList.sortItemsByKey();
 
             putData("group", group);
             putData("messages", readMessages);

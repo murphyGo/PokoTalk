@@ -42,7 +42,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
             /* Parse message and add sorted by message id */
             MessageList messageList = group.getMessageList();
             Message message = PokoParser.parseMessage(jsonMessage);
-            messageList.addMessageSortedById(message);
+            messageList.updateItem(message);
 
             /* Add NbNewMessage number */
             collection.acquireGroupSemaphore();

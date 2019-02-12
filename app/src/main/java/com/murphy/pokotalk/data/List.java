@@ -6,7 +6,7 @@ import java.util.Iterator;
 
 /* List that manages array of items with ArrayList and HashMap
    to efficiently insert and retrieve and remove items */
-public abstract class List<K, V> {
+public abstract class List<K, V extends Item> {
     protected HashMap<K, V> hashMap;
     protected ArrayList<V> arrayList;
 

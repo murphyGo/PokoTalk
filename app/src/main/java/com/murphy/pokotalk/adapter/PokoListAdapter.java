@@ -1,7 +1,6 @@
 package com.murphy.pokotalk.adapter;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -55,35 +54,6 @@ public abstract class PokoListAdapter<T> extends BaseAdapter {
 
     public void setViewCreationCallback(ViewCreationCallback viewCreationCallback) {
         this.viewCreationCallback = viewCreationCallback;
-    }
-
-    public abstract void refreshView(View view, T item);
-
-    /* Refreshes view for the item */
-    public boolean refreshView(T item) {
-        int index = items.indexOf(item);
-        Log.v("refresh view index", index + "");
-        if (index < 0)
-            return false;
-        View view = views.get(getItemId(index));
-        Log.v("refresh view view", view == null ? "null" : view.toString());
-        refreshView(view, item);
-        return true;
-    }
-
-    public void refreshAllExistingViews() {
-        for (int i = 0; i < items.size(); i++) {
-            T item = items.get(i);
-            View view = views.get(getItemId(i));
-            if (view != null)
-                refreshView(view, item);
-            notifyDataSetChanged();
-        }
-    }
-
-    /* Get item view by item id(returned from getItemId method) */
-    public View findViewByItemId(long id) {
-        return views.get(id);
     }
 
     public abstract T getItemFromView(View view);

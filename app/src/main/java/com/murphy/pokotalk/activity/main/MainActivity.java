@@ -28,6 +28,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupListUI;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
@@ -36,9 +37,6 @@ import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.view.ContactItem;
 import com.murphy.pokotalk.view.GroupItem;
-
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.util.ArrayList;
 
@@ -106,6 +104,8 @@ public class MainActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.getGroupListName, getGroupListCallback);
         server.attachActivityCallback(Constants.addGroupName, addGroupCallback);
         server.attachActivityCallback(Constants.exitGroupName, removeGroupCallback);
+        server.attachActivityCallback(Constants.readMessageName, readMessageCallback);
+        server.attachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
     }
 
@@ -122,6 +122,8 @@ public class MainActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.getGroupListName, getGroupListCallback);
         server.detachActivityCallback(Constants.addGroupName, addGroupCallback);
         server.detachActivityCallback(Constants.exitGroupName, removeGroupCallback);
+        server.detachActivityCallback(Constants.readMessageName, readMessageCallback);
+        server.detachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
 
         super.onDestroy();
@@ -293,7 +295,6 @@ public class MainActivity extends AppCompatActivity
             if (group == null)
                 return;
             if (groupListAdapter != null) {
-                groupListAdapter.refreshView(group);
                 groupListAdapter.notifyDataSetChanged();
             }
         }
@@ -398,17 +399,18 @@ public class MainActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    JSONObject jsonObject = (JSONObject) args[0];
+                    Contact contact = (Contact) getData("contact");
+                    Group group = (Group) getData("group");
                     ContactList contactList = collection.getContactList();
-                    try {
-                        int contactId = jsonObject.getInt("contactId");
-                        Contact contact = contactList.getItemByKey(contactId);
+                    if (group != null) {
+                        if (groupListAdapter != null) {
+                            groupListAdapter.getPokoList().updateItem(group);
+                            groupListAdapter.notifyDataSetChanged();
+                        }
                         /* Start group chat with contact */
                         if (contact != null) {
-                            startGroupChat(contact.getContactGroup());
+                            startGroupChat(group);
                         }
-                    } catch (JSONException e) {
-
                     }
                 }
             });
@@ -428,7 +430,9 @@ public class MainActivity extends AppCompatActivity
                 public void run() {
                     if (groupListAdapter != null) {
                         GroupList groupList = collection.getGroupList();
-                        groupListAdapter.getPokoList().copyFromPokoList(groupList);
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                        groupListUI.copyFromPokoList(groupList);
+                        groupListUI.addEveryContactChatGroupThatHasMessage();
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }
@@ -450,7 +454,8 @@ public class MainActivity extends AppCompatActivity
                     if (groupListAdapter != null) {
                         Group group = (Group) getData("group");
                         if (group != null) {
-                            groupListAdapter.getPokoList().updateItem(group);
+                            GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                            groupListUI.updateItem(group);
                             groupListAdapter.notifyDataSetChanged();
                         }
                     }
@@ -485,15 +490,40 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ActivityCallback newMessageCallback = new ActivityCallback() {
+    private ActivityCallback readMessageCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            final Group group = (Group) getData("group");
-
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    if (groupListAdapter != null) {
+                    Group group = (Group) getData("group");
+                    if (groupListAdapter != null && group != null) {
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                        groupListUI.addContactChatGroupIfHasMessage(group);
+                        groupListUI.moveItemSortedByKey(group);
+                        groupListAdapter.notifyDataSetChanged();
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback newMessageCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Group group = (Group) getData("group");
+                    if (groupListAdapter != null && group != null) {
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                        groupListUI.addContactChatGroupIfHasMessage(group);
+                        groupListUI.moveItemToFront(group);
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }
@@ -563,9 +593,17 @@ public class MainActivity extends AppCompatActivity
 
     /* Chat methods */
     public void startContactChat(Contact contact) {
-        Group contactChatGroup = contact.getContactGroup();
+        Group contactChatGroup = null;
+        ContactList contactList = collection.getContactList();
+        GroupList groupList = collection.getGroupList();
+        ContactList.ContactGroupRelation relation =
+                contactList.getContactGroupRelationByUserId(contact.getUserId());
+        if (relation != null) {
+            contactChatGroup = groupList.getItemByKey(relation.getGroupId());
+        }
+
         /* Start contact chat */
-        if (contactChatGroup == null) {
+        if (relation == null || contactChatGroup == null) {
             server.sendJoinContactChat(contact.getEmail());
         } else {
             startGroupChat(contactChatGroup);

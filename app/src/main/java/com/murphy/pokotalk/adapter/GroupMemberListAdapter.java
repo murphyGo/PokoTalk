@@ -22,16 +22,16 @@ public class GroupMemberListAdapter extends PokoListAdapter<User> {
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
         User member = items.get(position);
-        ChatMemberItem item = new ChatMemberItem(context);;
-        item.inflate();
+        ChatMemberItem item;
+        if (convertView == null) {
+            item = new ChatMemberItem(context);
+            item.inflate();
+        } else {
+            item = (ChatMemberItem) convertView;
+        }
         item.setUser(member);
-        return item;
-    }
 
-    @Override
-    public void refreshView(View view, User item) {
-        ChatMemberItem contactView = (ChatMemberItem) view;
-        contactView.setUser(item);
+        return item;
     }
 
     @Override

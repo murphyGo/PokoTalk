@@ -1,10 +1,11 @@
 package com.murphy.pokotalk.data.event;
 
+import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.user.ContactList;
 
 import java.util.Calendar;
 
-public class Event {
+public class Event extends Item {
     private int eventId;
     private String eventName;
     private String description;
@@ -14,6 +15,16 @@ public class Event {
 
     public static final int EVENT_UPCOMING = 0;
     public static final int EVENT_STARTED = 1;
+
+    @Override
+    public void update(Item item) {
+        Event event = (Event) item;
+        setEventName(event.getEventName());
+        setDescription(event.getDescription());
+        setParticipants(event.getParticipants());
+        setEventDate(event.getEventDate());
+        setState(event.getState());
+    }
 
     public int getEventId() {
         return eventId;

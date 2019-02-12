@@ -1,22 +1,30 @@
 package com.murphy.pokotalk.data.group;
 
-import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 
-public class Group {
+public class Group extends Item {
     private String groupName;
     private String alias;
     private int groupId;
     private int nbNewMessages;
     private UserList members;
     private MessageList messageList;
-    private Contact contact;
 
     public Group() {
         members = new UserList();
         messageList = new MessageList();
         nbNewMessages = 0;
+    }
+
+    @Override
+    public void update(Item item) {
+        Group group = (Group) item;
+        setGroupName(group.getGroupName());
+        setAlias(group.getAlias());
+        setNbNewMessages(group.getNbNewMessages());
+        setMembers(group.getMembers());
     }
 
     public String getGroupName() {
@@ -73,13 +81,5 @@ public class Group {
 
     public void setMessageList(MessageList messages) {
         this.messageList = messages;
-    }
-
-    public Contact getContact() {
-        return contact;
-    }
-
-    public void setContact(Contact contact) {
-        this.contact = contact;
     }
 }

@@ -29,7 +29,7 @@ public abstract class PokoFile<T> {
 
     public PokoFile() {
         fullFilePath = null;
-        tokenDeque = new ArrayDeque<String>();
+        tokenDeque = new ArrayDeque<>();
     }
 
     public abstract String getFileName();
@@ -61,7 +61,7 @@ public abstract class PokoFile<T> {
     }
 
     public void openReader() throws IOException {
-        Log.v("POKO", "Open reader");
+        Log.v("POKO", "Open reader " + getFullFilePath());
         makeSureFullDirectoryExists();
         fileInputStream = new FileInputStream(getFullFilePath());
         inputStreamReader = new InputStreamReader(fileInputStream);
@@ -70,7 +70,7 @@ public abstract class PokoFile<T> {
     }
 
     public void openWriter() throws IOException {
-        Log.v("POKO", "Open writer");
+        Log.v("POKO", "Open writer " + getFullFilePath());
         makeSureFullDirectoryExists();
         fileOutputStream = new FileOutputStream(getFullFilePath());
         outputStreamWriter = new OutputStreamWriter(fileOutputStream);
@@ -81,12 +81,17 @@ public abstract class PokoFile<T> {
         bufferedReader.close();
         inputStreamReader.close();
         fileInputStream.close();
+        bufferedReader = null;
+        inputStreamReader = null;
+        fileOutputStream = null;
     }
 
     public void closeWriter() throws IOException {
         Log.v("POKO", "Close writer");
         outputStreamWriter.close();
         fileOutputStream.close();
+        outputStreamWriter = null;
+        fileOutputStream = null;
     }
 
     public void flush() throws IOException {
@@ -99,7 +104,8 @@ public abstract class PokoFile<T> {
     /* Reads one json object from input */
     public JSONObject readJSON() throws IOException, JSONException {
         JSONObject jsonObject = jsonReader.readJSON();
-        Log.v("POKO", "READ JSON " + jsonObject.toString());
+        if (jsonObject != null)
+            Log.v("POKO", "READ JSON " + jsonObject.toString());
         return jsonObject;
     }
 }

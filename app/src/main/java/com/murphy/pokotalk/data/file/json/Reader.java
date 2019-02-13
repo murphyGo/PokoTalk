@@ -13,13 +13,22 @@ import java.util.ArrayList;
 public class Reader {
     protected TokenContext tokenContext;
     protected BufferedReader bufferedReader;
+    protected StringBuffer stringBuffer;
+    protected ArrayDeque<JSONObject> jsonObjects;
+
     public static final int BUFFER_SIZE = 32;
-    StringBuffer stringBuffer;
 
     public Reader(BufferedReader reader) {
-        tokenContext = new TokenContext();
         bufferedReader = reader;
+        tokenContext = new TokenContext();
         stringBuffer = new StringBuffer();
+        jsonObjects = new ArrayDeque<>();
+    }
+
+    public void clearContext() {
+        tokenContext.clear();
+        stringBuffer.setLength(0);
+        jsonObjects.clear();
     }
 
     /* Read n JSONObjects from reader */
@@ -34,23 +43,26 @@ public class Reader {
 
     /* Reads one json object from input */
     public JSONObject readJSON() throws IOException, JSONException {
-        tokenContext.clear();
+        if (jsonObjects.size() > 0) {
+            return jsonObjects.removeFirst();
+        }
+
         char[] buffer = new char[BUFFER_SIZE];
 
-        int n, offset;
+        int n, offset, len = 0;
         while ((n = bufferedReader.read(buffer, 0, buffer.length)) > 0) {
-            if ((offset = tokenContext.putCharacterArray(buffer, 0, n)) >= 0) {
-                int len = offset + 1;
-                stringBuffer.append(buffer, 0, len);
+            while ((offset = tokenContext.putCharacterArray(buffer, len, n - len)) >= 0) {
+                stringBuffer.append(buffer, len, len + offset + 1);
+                len += offset + 1;
                 JSONObject result = new JSONObject(stringBuffer.toString());
                 stringBuffer.setLength(0);
-                if (len < n) {
-                    stringBuffer.append(buffer, len, n - len);
-                }
-                return result;
-            } else {
-                stringBuffer.append(buffer, 0, n);
+                jsonObjects.addLast(result);
             }
+            stringBuffer.append(buffer, len, n - len);
+            if (jsonObjects.size() > 0) {
+                return jsonObjects.removeFirst();
+            }
+            len = 0;
         }
 
         if (stringBuffer.length() > 0 && !tokenContext.isValidJSON()) {

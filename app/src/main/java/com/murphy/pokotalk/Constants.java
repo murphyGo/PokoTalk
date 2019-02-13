@@ -1,15 +1,23 @@
 package com.murphy.pokotalk;
 
+import java.util.Locale;
+
 public class Constants {
     public static final String serverURL = "https://192.168.0.2:4000";    /* Server Address */
     public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
+    public static final Locale locale = Locale.KOREA;
 
     /* Location for saved session and application data */
     public static final String rootDirectory = "PokoTalk";   // Root directory
     public static final String sessionFile = "session.dat"; // Session info
     public static final String contactFile = "contact.dat";
+    public static final String invitedPendngContactFile = "invited.dat";
+    public static final String invitingPendingContactFile = "inviting.dat";
+    public static final String strangerFile = "stranger.dat";
     public static final String groupFile = "group.dat";
+    public static final String messageFileFormat = "groupMsg%d.dat";
     public static final String eventFile = "event.dat";
+    public static final String messageDirectory = "msg";
     public static final String imagesDirectory = "img";
     public static final String attchedFileDirectory = "attach";
 

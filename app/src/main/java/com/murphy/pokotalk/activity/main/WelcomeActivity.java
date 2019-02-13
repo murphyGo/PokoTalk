@@ -4,9 +4,11 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
@@ -66,6 +68,11 @@ public class WelcomeActivity extends AppCompatActivity {
                 /* Load application data */
                 FileManager fileManager = FileManager.getInstance();
                 fileManager.loadSession();
+                fileManager.loadContactList();
+                fileManager.loadPendingContactList();
+                fileManager.loadStragerList();
+                fileManager.loadGroupList();
+                fileManager.loadMessages();
                 /* Login session */
                 Session session = Session.getInstance();
                 if (session.sessionIdExists()) {
@@ -78,8 +85,7 @@ public class WelcomeActivity extends AppCompatActivity {
                 } catch(InterruptedException e) {
                     e.printStackTrace();
                 }
-                startActivity(intent);
-                finish();
+                startActivityForResult(intent, 0);
             }
         };
 
@@ -91,6 +97,22 @@ public class WelcomeActivity extends AppCompatActivity {
                     permissions.toArray(new String[permissions.size()]),
                     Constants.ALL_PERMISSION);
         }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        /* Save application data */
+        Log.v("POKO", "SAVE DATA");
+        FileManager fileManager = FileManager.getInstance();
+        fileManager.saveSession();
+        fileManager.saveContactList();
+        fileManager.savePendingContactList();
+        fileManager.saveStrangerList();
+        fileManager.saveGroupList();
+        fileManager.saveMessages();
+        Log.v("POKO", "SAVE DATA END");
+
+        finish();
     }
 
     @Override

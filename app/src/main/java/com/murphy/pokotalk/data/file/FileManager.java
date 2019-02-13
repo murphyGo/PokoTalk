@@ -1,21 +1,42 @@
 package com.murphy.pokotalk.data.file;
 
 import android.os.Environment;
-import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.file.contact.ContactListFile;
+import com.murphy.pokotalk.data.file.contact.InvitedPendingContactListFile;
+import com.murphy.pokotalk.data.file.contact.InvitingPendingContactListFile;
+import com.murphy.pokotalk.data.file.contact.StrangerFile;
+import com.murphy.pokotalk.data.file.group.GroupListFile;
+import com.murphy.pokotalk.data.file.group.MessageFile;
+import com.murphy.pokotalk.data.file.session.SessionFile;
+import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.GroupList;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 
 /* Manages saving data as a file, reading from and writing to files */
 public class FileManager {
     protected static FileManager instance;
     protected static String rootPath = null;
+    protected SessionFile sessionFile;
+    protected ContactListFile contactListFile;
+    protected InvitedPendingContactListFile invitedFile;
+    protected InvitingPendingContactListFile invitingFile;
+    protected StrangerFile strangerFile;
+    protected GroupListFile groupListFile;
 
     public FileManager() {
-
+        sessionFile = new SessionFile();
+        contactListFile = new ContactListFile();
+        invitedFile = new InvitedPendingContactListFile();
+        invitingFile = new InvitingPendingContactListFile();
+        strangerFile = new StrangerFile();
+        groupListFile = new GroupListFile();
     }
 
     public static FileManager getInstance() {
@@ -32,7 +53,6 @@ public class FileManager {
             rootPath = sdcardPath + File.separator + Constants.rootDirectory;
         }
 
-        Log.v("ROOT PATH", rootPath);
         return rootPath;
     }
 
@@ -45,26 +65,80 @@ public class FileManager {
     }
 
     public boolean loadSession() {
-        try {
-            SessionFile sessionFile = new SessionFile();
-            sessionFile.openReader();
-            sessionFile.read();
-            sessionFile.closeReader();
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
+        return readFromFile(sessionFile);
+    }
+
+    public boolean loadContactList() {
+        return readAllFromFile(contactListFile);
+    }
+
+    public boolean loadPendingContactList() {
+        boolean invited = readAllFromFile(invitedFile);
+        boolean inviting = readAllFromFile(invitingFile);
+        return invited && inviting;
+    }
+
+    public boolean loadStragerList() {
+        return readAllFromFile(strangerFile);
+    }
+
+    public boolean loadGroupList() {
+        return readAllFromFile(groupListFile);
+    }
+
+    public boolean loadMessages() {
+        GroupList groupList = DataCollection.getInstance().getGroupList();
+        ArrayList<Group> groups = groupList.getList();
+
+        for (Group group : groups) {
+            MessageFile messageFile = new MessageFile(group);
+            readAllFromFile(messageFile);
         }
 
         return true;
     }
 
     public boolean saveSession() {
+        return saveToFile(sessionFile);
+    }
+
+    public boolean saveContactList() {
+        return saveToFile(contactListFile);
+    }
+
+    public boolean savePendingContactList() {
+        boolean invited = saveToFile(invitedFile);
+        boolean inviting = saveToFile(invitingFile);
+
+        return invited && inviting;
+    }
+
+    public boolean saveStrangerList() {
+        return saveToFile(strangerFile);
+    }
+
+    public boolean saveGroupList() {
+        return saveToFile(groupListFile);
+    }
+
+
+    public boolean saveMessages() {
+        GroupList groupList = DataCollection.getInstance().getGroupList();
+        ArrayList<Group> groups = groupList.getList();
+
+        for (Group group : groups) {
+            MessageFile messageFile = new MessageFile(group);
+            saveToFile(messageFile);
+        }
+
+        return true;
+    }
+
+    protected boolean readFromFile(PokoFile file) {
         try {
-            SessionFile sessionFile = new SessionFile();
-            sessionFile.openWriter();
-            sessionFile.save();
-            sessionFile.flush();
-            sessionFile.closeWriter();
+            file.openReader();
+            file.read();
+            file.closeReader();
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -73,35 +147,30 @@ public class FileManager {
         return true;
     }
 
-    public boolean loadContactList() {
-        return false;
+    protected boolean readAllFromFile(PokoMultiItemsFile file) {
+        try {
+            file.openReader();
+            file.readAll();
+            file.closeReader();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+
+        return true;
     }
 
-    public boolean pendingContactList() {
-        return false;
-    }
+    protected boolean saveToFile(PokoFile file) {
+        try {
+            file.openWriter();
+            file.save();
+            file.flush();
+            file.closeWriter();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
 
-    public boolean loadGroupList() {
-        return false;
-    }
-
-    public boolean loadMessagesForGroup() {
-        return false;
-    }
-
-    public boolean saveContactList() {
-        return false;
-    }
-
-    public boolean savePendingContactList() {
-        return false;
-    }
-
-    public boolean saveGroupList() {
-        return false;
-    }
-
-    public boolean saveMessagesForGroup() {
-        return false;
+        return true;
     }
 }

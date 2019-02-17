@@ -1,8 +1,15 @@
 package com.murphy.pokotalk.activity.main;
 
+import android.content.ComponentName;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.os.Messenger;
 import android.os.Process;
+import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.view.ViewPager;
@@ -37,6 +44,7 @@ import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.service.PokoTalkService;
 import com.murphy.pokotalk.view.ContactItem;
 import com.murphy.pokotalk.view.GroupItem;
 
@@ -46,7 +54,8 @@ public class MainActivity extends AppCompatActivity
         implements BottomNavigationView.OnNavigationItemSelectedListener,
         ContactDetailDialog.ContactDetailDialogListener,
         ContactOptionDialog.ContactOptionDialogListener,
-        GroupOptionDialog.GroupOptionDialogListener {
+        GroupOptionDialog.GroupOptionDialogListener,
+        ServiceConnection {
     private PokoServer server;
     private Session session;
     private DataCollection collection;
@@ -57,6 +66,11 @@ public class MainActivity extends AppCompatActivity
     private MpagerAdapter pagerAdapter;
     private ContactListAdapter contactListAdapter;
     private GroupListAdapter groupListAdapter;
+    private Messenger serviceMessenger = null;
+    private Messenger myMessenger = new Messenger(new ServiceCallback());
+
+    /* Intent commands */
+    public static final int START_GROUP_CHAT = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,6 +124,17 @@ public class MainActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
         Log.v("POKO", "MainActivity starts, process id " + Process.myPid());
+
+        /* Services */
+        PokoTalkService.startPokoTalkService(this);
+        PokoTalkService.bindPokoTalkService(this, this);
+
+        /* Get intent and start operation if given */
+        Intent intent = getIntent();
+        int opcode = intent.getIntExtra("opcode", -1);
+        if (opcode >= 0) {
+            startOperation(opcode, intent);
+        }
     }
 
     @Override
@@ -129,7 +154,38 @@ public class MainActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
 
+        /* Send app closed message */
+        try {
+            Message message = Message.obtain(null, PokoTalkService.APP_CLOSED);
+            serviceMessenger.send(message);
+        } catch(RemoteException e) {
+            e.printStackTrace();
+        }
+
+        PokoTalkService.unbindPokoTalkService(this, this);
+
         super.onDestroy();
+    }
+
+    /* Start operation given to MainActivity */
+    public void startOperation(int opcode, Intent intent) {
+        switch (opcode) {
+            case START_GROUP_CHAT: {
+                int groupId = intent.getIntExtra("groupId", -1);
+                if (groupId < 0) {
+                    return;
+                }
+                Log.v("POKO", "NEW MESSAGE GROUP ID3 " + groupId);
+                Group group = collection.getGroupList().getItemByKey(groupId);
+                if (group != null) {
+                    startGroupChat(group);
+                }
+                return;
+            }
+            default: {
+                return;
+            }
+        }
     }
 
     @Override
@@ -618,5 +674,35 @@ public class MainActivity extends AppCompatActivity
         Intent intent = new Intent(this, ChatActivity.class);
         intent.putExtra("groupId", group.getGroupId());
         startActivityForResult(intent, RequestCode.GROUP_CHAT.value);
+        Log.v("POKO", "START GROUP CHAT " + group.getGroupId());
     }
+
+    /* Service callbacks */
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        try {
+            serviceMessenger = new Messenger(service);
+            Message message = Message.obtain(null, PokoTalkService.APP_STARTED);
+            serviceMessenger.send(message);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        PokoTalkService.startPokoTalkService(this);
+        PokoTalkService.bindPokoTalkService(this, this);
+    }
+
+    class ServiceCallback extends Handler {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case PokoTalkService.APP_STARTED: {
+
+                }
+            }
+        }
+    };
 }

@@ -115,14 +115,14 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
                     break;
                 int messageId = arrayList.get(curIndex).getMessageId();
                 if (inRange(fromId, toId, messageId)) {
-                    toIndex = messageId;
+                    toIndex = curIndex;
                     found = true;
                     break;
                 }
             }
 
             if (!found) {
-                toIndex = listSorter.findAddPositionWithBS(toId) - 1;
+                toIndex = listSorter.findAddPositionWithBsByKey(toId) - 1;
                 toIndex = toIndex < 0 ? 0 : toIndex;
             }
         } else {

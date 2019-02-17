@@ -21,18 +21,21 @@
             android:padding="10dp"
             android:src="@drawable/user"
             app:civ_border_color="#000000"
-            app:civ_border_width="1dp"/>
+            app:civ_border_width="1dp" />
 
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_weight="3"
             android:paddingTop="6dp"
+            android:paddingRight="10dp"
             android:orientation="vertical">
+
+
 
             <TextView
                 android:id="@+id/userName"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentTop="true"
                 android:layout_alignParentLeft="true"
@@ -41,6 +44,20 @@
                 android:text="실험자"
                 android:textStyle="bold"
                 android:textSize="18sp"/>
+
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/userName"
+                android:layout_toEndOf="@id/userName"
+                android:layout_marginBottom="2dp"
+                android:layout_marginLeft="6dp"
+                android:layout_marginRight="6dp"
+                android:textAlignment="textStart"
+                android:text="11:59"
+                android:textStyle="normal"
+                android:textSize="13sp"/>
 
             <TextView
                 android:id="@+id/message"

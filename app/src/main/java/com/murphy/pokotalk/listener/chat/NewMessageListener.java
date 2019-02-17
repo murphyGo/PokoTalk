@@ -25,6 +25,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
 
     @Override
     public void callSuccess(Status status, Object... args) {
+        Log.v("POKO", "NEW MESSAGE CALLBACK");
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
         GroupList groupList = collection.getGroupList();
@@ -52,6 +53,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
             }
             collection.releaseGroupSemaphore();
 
+            Log.v("POKO", "NEW MESSAGE GROUP ID " + group.getGroupId());
             putData("group", group);
             putData("message", messageList.getItemByKey(message.getMessageId()));
         } catch (JSONException e) {

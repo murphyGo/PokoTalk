@@ -1,7 +1,11 @@
 package com.murphy.pokotalk.service;
 
+import android.app.PendingIntent;
 import android.app.Service;
+import android.app.TaskStackBuilder;
+import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,8 +21,10 @@ import android.widget.RemoteViews;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.activity.main.MainActivity;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.FileManager;
+import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.server.ActivityCallback;
@@ -35,12 +41,15 @@ public class PokoTalkService extends Service {
     private PokoServer server;
     private FileManager fileManager;
     private boolean sessionLoaded = false;
+    private boolean appStarted = false;
     private ArrayDeque<Messenger> waitingRequests = new ArrayDeque<>();
     private final Messenger requestMessenger = new Messenger(new ServiceRequestHandler());
     private NotificationManagerCompat notificationManagerCompat;
 
     /* PokoMessage names */
     public static final int NOTIFY_WHEN_LOADED = 0;
+    public static final int APP_STARTED = 1;
+    public static final int APP_CLOSED = 2;
 
     public PokoTalkService() {
         super();
@@ -61,6 +70,7 @@ public class PokoTalkService extends Service {
 
         /* Attach callbacks */
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
+        Log.v("POKO", "ATTACH SERVICE NEW MESSAGE CALLBACK");
     }
 
     /* Service must start with startService method */
@@ -73,13 +83,28 @@ public class PokoTalkService extends Service {
     /* Service can get bound to clients */
     @Override
     public IBinder onBind(Intent intent) {
+        Log.v("POKO", "ON BIND");
+
         return requestMessenger.getBinder();
+    }
+
+    /* When all bound client unbinds */
+    @Override
+    public boolean onUnbind(Intent intent) {
+        Log.v("POKO", "ON UNBIND");
+
+        return false;
     }
 
     @Override
     public void onDestroy() {
         /* Detach callbacks */
-        server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
+        Log.v("POKO", "DETACH SERVICE NEW MESSAGE CALLBACK");
+        //server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
+
+        /* Restart service again */
+        Intent broadcastIntent = new Intent("com.murphy.pokotalk.SERVICE_RESTART");
+        sendBroadcast(broadcastIntent);
 
         super.onDestroy();
     }
@@ -106,6 +131,14 @@ public class PokoTalkService extends Service {
                     case NOTIFY_WHEN_LOADED: {
                         Messenger replyMessenger = msg.replyTo;
                         isSessionLoaded(replyMessenger);
+                        return;
+                    }
+                    case APP_STARTED: {
+                        appStarted = true;
+                        return;
+                    }
+                    case APP_CLOSED: {
+                        appStarted = false;
                         return;
                     }
                     default: {
@@ -189,7 +222,7 @@ public class PokoTalkService extends Service {
     }
 
     /* New message notification */
-    public void sendNotificationForMessage(PokoMessage message) {
+    public void sendNotificationForMessage(Group group, PokoMessage message) {
         User writer = message.getWriter();
         RemoteViews remoteViews = new RemoteViews(getPackageName(),
                 R.layout.message_notification_layout);
@@ -200,11 +233,26 @@ public class PokoTalkService extends Service {
         NotificationCompat.Builder builder =
                 new NotificationCompat.Builder(this, PokoTalkApp.CHANNEL_1_ID);
 
+        // Create an Intent for the activity you want to start
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.putExtra("opcode", MainActivity.START_GROUP_CHAT);
+        intent.putExtra("groupId", group.getGroupId());
+        Log.v("POKO", "NEW MESSAGE GROUP ID2.5 " + group.getGroupId());
+
+// Create the TaskStackBuilder and add the intent, which inflates the back stack
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
+        stackBuilder.addNextIntentWithParentStack(intent);
+// Get the PendingIntent containing the entire back stack
+        PendingIntent pendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+
         builder.setStyle(new android.support.v4.media.app.NotificationCompat.
                 DecoratedMediaCustomViewStyle()).
                 setSmallIcon(R.drawable.cockatiel_icon).
                 setContentTitle(writer.getNickname()).
                 setContentText(message.getContent()).
+                setContentIntent(pendingIntent).
                 setAutoCancel(true).
                 setCustomContentView(remoteViews).
                 setCustomBigContentView(remoteViews);
@@ -220,9 +268,11 @@ public class PokoTalkService extends Service {
     private ActivityCallback newMessageCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            Group group = (Group) getData("group");
+            Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
             PokoMessage message = (PokoMessage) getData("message");
-            if (message != null) {
-                sendNotificationForMessage(message);
+            if (group != null && message != null && !appStarted) {
+                sendNotificationForMessage(group, message);
             }
         }
 
@@ -231,4 +281,28 @@ public class PokoTalkService extends Service {
 
         }
     };
+
+    /* Service management methods */
+
+    /* Starts PokoTalk service */
+    public static void startPokoTalkService(Context context) {
+        Intent intent = new Intent(context, PokoTalkService.class);
+        context.startService(intent);
+        Log.v("POKO", "START SERVICE");
+    }
+
+    /* Bind PokoTalk service */
+    public static void bindPokoTalkService(Context context, ServiceConnection conn) {
+        /* Bind to PokoTalk service */
+        Intent intent = new Intent(context, PokoTalkService.class);
+        context.bindService(intent, conn, BIND_AUTO_CREATE);
+        Log.v("POKO", "BIND SERVICE");
+    }
+
+    /* Unbind PokoTalk service */
+    public static void unbindPokoTalkService(Context context, ServiceConnection conn) {
+        /* Bind to PokoTalk service */
+        context.unbindService(conn);
+        Log.v("POKO", "UNBIND SERVICE");
+    }
 }

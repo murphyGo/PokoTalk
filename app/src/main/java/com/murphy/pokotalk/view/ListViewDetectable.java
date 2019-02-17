@@ -11,6 +11,8 @@ public class ListViewDetectable extends ListView {
     protected OnScrollListenerDetectable onScrollListnerDetectable;
     protected boolean fullyAtBottom;
     protected boolean keepVerticalPosition;
+    protected boolean scrollDownAtFirst;
+    protected boolean isFirstLoop;
 
     public ListViewDetectable(Context context) {
         super(context);
@@ -36,11 +38,13 @@ public class ListViewDetectable extends ListView {
         onScrollListnerDetectable = new OnScrollListenerDetectable();
         super.setOnScrollListener(new OnScrollListenerDetectable());
         keepVerticalPosition = false;
+        scrollDownAtFirst = false;
+        isFirstLoop = true;
     }
 
     @Override
     public void setOnScrollListener(OnScrollListener l) {
-        onScrollListnerDetectable.setOuterOnScrollListner(l);
+        onScrollListnerDetectable.setOuterOnScrollListener(l);
     }
 
     public void setKeepVerticalPosition(boolean adjustVerticalPosition) {
@@ -116,8 +120,8 @@ public class ListViewDetectable extends ListView {
                 outerOnScrollListner.onScrollStateChanged(view, scrollState);
         }
 
-        public void setOuterOnScrollListner(OnScrollListener outerOnScrollListner) {
-            this.outerOnScrollListner = outerOnScrollListner;
+        public void setOuterOnScrollListener(OnScrollListener outerOnScrollListener) {
+            this.outerOnScrollListner = outerOnScrollListener;
         }
 
         public ListViewDetectable getListView() {

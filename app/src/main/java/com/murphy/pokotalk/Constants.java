@@ -1,11 +1,13 @@
 package com.murphy.pokotalk;
 
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class Constants {
     public static final String serverURL = "https://192.168.0.2:4000";    /* Server Address */
     public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     public static final Locale locale = Locale.KOREA;
+    public static final TimeZone timeZone = TimeZone.getTimeZone("Asia/Seoul");
 
     /* Location for saved session and application data */
     public static final String rootDirectory = "PokoTalk";   // Root directory

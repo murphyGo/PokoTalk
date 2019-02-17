@@ -140,11 +140,7 @@ public class ChatActivity extends AppCompatActivity
         messageListAdapter = new MessageListAdapter(this);
         messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
         messageListView.setAdapter(messageListAdapter);
-        messageListView.setKeepVerticalPosition(true);
-
-        /* Focus to message list */
-        messageInputView.clearFocus();
-        messageListView.requestFocus();
+        messageListView.postScrollToBottom();
 
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
@@ -165,8 +161,6 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
-
         server.detachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
         server.detachActivityCallback(Constants.newMessageName, addMessageListener);
@@ -174,6 +168,8 @@ public class ChatActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
         server.detachActivityCallback(Constants.exitGroupName, exitGroupListener);
+
+        super.onDestroy();
     }
 
     @Override
@@ -351,8 +347,8 @@ public class ChatActivity extends AppCompatActivity
                             server.sendAckMessage(group.getGroupId(), messageId, messageId);
                         }
 
-                        /* If it's my message and at bottom, scroll down */
-                        if (newMessage.isMyMessage(session) &&
+                        /* If it's my message or fully at bottom, scroll down */
+                        if (newMessage.isMyMessage(session) ||
                                 messageListView.isFullyAtBottom()) {
                             messageListView.postScrollToBottom();
                         }
@@ -461,16 +457,6 @@ public class ChatActivity extends AppCompatActivity
 
         }
     };
-
-    /* Scrolls message list to bottom */
-    private void messageListScrollToBottom() {
-        messageListView.post(new Runnable() {
-            @Override
-            public void run() {
-                messageListView.setSelection(messageListView.getCount() - 1);
-            }
-        });
-    }
 
     /* Popup menu code */
     private void open_menu(View v) {

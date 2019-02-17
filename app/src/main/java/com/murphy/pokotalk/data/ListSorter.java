@@ -18,6 +18,10 @@ public abstract class ListSorter<K, V> {
     /** Finds appropriate add position that makes list sorted with binary search */
     public int findAddPositionWithBS(V item) {
         K key = getKey(item);
+        return findAddPositionWithBsByKey(key);
+    }
+
+    public int findAddPositionWithBsByKey(K key) {
         int size = list.size();
         int start = 0, end = size - 1;
         int curIndex, properIndex = 0;

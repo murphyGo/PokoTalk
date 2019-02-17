@@ -87,7 +87,8 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
         };
 
         if (writePermission) {
-            startPokoTalkService();
+            PokoTalkService.startPokoTalkService(this);
+            PokoTalkService.bindPokoTalkService(this, this);
         } else {
             /* Request for permissions */
             ActivityCompat.requestPermissions(this,
@@ -99,25 +100,21 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
 
     @Override
     protected void onStart() {
-        /* Bind to PokoTalk service */
-        Intent intent = new Intent(this, PokoTalkService.class);
-        bindService(intent, this, BIND_AUTO_CREATE);
 
         super.onStart();
     }
 
     @Override
     protected void onStop() {
-        /* Unbind service */
-        unbindService(this);
-
         super.onStop();
     }
 
-    /* Starts PokoTalk service */
-    public void startPokoTalkService() {
-        Intent intent = new Intent(this, PokoTalkService.class);
-        startService(intent);
+    @Override
+    protected void onDestroy() {
+        /* Unbind service */
+        PokoTalkService.unbindPokoTalkService(this, this);
+
+        super.onDestroy();
     }
 
     @Override
@@ -157,7 +154,8 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
         }
 
         if (writePermission) {
-            startPokoTalkService();
+            PokoTalkService.startPokoTalkService(this);
+            PokoTalkService.bindPokoTalkService(this, this);
         } else {
             finish();
         }
@@ -181,14 +179,17 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
     @Override
     public void onServiceDisconnected(ComponentName name) {
         serviceMessenger = null;
+        PokoTalkService.startPokoTalkService(this);
     }
 
     class ServiceMessageHandler extends Handler {
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case PokoTalkService.NOTIFY_WHEN_LOADED:
+                case PokoTalkService.NOTIFY_WHEN_LOADED: {
                     thread.start();
+                    return;
+                }
             }
         }
     }

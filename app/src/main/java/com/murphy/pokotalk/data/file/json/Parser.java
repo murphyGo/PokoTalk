@@ -3,7 +3,7 @@ package com.murphy.pokotalk.data.file.json;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.Stranger;
@@ -108,9 +108,9 @@ public class Parser {
         return group;
     }
 
-    public static Message parseMessage(JSONObject userJson) throws JSONException {
+    public static PokoMessage parseMessage(JSONObject userJson) throws JSONException {
         Contact user = Session.getInstance().getUser();
-        Message message = new Message();
+        PokoMessage message = new PokoMessage();
         message.setMessageId(userJson.getInt("messageId"));
         message.setMessageType(userJson.getInt("messageType"));
         message.setDate(epochInMillsToCalendar(userJson.getLong("date")));

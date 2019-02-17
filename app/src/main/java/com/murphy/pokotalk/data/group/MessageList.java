@@ -7,9 +7,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
-public class MessageList extends SortingList<Integer, Message> {
-    private HashMap<Integer, Message> sentMessages;
-    private ArrayList<Message> unackedMessages;
+public class MessageList extends SortingList<Integer, PokoMessage> {
+    private HashMap<Integer, PokoMessage> sentMessages;
+    private ArrayList<PokoMessage> unackedMessages;
 
     public MessageList() {
         super();
@@ -18,15 +18,15 @@ public class MessageList extends SortingList<Integer, Message> {
     }
 
     @Override
-    public Integer getKey(Message message) {
+    public Integer getKey(PokoMessage message) {
         return message.getMessageId();
     }
 
     @Override
     public ListSorter getListSorter() {
-        return new ListSorter<Integer, Message>(getList()) {
+        return new ListSorter<Integer, PokoMessage>(getList()) {
             @Override
-            public Integer getKey(Message item) {
+            public Integer getKey(PokoMessage item) {
                 return item.getMessageId();
             }
 
@@ -37,11 +37,11 @@ public class MessageList extends SortingList<Integer, Message> {
         };
     }
 
-    public ArrayList<Message> getUnackedMessages() {
+    public ArrayList<PokoMessage> getUnackedMessages() {
         return unackedMessages;
     }
 
-    public Message getLastMessage() {
+    public PokoMessage getLastMessage() {
         if (arrayList.size() == 0)
             return null;
 
@@ -49,22 +49,22 @@ public class MessageList extends SortingList<Integer, Message> {
     }
 
     @Override
-    protected void addHashMapAndArrayList(int index, Message message) {
+    protected void addHashMapAndArrayList(int index, PokoMessage message) {
         if (!message.isAcked())
             unackedMessages.add(message);
         super.addHashMapAndArrayList(index, message);
     }
 
     @Override
-    protected void addHashMapAndArrayList(Message message) {
+    protected void addHashMapAndArrayList(PokoMessage message) {
         if (!message.isAcked())
             unackedMessages.add(message);
         super.addHashMapAndArrayList(message);
     }
 
     @Override
-    public Message removeItemByKey(Integer key) {
-        Message message = hashMap.get(key);
+    public PokoMessage removeItemByKey(Integer key) {
+        PokoMessage message = hashMap.get(key);
         if (message != null)
             unackedMessages.remove(message);
         return super.removeItemByKey(key);
@@ -74,16 +74,16 @@ public class MessageList extends SortingList<Integer, Message> {
      *  We maintain these messages in some other list and move to message list
      *  when server has acked the message.
      */
-    public void addSentMessage(Message message) {
+    public void addSentMessage(PokoMessage message) {
         sentMessages.put(message.getSendId(), message);
     }
 
-    public Message getSentMessage(int sendId) {
+    public PokoMessage getSentMessage(int sendId) {
         return sentMessages.get(sendId);
     }
 
     public boolean moveSentMessageToMessageList(int sendId, int messageId, int nbread, Calendar date) {
-        Message sentMessage = sentMessages.remove(sendId);
+        PokoMessage sentMessage = sentMessages.remove(sendId);
         if (sentMessage == null)
             return false;
 
@@ -101,7 +101,7 @@ public class MessageList extends SortingList<Integer, Message> {
         if (arrayList.size() == 0)
             return;
 
-        Message toMessage = getItemByKey(toId);
+        PokoMessage toMessage = getItemByKey(toId);
         int toIndex = 0;
         /* When message with start id does not exists,
          * Check if last three messages are in range.
@@ -137,7 +137,7 @@ public class MessageList extends SortingList<Integer, Message> {
         /* When message with start id exists */
         int curIndex = toIndex;
         do {
-            Message curMessage = arrayList.get(curIndex);
+            PokoMessage curMessage = arrayList.get(curIndex);
             if (curMessage == null || curMessage.getMessageId() < fromId)
                 break;
             if (decrement)

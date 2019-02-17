@@ -104,8 +104,8 @@ public abstract class PokoFile<T> {
     /* Reads one json object from input */
     public JSONObject readJSON() throws IOException, JSONException {
         JSONObject jsonObject = jsonReader.readJSON();
-        if (jsonObject != null)
-            Log.v("POKO", "READ JSON " + jsonObject.toString());
+        //if (jsonObject != null)
+        //    Log.v("POKO", "READ JSON " + jsonObject.toString());
         return jsonObject;
     }
 }

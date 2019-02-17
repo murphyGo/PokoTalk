@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.file.json;
 
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.User;
@@ -87,7 +87,7 @@ public class Serializer {
         return jsonMember;
     }
 
-    public static JSONObject makeMessageJSON(Message message) throws JSONException {
+    public static JSONObject makeMessageJSON(PokoMessage message) throws JSONException {
         JSONObject jsonMessage = new JSONObject();
         jsonMessage.put("messageId", message.getMessageId());
         jsonMessage.put("messageType", message.getMessageType());

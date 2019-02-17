@@ -10,7 +10,7 @@ import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
 
 import de.hdodenhof.circleimageview.CircleImageView;
@@ -26,7 +26,7 @@ public class MessageItem extends FrameLayout {
     private CircleImageView imageView;
     private TextView messageView;
     private TextView nbNotReadUserView;
-    private Message message;
+    private PokoMessage message;
 
     public MessageItem(Context context) {
         super(context);
@@ -51,11 +51,11 @@ public class MessageItem extends FrameLayout {
         return img;
     }
 
-    public Message getMessage() {
+    public PokoMessage getMessage() {
         return message;
     }
 
-    public void setMessage(Message message) {
+    public void setMessage(PokoMessage message) {
         this.message = message;
         User writer = message.getWriter();
         setNickname(writer.getNickname());

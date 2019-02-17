@@ -5,7 +5,7 @@ import com.murphy.pokotalk.data.file.PokoMultiItemsFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
 
 import org.json.JSONException;
@@ -14,8 +14,8 @@ import org.json.JSONObject;
 import java.io.File;
 import java.io.IOException;
 
-/** NOTE: Message file must contain message sorted by message id */
-public class MessageFile extends PokoMultiItemsFile<Message> {
+/** NOTE: PokoMessage file must contain message sorted by message id */
+public class MessageFile extends PokoMultiItemsFile<PokoMessage> {
     protected Group group;
     protected MessageList messageList;
     protected int position;
@@ -43,17 +43,17 @@ public class MessageFile extends PokoMultiItemsFile<Message> {
     }
 
     @Override
-    public void addItem(Message item) {
+    public void addItem(PokoMessage item) {
         messageList.updateItem(item);
     }
 
     @Override
-    public Message getItemAt(int position) {
+    public PokoMessage getItemAt(int position) {
         return messageList.getList().get(position);
     }
 
     @Override
-    public Message read() throws IOException, JSONException {
+    public PokoMessage read() throws IOException, JSONException {
         JSONObject jsonMessage = readJSON();
         if (jsonMessage == null) {
             return null;
@@ -63,7 +63,7 @@ public class MessageFile extends PokoMultiItemsFile<Message> {
     }
 
     @Override
-    public void saveItem(Message item) throws IOException, JSONException {
+    public void saveItem(PokoMessage item) throws IOException, JSONException {
         JSONObject jsonMessage = Serializer.makeMessageJSON(item);
         outputStreamWriter.write(jsonMessage.toString());
     }

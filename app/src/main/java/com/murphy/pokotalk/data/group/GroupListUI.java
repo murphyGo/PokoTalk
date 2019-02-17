@@ -35,7 +35,7 @@ public class GroupListUI extends SortingList<Integer, Group> {
             @Override
             public Calendar getKey(Group item) {
                 MessageList messageList = item.getMessageList();
-                Message lastMessage = messageList.getLastMessage();
+                PokoMessage lastMessage = messageList.getLastMessage();
                 if (lastMessage == null)
                     return null;
                 return lastMessage.getDate();

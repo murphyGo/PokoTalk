@@ -6,7 +6,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.server.parser.PokoParser;
 import com.murphy.pokotalk.server.PokoServer;
@@ -41,7 +41,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
 
             /* Parse message and add sorted by message id */
             MessageList messageList = group.getMessageList();
-            Message message = PokoParser.parseMessage(jsonMessage);
+            PokoMessage message = PokoParser.parseMessage(jsonMessage);
             messageList.updateItem(message);
 
             /* Add NbNewMessage number */

@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.user;
 
 import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 
 import java.util.ArrayList;
 
@@ -11,7 +11,7 @@ public class User extends Item {
     protected String email;
     protected String nickname;
     protected String picture;
-    protected ArrayList<Message> messageList;
+    protected ArrayList<PokoMessage> messageList;
     protected ArrayList<Group> groupList;
 
     public User() {

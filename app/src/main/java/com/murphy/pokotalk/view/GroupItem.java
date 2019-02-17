@@ -11,7 +11,7 @@ import android.widget.TextView;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
@@ -24,7 +24,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class GroupItem extends FrameLayout {
     private String groupName;
     private String alias;
-    private Message lastMessage;
+    private PokoMessage lastMessage;
     private int nbMembers;
     private int nbNewMessage;
     private Calendar lastMessageDate;
@@ -159,7 +159,7 @@ public class GroupItem extends FrameLayout {
     }
 
 
-    public Message getLastMessage() {
+    public PokoMessage getLastMessage() {
         return lastMessage;
     }
 

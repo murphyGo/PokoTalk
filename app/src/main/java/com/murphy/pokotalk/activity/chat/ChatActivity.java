@@ -30,7 +30,7 @@ import com.murphy.pokotalk.adapter.MessageListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
@@ -213,11 +213,11 @@ public class ChatActivity extends AppCompatActivity
     private void ackUnackedMessages() {
         /* If unacked message exists, try ack */
         MessageList messageList = group.getMessageList();
-        ArrayList<Message> unackedMessages = messageList.getUnackedMessages();
+        ArrayList<PokoMessage> unackedMessages = messageList.getUnackedMessages();
 
         if (unackedMessages.size() > 0) {
             ArrayList<Integer> messageIds = new ArrayList<>();
-            for (Message message : unackedMessages) {
+            for (PokoMessage message : unackedMessages) {
                 messageIds.add(message.getMessageId());
             }
 
@@ -261,8 +261,8 @@ public class ChatActivity extends AppCompatActivity
             slideMenuToggle.onConfigurationChanged(newConfig);
     }
 
-    private Message createSentMessage(int sendId, String content, @Nullable Integer importanceLevel) {
-        Message message = new Message();
+    private PokoMessage createSentMessage(int sendId, String content, @Nullable Integer importanceLevel) {
+        PokoMessage message = new PokoMessage();
         message.setWriter(session.getUser());
         message.setSendId(sendId);
         message.setContent(content);
@@ -290,8 +290,8 @@ public class ChatActivity extends AppCompatActivity
                 return;
             }
             sendId++;
-            Message message = createSentMessage(sendId, content, Message.NORMAL);
-            server.sendNewMessage(group.getGroupId(), sendId, content, Message.NORMAL);
+            PokoMessage message = createSentMessage(sendId, content, PokoMessage.NORMAL);
+            server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.NORMAL);
             group.getMessageList().addSentMessage(message);
             messageInputView.setText("");
         }
@@ -309,12 +309,12 @@ public class ChatActivity extends AppCompatActivity
                     ackUnackedMessages();
                     /* Update all messages */
                     Group readGroup = (Group) getData("group");
-                    ArrayList<Message> messages = (ArrayList<Message>) getData("messages");
+                    ArrayList<PokoMessage> messages = (ArrayList<PokoMessage>) getData("messages");
                     if (readGroup == null || messages == null)
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        for (Message message : messages) {
+                        for (PokoMessage message : messages) {
                             MessageList adapterList = (MessageList) messageListAdapter.getPokoList();
                             adapterList.updateItem(message);
                         }
@@ -339,7 +339,7 @@ public class ChatActivity extends AppCompatActivity
                 @Override
                 public void run() {
                     Group readGroup = (Group) getData("group");
-                    Message newMessage = (Message) getData("message");
+                    PokoMessage newMessage = (PokoMessage) getData("message");
                     if (readGroup == null || newMessage == null)
                         return;
 

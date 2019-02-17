@@ -63,7 +63,7 @@ public abstract class ListSorter<K, V> {
         return -1;
     }
 
-    /* Message add sorted and sort method */
+    /* PokoMessage add sorted and sort method */
     public boolean addItemSorted(V item) {
         if (list.size() == 0) {
             list.add(item);

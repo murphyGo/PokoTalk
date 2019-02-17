@@ -6,7 +6,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.event.Event;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
@@ -123,8 +123,8 @@ public class PokoParser {
         return result;
     }
 
-    public static Message parseMessage(JSONObject jsonObject) throws JSONException, ParseException {
-        Message result = new Message();
+    public static PokoMessage parseMessage(JSONObject jsonObject) throws JSONException, ParseException {
+        PokoMessage result = new PokoMessage();
         DataCollection collection = DataCollection.getInstance();
         ContactList contactList = collection.getContactList();
         PendingContactList invitedList = collection.getInvitedContactList();
@@ -137,7 +137,7 @@ public class PokoParser {
                 parseMessageImportanceLevel(jsonObject.getInt("importance")));
         result.setNbNotReadUser(jsonObject.getInt("nbread"));
         result.setDate(parseDateString(jsonObject.getString("date")));
-        result.setMessageType(Message.MESSAGE);
+        result.setMessageType(PokoMessage.MESSAGE);
         int userId = jsonObject.getInt("userId");
         User writer;
 
@@ -172,11 +172,11 @@ public class PokoParser {
     public static int parseMessageImportanceLevel(int level) throws ParseException {
         switch (level) {
             case 0:
-                return Message.NORMAL;
+                return PokoMessage.NORMAL;
             case 1:
-                return Message.IMPORTANT;
+                return PokoMessage.IMPORTANT;
             case 2:
-                return Message.VERY_IMPORTANT;
+                return PokoMessage.VERY_IMPORTANT;
             default:
                 throw new ParseException("Unknown importance level", 1);
         }

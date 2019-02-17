@@ -4,11 +4,11 @@ import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.murphy.pokotalk.data.group.Message;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.view.MessageItem;
 
-public class MessageListAdapter extends PokoListAdapter<Message> {
+public class MessageListAdapter extends PokoListAdapter<PokoMessage> {
     public MessageListAdapter(Context context) {
         super(context);
         setPokoList(new MessageList());
@@ -21,7 +21,7 @@ public class MessageListAdapter extends PokoListAdapter<Message> {
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
-        Message message = items.get(position);
+        PokoMessage message = items.get(position);
         MessageItem item;
         if (convertView == null) {
             item = new MessageItem(context);
@@ -35,7 +35,7 @@ public class MessageListAdapter extends PokoListAdapter<Message> {
     }
 
     @Override
-    public Message getItemFromView(View view) {
+    public PokoMessage getItemFromView(View view) {
         return ((MessageItem) view).getMessage();
     }
 }

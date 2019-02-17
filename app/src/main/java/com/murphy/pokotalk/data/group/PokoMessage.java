@@ -6,7 +6,7 @@ import com.murphy.pokotalk.data.user.User;
 
 import java.util.Calendar;
 
-public class Message extends Item {
+public class PokoMessage extends Item {
     private int messageId;
     private int sendId;
     private User writer;
@@ -17,22 +17,22 @@ public class Message extends Item {
     private int nbNotReadUser;    // number of users has not read this message
     private boolean acked;        // the user acked this message?
 
-    /* Message type constants */
+    /* PokoMessage type constants */
     public static final int MESSAGE = 0;
     public static final int IMAGE = 1;
     public static final int FILESHARE = 2;
 
-    /* Message importance level */
+    /* PokoMessage importance level */
     public static final int NORMAL = 0;
     public static final int IMPORTANT = 1;
     public static final int VERY_IMPORTANT = 2;
 
-    public Message() {
+    public PokoMessage() {
         setAcked(false);
     }
 
     public void update(Item item) {
-        Message message = (Message) item;
+        PokoMessage message = (PokoMessage) item;
         setContent(message.getContent());
         setDate(message.getDate());
         setMessageType(message.getMessageType());

@@ -11,9 +11,10 @@ public class Constants {
 
     /* Location for saved session and application data */
     public static final String rootDirectory = "PokoTalk";   // Root directory
-    public static final String sessionFile = "session.dat"; // Session info
+    public static final String sessionFile = "session.dat";  // Session info
     public static final String contactFile = "contact.dat";
-    public static final String invitedPendngContactFile = "invited.dat";
+    public static final String contactGroupFile = "contactGroup.dat";
+    public static final String invitedPendingContactFile = "invited.dat";
     public static final String invitingPendingContactFile = "inviting.dat";
     public static final String strangerFile = "stranger.dat";
     public static final String groupFile = "group.dat";

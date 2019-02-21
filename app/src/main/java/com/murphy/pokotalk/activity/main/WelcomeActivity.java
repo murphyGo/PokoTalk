@@ -126,6 +126,7 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
         fileManager.saveContactList();
         fileManager.savePendingContactList();
         fileManager.saveStrangerList();
+        fileManager.saveContactGroupRelations();
         fileManager.saveGroupList();
         fileManager.saveMessages();
         Log.v("POKO", "SAVE DATA END");

@@ -27,19 +27,19 @@ public class Session {
     }
 
     /* Returns true if the user has logined */
-    public boolean hasLogined() {
+    public synchronized boolean hasLogined() {
         return logined;
     }
 
-    public void setLogined() {
+    public synchronized void setLogined() {
         logined = true;
     }
 
-    public void setLogouted() {
+    public synchronized void setLogouted() {
         logined = false;
     }
 
-    public boolean sessionIdExists() {
+    public synchronized boolean sessionIdExists() {
         return sessionId != null;
     }
 

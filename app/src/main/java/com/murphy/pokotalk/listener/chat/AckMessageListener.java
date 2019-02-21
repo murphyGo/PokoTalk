@@ -35,7 +35,7 @@ public class AckMessageListener extends PokoServer.PokoListener {
 
             /* Mark messages that ack has been done */
             MessageList messageList = group.getMessageList();
-            messageList.ackMessages(fromId, toId, false, true);
+            messageList.ackMessages(fromId, toId, false, true, null);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "bad ack message json data");
         }

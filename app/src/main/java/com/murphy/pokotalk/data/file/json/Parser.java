@@ -5,6 +5,7 @@ import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.Stranger;
 import com.murphy.pokotalk.data.user.User;
@@ -71,6 +72,15 @@ public class Parser {
         user.setLastSeen(epochInMillsToCalendar(userJson.getLong("lastSeen")));
 
         return user;
+    }
+
+    public static ContactList.ContactGroupRelation parseContactGroupRelation(JSONObject jsonObject)
+        throws JSONException {
+        ContactList.ContactGroupRelation relation = new ContactList.ContactGroupRelation();
+        relation.setContactUserId(jsonObject.getInt("contactUserId"));
+        relation.setGroupId(jsonObject.getInt("groupId"));
+
+        return relation;
     }
 
     /** NOTE: Before parsing group and message, all the user must be parsed and

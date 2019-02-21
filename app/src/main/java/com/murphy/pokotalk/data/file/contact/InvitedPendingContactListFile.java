@@ -7,7 +7,7 @@ import com.murphy.pokotalk.data.user.PendingContactList;
 public class InvitedPendingContactListFile extends PendingContactListFile{
     @Override
     public String getFileName() {
-        return Constants.invitedPendngContactFile;
+        return Constants.invitedPendingContactFile;
     }
 
     @Override

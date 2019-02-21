@@ -117,6 +117,7 @@ public class PokoTalkService extends Service {
         fileManager.loadContactList();
         fileManager.loadPendingContactList();
         fileManager.loadStragerList();
+        fileManager.loadContactGroupRelations();
         fileManager.loadGroupList();
         //TODO: Only load last messages first.
         fileManager.loadMessages();
@@ -214,6 +215,7 @@ public class PokoTalkService extends Service {
             }
         }
         this.sessionLoaded = sessionLoaded;
+        waitingRequests.clear();
     }
 
     private void sendNotifyWhenLoaded(Messenger messenger) throws RemoteException {
@@ -269,9 +271,9 @@ public class PokoTalkService extends Service {
         @Override
         public void onSuccess(Status status, Object... args) {
             Group group = (Group) getData("group");
-            Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
             PokoMessage message = (PokoMessage) getData("message");
             if (group != null && message != null && !appStarted) {
+                Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId()); 
                 sendNotificationForMessage(group, message);
             }
         }

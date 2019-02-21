@@ -4,6 +4,7 @@ import android.os.Environment;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.file.contact.ContactGroupFile;
 import com.murphy.pokotalk.data.file.contact.ContactListFile;
 import com.murphy.pokotalk.data.file.contact.InvitedPendingContactListFile;
 import com.murphy.pokotalk.data.file.contact.InvitingPendingContactListFile;
@@ -28,6 +29,7 @@ public class FileManager {
     protected InvitedPendingContactListFile invitedFile;
     protected InvitingPendingContactListFile invitingFile;
     protected StrangerFile strangerFile;
+    protected ContactGroupFile contactGroupFile;
     protected GroupListFile groupListFile;
 
     public FileManager() {
@@ -36,6 +38,7 @@ public class FileManager {
         invitedFile = new InvitedPendingContactListFile();
         invitingFile = new InvitingPendingContactListFile();
         strangerFile = new StrangerFile();
+        contactGroupFile = new ContactGroupFile();
         groupListFile = new GroupListFile();
     }
 
@@ -82,6 +85,10 @@ public class FileManager {
         return readAllFromFile(strangerFile);
     }
 
+    public boolean loadContactGroupRelations() {
+        return readAllFromFile(contactGroupFile);
+    }
+
     public boolean loadGroupList() {
         return readAllFromFile(groupListFile);
     }
@@ -115,6 +122,10 @@ public class FileManager {
 
     public boolean saveStrangerList() {
         return saveToFile(strangerFile);
+    }
+
+    public boolean saveContactGroupRelations() {
+        return saveToFile(contactGroupFile);
     }
 
     public boolean saveGroupList() {

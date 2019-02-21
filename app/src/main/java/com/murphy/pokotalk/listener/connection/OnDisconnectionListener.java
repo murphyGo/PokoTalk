@@ -13,7 +13,8 @@ public class OnDisconnectionListener extends PokoServer.SocketEventListener {
 
     @Override
     public void call(Status status, Object... args) {
-        /* Logout user */
+        PokoServer.getInstance(null).setConnected(false);
+
         Session session = Session.getInstance();
         if (session.hasLogined()) {
             session.setLogouted();

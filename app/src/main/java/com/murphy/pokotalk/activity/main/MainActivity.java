@@ -94,14 +94,29 @@ public class MainActivity extends AppCompatActivity
         navigationMenu = (BottomNavigationView) findViewById(R.id.mainNavigation);
         navigationMenu.setOnNavigationItemSelectedListener(this);
 
+        /* Get server */
+        server = PokoServer.getInstance(this);
+
         /* If application has no session id to login, show login activity */
         session = Session.getInstance();
         if (!session.sessionIdExists()) {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, RequestCode.LOGIN.value);
+        } else if (session.hasLogined()) {
+            server.sendGetContactList();
+            server.sendGetGroupList();
         }
 
-        server = PokoServer.getInstance(this);
+        /* Create adapters */
+        ContactList contactList = collection.getContactList();
+        contactListAdapter = new ContactListAdapter(getApplicationContext());
+        contactListAdapter.setViewCreationCallback(contactCreationCallback);
+        contactListAdapter.getPokoList().copyFromPokoList(contactList);
+
+        GroupList groupList = collection.getGroupList();
+        groupListAdapter = new GroupListAdapter(getApplicationContext());
+        groupListAdapter.setViewCreationCallback(groupCreationCallback);
+        groupListAdapter.getPokoList().copyFromPokoList(groupList);
 
         /* Attach view pager callbacks */
         pagerAdapter.enrollItemCallback(R.layout.contact_list_layout, contactListCreationCallback);
@@ -211,17 +226,11 @@ public class MainActivity extends AppCompatActivity
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView contactListLayout = view.findViewById(R.id.contactList);
-            ContactList contactList = collection.getContactList();
-            contactListAdapter = new ContactListAdapter(getApplicationContext());
-            contactListAdapter.setViewCreationCallback(contactCreationCallback);
-            contactListAdapter.getPokoList().copyFromPokoList(contactList);
             contactListLayout.setAdapter(contactListAdapter);
 
             /* Add button listeners */
             Button contactAddButton = view.findViewById(R.id.contactAddButton);
             contactAddButton.setOnClickListener(contactAddButtonClickListener);
-
-            server.sendGetContactList();
         }
     };
 
@@ -231,17 +240,11 @@ public class MainActivity extends AppCompatActivity
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView groupListLayout = view.findViewById(R.id.groupList);
-            GroupList groupList = collection.getGroupList();
-            groupListAdapter = new GroupListAdapter(getApplicationContext());
-            groupListAdapter.setViewCreationCallback(groupCreationCallback);
-            groupListAdapter.getPokoList().copyFromPokoList(groupList);
             groupListLayout.setAdapter(groupListAdapter);
 
             /* Add button listeners */
             Button groupAddButton = view.findViewById(R.id.groupAddButton);
             groupAddButton.setOnClickListener(groupAddButtonClickListener);
-
-            server.sendGetGroupList();
         }
     };
 

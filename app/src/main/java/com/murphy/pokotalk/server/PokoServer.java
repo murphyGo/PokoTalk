@@ -45,12 +45,13 @@ import java.util.List;
 import java.util.Map;
 
 public class PokoServer extends ServerSocket {
-    private static PokoServer pokoServer = null;
-    public boolean connected;
+    protected static PokoServer pokoServer = null;
+    protected boolean connecting;
+    protected boolean connected;
 
     public PokoServer() {
         super(Constants.serverURL);
-        connected = false;
+        connecting = false;
     }
 
     /* There is only one connection so we use singleton design
@@ -60,11 +61,11 @@ public class PokoServer extends ServerSocket {
             if (pokoServer == null) {
                 pokoServer = new PokoServer();
             }
-            if (!pokoServer.connected && context != null) {
+            if (!pokoServer.connecting && context != null) {
                 pokoServer.createSocket(context);
                 pokoServer.enrollOnMessageHandlers();
                 pokoServer.connect();
-                pokoServer.connected = true;
+                pokoServer.connecting = true;
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -344,5 +345,14 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.newMessageName, new NewMessageListener());
         mSocket.on(Constants.messageAckName, new MessageAckListener());
         mSocket.on(Constants.ackMessageName, new AckMessageListener());
+    }
+
+    /* Getter and Setters */
+    public synchronized boolean isConnected() {
+        return connected;
+    }
+
+    public synchronized void setConnected(boolean connected) {
+        this.connected = connected;
     }
 }

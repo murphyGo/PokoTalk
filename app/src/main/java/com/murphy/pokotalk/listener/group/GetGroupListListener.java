@@ -6,13 +6,17 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.server.parser.PokoParser;
+import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.server.parser.PokoParser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.text.ParseException;
 
 public class GetGroupListListener extends PokoServer.PokoListener {
     @Override
@@ -29,12 +33,25 @@ public class GetGroupListListener extends PokoServer.PokoListener {
             JSONArray groups = data.getJSONArray("groups");
             for (int i = 0; i < groups.length(); i++) {
                 JSONObject jsonObject = groups.getJSONObject(i);
+                /* Parse group */
                 Group group = PokoParser.parseGroup(jsonObject);
                 list.updateItem(group);
+
+                /* Parse last message */
+                if (jsonObject.has("lastMessage")) {
+                    JSONObject jsonLastMessage = jsonObject.getJSONObject("lastMessage");
+                    PokoMessage lastMessage = PokoParser.parseMessage(jsonLastMessage);
+                    group = list.getItemByKey(group.getGroupId());
+                    MessageList messageList = group.getMessageList();
+                    messageList.updateItem(lastMessage);
+                }
             }
         } catch (JSONException e) {
             e.printStackTrace();
             Log.e("POKO ERROR", "Bad group json data");
+        } catch (ParseException e) {
+            e.printStackTrace();
+            Log.e("POKO ERROR", "Bad last message data");
         } finally {
             list.endUpdateList();
         }

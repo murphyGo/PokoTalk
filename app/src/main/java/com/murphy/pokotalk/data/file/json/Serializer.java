@@ -4,6 +4,7 @@ import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
@@ -56,6 +57,15 @@ public class Serializer {
         jsonUser.put("picture", user.getPicture());
 
         return jsonUser;
+    }
+
+    public static JSONObject makeContactGroupRelationJSON(ContactList.ContactGroupRelation relation)
+        throws JSONException {
+        JSONObject jsonRelation = new JSONObject();
+        jsonRelation.put("contactUserId", relation.getContactUserId());
+        jsonRelation.put("groupId", relation.getGroupId());
+
+        return jsonRelation;
     }
 
     public static JSONObject makeGroupJSON(Group group) throws JSONException {

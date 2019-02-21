@@ -7,6 +7,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -27,6 +28,7 @@ public class MessageAckListener extends PokoServer.PokoListener {
         try {
             JSONObject jsonMessage = data.getJSONObject("message");
             int groupId = jsonMessage.getInt("groupId");
+            int userId =  jsonMessage.getInt("userId");
             int fromId = jsonMessage.getInt("ackStart");
             int toId = jsonMessage.getInt("ackEnd");
 
@@ -36,9 +38,15 @@ public class MessageAckListener extends PokoServer.PokoListener {
                 return;
             }
 
+            User user = group.getMembers().getItemByKey(userId);
+            if (user == null) {
+                Log.e("POKO ERROR", "Can't ack message since there is no such user.");
+                return;
+            }
+
             /* Decrement nbNotReadUser of acked messages */
             MessageList messageList = group.getMessageList();
-            messageList.ackMessages(fromId, toId, true,false);
+            messageList.ackMessages(fromId, toId, true,false, user);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad message ack json data");
         }

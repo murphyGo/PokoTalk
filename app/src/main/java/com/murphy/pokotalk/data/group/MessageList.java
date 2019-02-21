@@ -2,6 +2,7 @@ package com.murphy.pokotalk.data.group;
 
 import com.murphy.pokotalk.data.ListSorter;
 import com.murphy.pokotalk.data.SortingList;
+import com.murphy.pokotalk.data.user.User;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -94,7 +95,8 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
     }
 
     /* Acknowledges message method from fromId to toId inclusive. */
-    public void ackMessages(int fromId, int toId, boolean decrement, boolean markAcked) {
+    public void ackMessages(int fromId, int toId, boolean decrement, boolean markAcked,
+                            User ackUser) {
         if (toId < fromId)
             return;
 
@@ -130,18 +132,20 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
         }
 
         /* Ack starts from toId back to fromId */
-        ackFromBackToFront(fromId, toIndex, decrement, markAcked);
+        ackFromBackToFront(fromId, toIndex, decrement, markAcked, ackUser);
     }
 
-    private void ackFromBackToFront(int fromId, int toIndex, boolean decrement, boolean markAcked) {
+    private void ackFromBackToFront(int fromId, int toIndex, boolean decrement, boolean markAcked,
+                                    User ackUser) {
         /* When message with start id exists */
         int curIndex = toIndex;
         do {
             PokoMessage curMessage = arrayList.get(curIndex);
             if (curMessage == null || curMessage.getMessageId() < fromId)
                 break;
-            if (decrement)
+            if (decrement && !ackUser.equals(curMessage.getWriter())) {
                 curMessage.decrementNbNotReadUser();
+            }
             if (markAcked && !curMessage.isAcked()) {
                 curMessage.setAcked(true);
                 unackedMessages.remove(curMessage);

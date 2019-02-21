@@ -30,8 +30,8 @@ import com.murphy.pokotalk.adapter.MessageListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.ActivityCallback;
@@ -140,7 +140,7 @@ public class ChatActivity extends AppCompatActivity
         messageListAdapter = new MessageListAdapter(this);
         messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
         messageListView.setAdapter(messageListAdapter);
-        messageListView.postScrollToBottom();
+        messageListView.setKeepVerticalPosition(true);
 
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
@@ -172,10 +172,45 @@ public class ChatActivity extends AppCompatActivity
         super.onDestroy();
     }
 
+    /* Overriding methods */
     @Override
     public void onBackPressed() {
-        closeChatting();
-        super.onBackPressed();
+        /* if drawer is opened, close drawer */
+        if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
+            drawerLayout.closeDrawer(Gravity.RIGHT);
+        } else {
+            closeChatting();
+            super.onBackPressed();
+        }
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        if (item != null && item.getItemId() == android.R.id.home) {
+            if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
+                drawerLayout.closeDrawer(Gravity.RIGHT);
+            }
+            else {
+                drawerLayout.openDrawer(Gravity.RIGHT);
+            }
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
+        }
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        if (slideMenuToggle != null)
+            slideMenuToggle.syncState();
+        super.onPostCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        if (slideMenuToggle != null)
+            slideMenuToggle.onConfigurationChanged(newConfig);
+        super.onConfigurationChanged(newConfig);
     }
 
     private void openChatting() {
@@ -229,33 +264,6 @@ public class ChatActivity extends AppCompatActivity
         finish();
     }
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item != null && item.getItemId() == android.R.id.home) {
-            if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
-                drawerLayout.closeDrawer(Gravity.RIGHT);
-            }
-            else {
-                drawerLayout.openDrawer(Gravity.RIGHT);
-            }
-        }
-
-        return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        if (slideMenuToggle != null)
-            slideMenuToggle.syncState();
-    }
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        if (slideMenuToggle != null)
-            slideMenuToggle.onConfigurationChanged(newConfig);
-    }
 
     private PokoMessage createSentMessage(int sendId, String content, @Nullable Integer importanceLevel) {
         PokoMessage message = new PokoMessage();
@@ -343,7 +351,7 @@ public class ChatActivity extends AppCompatActivity
                         /* Ack if it is a new message */
                         int messageId = newMessage.getMessageId();
                         if (!newMessage.isAcked() && newMessage.getNbNotReadUser() > 0
-                                && session.getUser() != newMessage.getWriter()) {
+                                && !newMessage.isMyMessage(session)) {
                             server.sendAckMessage(group.getGroupId(), messageId, messageId);
                         }
 

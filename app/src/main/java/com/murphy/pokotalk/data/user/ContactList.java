@@ -2,6 +2,7 @@ package com.murphy.pokotalk.data.user;
 
 import com.murphy.pokotalk.data.ItemList;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ContactList extends ItemList<Integer, Contact> {
@@ -35,6 +36,10 @@ public class ContactList extends ItemList<Integer, Contact> {
         return contactChatMapGroupId.get(groupId);
     }
 
+    public ArrayList<ContactGroupRelation> getContactGroupRelations() {
+        return new ArrayList<>(contactChatMapGroupId.values());
+    }
+
     public ContactGroupRelation removeContactGroupRelationByUserId(int contactUserId) {
         ContactGroupRelation relation = contactChatMapUserId.remove(contactUserId);
         if (relation == null)
@@ -51,7 +56,7 @@ public class ContactList extends ItemList<Integer, Contact> {
         return relation;
     }
 
-    public class ContactGroupRelation {
+    public static class ContactGroupRelation {
         protected int contactUserId;
         protected int groupId;
 

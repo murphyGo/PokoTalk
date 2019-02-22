@@ -11,6 +11,7 @@ import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.listener.chat.AckMessageListener;
+import com.murphy.pokotalk.listener.chat.GetMemberJoinHistory;
 import com.murphy.pokotalk.listener.chat.MessageAckListener;
 import com.murphy.pokotalk.listener.chat.NewMessageListener;
 import com.murphy.pokotalk.listener.chat.ReadMessageListener;
@@ -301,6 +302,17 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendGetMemberJoinHistory(int groupId, int messageId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("messageId", messageId);
+            mSocket.emit(Constants.getMemberJoinHistory, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
@@ -345,6 +357,7 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.newMessageName, new NewMessageListener());
         mSocket.on(Constants.messageAckName, new MessageAckListener());
         mSocket.on(Constants.ackMessageName, new AckMessageListener());
+        mSocket.on(Constants.getMemberJoinHistory, new GetMemberJoinHistory());
     }
 
     /* Getter and Setters */

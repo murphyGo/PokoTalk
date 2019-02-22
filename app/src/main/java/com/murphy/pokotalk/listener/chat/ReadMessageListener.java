@@ -50,6 +50,12 @@ public class ReadMessageListener extends PokoServer.PokoListener {
                 PokoMessage message = PokoParser.parseMessage(jsonMessage);
                 messageList.updateItem(message);
                 readMessages.add(messageList.getItemByKey(messageList.getKey(message)));
+                message = messageList.getItemByKey(messageList.getKey(message));
+
+                /* If the message is history, send get history */
+                if (message.getMessageType() == PokoMessage.MEMBER_JOIN) {
+                    PokoServer.getInstance(null).sendGetMemberJoinHistory(groupId, message.getMessageId());
+                }
             }
 
             messageList.sortItemsByKey();

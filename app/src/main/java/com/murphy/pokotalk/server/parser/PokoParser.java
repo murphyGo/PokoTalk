@@ -137,7 +137,7 @@ public class PokoParser {
                 parseMessageImportanceLevel(jsonObject.getInt("importance")));
         result.setNbNotReadUser(jsonObject.getInt("nbread"));
         result.setDate(parseDateString(jsonObject.getString("date")));
-        result.setMessageType(PokoMessage.MESSAGE);
+        result.setMessageType(jsonObject.getInt("messageType"));
         int userId = jsonObject.getInt("userId");
         User writer;
 

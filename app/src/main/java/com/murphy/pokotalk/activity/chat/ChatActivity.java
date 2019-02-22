@@ -150,6 +150,7 @@ public class ChatActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.attachActivityCallback(Constants.readMessageName, readMessageListener);
         server.attachActivityCallback(Constants.newMessageName, addMessageListener);
+        server.attachActivityCallback(Constants.getMemberJoinHistory, refreshMessageListener);
         server.attachActivityCallback(Constants.messageAckName, messageAckListener);
         server.attachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.attachActivityCallback(Constants.membersExitName, memberExitListener);
@@ -164,6 +165,7 @@ public class ChatActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
         server.detachActivityCallback(Constants.newMessageName, addMessageListener);
+        server.detachActivityCallback(Constants.getMemberJoinHistory, refreshMessageListener);
         server.detachActivityCallback(Constants.messageAckName, messageAckListener);
         server.detachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
@@ -325,6 +327,24 @@ public class ChatActivity extends AppCompatActivity
                         messageListAdapter.notifyDataSetChanged();
                         messageListView.postScrollToBottom();
                     }
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback refreshMessageListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            /* Refresh message list */
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    messageListAdapter.notifyDataSetChanged();
                 }
             });
         }

@@ -53,6 +53,11 @@ public class NewMessageListener extends PokoServer.PokoListener {
             }
             collection.releaseGroupSemaphore();
 
+            /* If the message is history, send get history */
+            if (message.getMessageType() == PokoMessage.MEMBER_JOIN) {
+                PokoServer.getInstance(null).sendGetMemberJoinHistory(groupId, message.getMessageId());
+            }
+
             Log.v("POKO", "NEW MESSAGE GROUP ID " + group.getGroupId());
             putData("group", group);
             putData("message", messageList.getItemByKey(message.getMessageId()));

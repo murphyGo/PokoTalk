@@ -13,14 +13,17 @@ public class PokoMessage extends Item {
     private int messageType;
     private int importanceLevel;
     private String content;
+    private String specialContent;
     private Calendar date;
     private int nbNotReadUser;    // number of users has not read this message
     private boolean acked;        // the user acked this message?
 
     /* PokoMessage type constants */
-    public static final int MESSAGE = 0;
-    public static final int IMAGE = 1;
-    public static final int FILESHARE = 2;
+    public static final int TEXT_MESSAGE = 0;
+    public static final int MEMBER_JOIN = 1;
+    public static final int MEMBER_EXIT = 2;
+    public static final int IMAGE = 3;
+    public static final int FILESHARE = 4;
 
     /* PokoMessage importance level */
     public static final int NORMAL = 0;
@@ -119,5 +122,13 @@ public class PokoMessage extends Item {
 
     public boolean isMyMessage(Session session) {
         return session.getUser().getUserId() == writer.getUserId();
+    }
+
+    public String getSpecialContent() {
+        return specialContent;
+    }
+
+    public void setSpecialContent(String specialContent) {
+        this.specialContent = specialContent;
     }
 }

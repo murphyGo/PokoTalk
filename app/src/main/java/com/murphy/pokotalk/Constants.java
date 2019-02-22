@@ -70,6 +70,7 @@ public class Constants {
     public static final String leaveChatName = "leaveChat";
     public static final String newMessageName = "newMessage";
     public static final String messageAckName = "messageAck";
+    public static final String getMemberJoinHistory = "getMemberJoinHistory";
 
     /* Event event names */
     public static final String getEventListName = "getEventList";

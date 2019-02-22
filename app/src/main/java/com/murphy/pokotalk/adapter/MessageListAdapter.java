@@ -8,10 +8,11 @@ import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.view.ListViewDetectable;
 import com.murphy.pokotalk.view.MessageItem;
+import com.murphy.pokotalk.view.SpecialMessageItem;
+import com.murphy.pokotalk.view.TextMessageItem;
 
 public class MessageListAdapter extends PokoListAdapter<PokoMessage> {
     private boolean bottomAtFirst = true;
-    private ListViewDetectable messageListView;
 
     public MessageListAdapter(Context context) {
         super(context);
@@ -26,12 +27,43 @@ public class MessageListAdapter extends PokoListAdapter<PokoMessage> {
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
         PokoMessage message = items.get(position);
-        MessageItem item;
-        if (convertView == null) {
-            item = new MessageItem(context);
+        MessageItem item = null;
+        if (convertView != null) {
+            switch (message.getMessageType()) {
+                case PokoMessage.TEXT_MESSAGE: {
+                    if (convertView instanceof TextMessageItem) {
+                        item = (TextMessageItem) convertView;
+                    }
+                    break;
+                }
+                case PokoMessage.MEMBER_JOIN:
+                case PokoMessage.MEMBER_EXIT: {
+                    if (convertView instanceof SpecialMessageItem) {
+                        item = (SpecialMessageItem) convertView;
+                    }
+                    break;
+                }
+                default:{
+                    break;
+                }
+            }
+        }
+
+        if (item == null) {
+            switch (message.getMessageType()) {
+                case PokoMessage.TEXT_MESSAGE: {
+                    item = new TextMessageItem(context);
+                    break;
+                }
+                case PokoMessage.MEMBER_JOIN:
+                case PokoMessage.MEMBER_EXIT: {
+                    item = new SpecialMessageItem(context);
+                    break;
+                }
+                default:
+                    item = new SpecialMessageItem(context);
+            }
             item.inflate();
-        } else {
-            item = (MessageItem) convertView;
         }
         item.setMessage(message);
 
@@ -48,10 +80,6 @@ public class MessageListAdapter extends PokoListAdapter<PokoMessage> {
 
     @Override
     public PokoMessage getItemFromView(View view) {
-        return ((MessageItem) view).getMessage();
-    }
-
-    public void setMessageListView(ListViewDetectable messageListView) {
-        this.messageListView = messageListView;
+        return ((TextMessageItem) view).getMessage();
     }
 }

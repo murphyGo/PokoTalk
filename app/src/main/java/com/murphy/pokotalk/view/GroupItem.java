@@ -140,8 +140,24 @@ public class GroupItem extends FrameLayout {
             lastMessageView.setText("");
             lastMessageDateView.setText("");
         } else {
-            lastMessageView.setText(lastMessage.getContent());
-            lastMessageDateView.setText(getLastMessageDateString(lastMessage.getDate()));
+            switch(lastMessage.getMessageType()) {
+                case PokoMessage.TEXT_MESSAGE: {
+                    lastMessageView.setText(lastMessage.getContent());
+                    lastMessageDateView.setText(getLastMessageDateString(lastMessage.getDate()));
+                    break;
+                }
+                case PokoMessage.MEMBER_JOIN:
+                case PokoMessage.MEMBER_EXIT: {
+                    lastMessageView.setText(lastMessage.getSpecialContent());
+                    lastMessageDateView.setText(getLastMessageDateString(lastMessage.getDate()));
+                    break;
+                }
+                default: {
+                    lastMessageView.setText(null);
+                    lastMessageDateView.setText(null);
+                    break;
+                }
+            }
         }
     }
 

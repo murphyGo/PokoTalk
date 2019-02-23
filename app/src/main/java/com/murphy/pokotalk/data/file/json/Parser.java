@@ -126,6 +126,7 @@ public class Parser {
         message.setDate(epochInMillsToCalendar(userJson.getLong("date")));
         message.setImportanceLevel(userJson.getInt("importanceLevel"));
         message.setContent(userJson.getString("content"));
+        message.setSpecialContent(userJson.getString("specialContent"));
         message.setNbNotReadUser(userJson.getInt("nbNotReadUser"));
         message.setAcked(userJson.getBoolean("acked"));
 

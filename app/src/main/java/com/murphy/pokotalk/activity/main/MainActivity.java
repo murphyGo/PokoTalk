@@ -138,6 +138,7 @@ public class MainActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.readMessageName, readMessageCallback);
         server.attachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
+        server.attachActivityCallback(Constants.getMemberJoinHistory, newMessageCallback);
         Log.v("POKO", "MainActivity starts, process id " + Process.myPid());
 
         /* Services */
@@ -168,6 +169,7 @@ public class MainActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.readMessageName, readMessageCallback);
         server.detachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
+        server.detachActivityCallback(Constants.getMemberJoinHistory, newMessageCallback);
 
         /* Send app closed message */
         try {

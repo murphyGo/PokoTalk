@@ -104,6 +104,7 @@ public class Serializer {
         jsonMessage.put("date", calendarToEpochInMills(message.getDate()));
         jsonMessage.put("importanceLevel", message.getImportanceLevel());
         jsonMessage.put("content", message.getContent());
+        jsonMessage.put("specialContent", message.getSpecialContent());
         jsonMessage.put("nbNotReadUser", message.getNbNotReadUser());
         jsonMessage.put("writer", makeMemberJSON(message.getWriter()));
         jsonMessage.put("acked", message.isAcked());

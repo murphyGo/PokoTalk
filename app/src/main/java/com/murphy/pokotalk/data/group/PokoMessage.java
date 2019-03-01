@@ -24,6 +24,7 @@ public class PokoMessage extends Item {
     public static final int MEMBER_EXIT = 2;
     public static final int IMAGE = 3;
     public static final int FILESHARE = 4;
+    public static final int APP_DATE_MESSAGE = 1000;
 
     /* PokoMessage importance level */
     public static final int NORMAL = 0;

@@ -7,9 +7,9 @@ import java.util.List;
 /** Sort, Insert, remove to/from ArrayList in a way that it maintains sorted */
 public abstract class ListSorter<K, V> {
     protected List<V> list;
-    public abstract K getKey(V item);
+    public abstract K getItemKey(V item);
     public abstract int compareKey(K key1, K key2);
-    public static final int INSERT_TRYIAL = 3;
+    public static final int INSERT_TRIAL = 3;
 
     public ListSorter(List<V> list) {
         this.list = list;
@@ -17,7 +17,7 @@ public abstract class ListSorter<K, V> {
 
     /** Finds appropriate add position that makes list sorted with binary search */
     public int findAddPositionWithBS(V item) {
-        K key = getKey(item);
+        K key = getItemKey(item);
         return findAddPositionWithBsByKey(key);
     }
 
@@ -28,7 +28,7 @@ public abstract class ListSorter<K, V> {
         while (start <= end) {
             curIndex = (start + end) / 2;
             V curItem = list.get(curIndex);
-            K curKey = getKey(curItem);
+            K curKey = getItemKey(curItem);
             int cmp = compareKey(curKey, key);
             if (cmp == 0) {
                 return curIndex;
@@ -46,14 +46,14 @@ public abstract class ListSorter<K, V> {
 
     /** Finds appropriate item position in array with binary search */
     public int findItemIndexWithBS(V item) {
-        K key = getKey(item);
+        K key = getItemKey(item);
         int size = list.size();
         int start = 0, end = size - 1;
-        int curIndex, properIndex = 0;
+        int curIndex;
         while (start <= end) {
             curIndex = (start + end) / 2;
             V curItem = list.get(curIndex);
-            K curKey = getKey(curItem);
+            K curKey = getItemKey(curItem);
             int cmp = compareKey(curKey, key);
             if (cmp == 0) {
                 return curIndex;
@@ -68,40 +68,40 @@ public abstract class ListSorter<K, V> {
     }
 
     /* PokoMessage add sorted and sort method */
-    public boolean addItemSorted(V item) {
+    public int addItemSorted(V item) {
         if (list.size() == 0) {
             list.add(item);
-            return true;
+            return 0;
         }
 
-        K itemKey = getKey(item);
+        K itemKey = getItemKey(item);
         /* It tries last INSERT_TRIAL items to find location.
         /* If it fails, it coverts to binary search. */
-        for (int i = 1; i <= INSERT_TRYIAL; i++) {
+        for (int i = 1; i <= INSERT_TRIAL; i++) {
             int index = list.size() - i;
             if (index < 0) {
                 list.add(0, item);
-                return true;
+                return 0;
             }
             V curItem = list.get(index);
-            if (compareKey(getKey(curItem), itemKey) < 0) {
+            if (compareKey(getItemKey(curItem), itemKey) < 0) {
                 list.add(index + 1, item);
-                return true;
+                return index + 1;
             }
         }
 
         int index = findAddPositionWithBS(item);
         list.add(index, item);
-        return true;
+        return index;
     }
 
     /**NOTE: Remove item, if items with same key exists, it is unpredictable */
-    public boolean removeItem(V item) {
+    public V removeItem(V item) {
         int index = findItemIndexWithBS(item);
         if (index < 0)
-            return false;
+            return null;
 
-        return list.remove(index) != null;
+        return list.remove(index);
     }
 
     public void sortList() {
@@ -112,7 +112,7 @@ public abstract class ListSorter<K, V> {
     class ItemComparator implements Comparator<V> {
         @Override
         public int compare(V item1, V item2) {
-            return compareKey(getKey(item1), getKey(item2));
+            return compareKey(getItemKey(item1), getItemKey(item2));
         }
     }
 

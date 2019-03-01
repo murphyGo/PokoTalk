@@ -19,5 +19,11 @@ public class OnDisconnectionListener extends PokoServer.SocketEventListener {
         if (session.hasLogined()) {
             session.setLogouted();
         }
+
+        /* Socket io will try to reconnect if we emit a message */
+        String sessionId = session.getSessionId();
+        if (session.sessionIdExists() && !session.hasLogined()) {
+            PokoServer.getInstance(null).sendSessionLogin(sessionId);
+        }
     }
 }

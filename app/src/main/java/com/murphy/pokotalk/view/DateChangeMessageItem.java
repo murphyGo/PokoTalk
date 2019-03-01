@@ -9,27 +9,26 @@ import android.widget.TextView;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.group.PokoMessage;
 
-public class SpecialMessageItem extends MessageItem {
+public class DateChangeMessageItem extends MessageItem {
     private String content;
     private TextView messageView;
 
-    public SpecialMessageItem(Context context) {
+    public DateChangeMessageItem(Context context) {
         super(context);
     }
 
     @Override
     public void inflate() {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.message_special_item, this, true);
-        messageView = view.findViewById(R.id.messageSpecial_Message);
+        View view = inflater.inflate(R.layout.message_day_border, this, true);
+        messageView = view.findViewById(R.id.dateText);
     }
 
     @Override
     public void setMessage(PokoMessage message) {
         this.message = message;
         switch(message.getMessageType()) {
-            case PokoMessage.MEMBER_JOIN:
-            case PokoMessage.MEMBER_EXIT:{
+            case PokoMessage.APP_DATE_MESSAGE: {
                 setContent(message.getSpecialContent());
                 break;
             }

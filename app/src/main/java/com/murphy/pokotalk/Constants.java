@@ -4,10 +4,16 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 public class Constants {
-    public static final String serverURL = "https://192.168.0.2:4000";    /* Server Address */
+    public static final String[] serverURLs = {"https://192.168.0.2",
+            "https://172.30.1.24"};
+    public static final int serverPort = 4000;
+    public static final String serverURL = serverURLs[1] + ":" + serverPort;    /* Server Address */
     public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     public static final Locale locale = Locale.KOREA;
     public static final TimeZone timeZone = TimeZone.getTimeZone("Asia/Seoul");
+
+    /* Chat constants */
+    public static final String chatDateChangeFormat = "yyyy년 M월 d일";
 
     /* Location for saved session and application data */
     public static final String rootDirectory = "PokoTalk";   // Root directory

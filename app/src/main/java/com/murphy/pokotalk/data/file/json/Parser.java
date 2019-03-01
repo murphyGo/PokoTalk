@@ -86,6 +86,7 @@ public class Parser {
     /** NOTE: Before parsing group and message, all the user must be parsed and
      * should be in user list */
     public static Group parseGroup(JSONObject jsonGroup) throws JSONException {
+        Contact user = Session.getInstance().getUser();
         Group group = new Group();
         int userId = Session.getInstance().getUser().getUserId();
         UserList memberList = group.getMembers();
@@ -105,12 +106,14 @@ public class Parser {
         for (int i = 0; i < jsonMembers.length(); i++) {
             JSONObject jsonMember = jsonMembers.getJSONObject(i);
             int memberUserId = jsonMember.getInt("userId");
-            if (memberUserId == userId) {
-                continue;
-            }
+
             User member = collection.getUserById(memberUserId);
             if (member == null) {
-                throw new JSONException("Can not find member");
+                if (user.getUserId() == memberUserId) {
+                    member = user;
+                } else {
+                    throw new JSONException("Can not find member");
+                }
             }
             memberList.updateItem(member);
         }
@@ -125,8 +128,16 @@ public class Parser {
         message.setMessageType(userJson.getInt("messageType"));
         message.setDate(epochInMillsToCalendar(userJson.getLong("date")));
         message.setImportanceLevel(userJson.getInt("importanceLevel"));
-        message.setContent(userJson.getString("content"));
-        message.setSpecialContent(userJson.getString("specialContent"));
+        try{
+            message.setContent(userJson.getString("content"));
+        } catch (JSONException e) {
+            message.setContent(null);
+        }
+        try{
+            message.setSpecialContent(userJson.getString("specialContent"));
+        } catch (JSONException e) {
+            message.setSpecialContent(null);
+        }
         message.setNbNotReadUser(userJson.getInt("nbNotReadUser"));
         message.setAcked(userJson.getBoolean("acked"));
 

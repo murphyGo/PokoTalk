@@ -31,6 +31,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
@@ -321,7 +322,7 @@ public class ChatActivity extends AppCompatActivity
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
                         for (PokoMessage message : messages) {
-                            MessageList adapterList = (MessageList) messageListAdapter.getPokoList();
+                            MessageListUI adapterList = (MessageListUI) messageListAdapter.getPokoList();
                             adapterList.updateItem(message);
                         }
                         messageListAdapter.notifyDataSetChanged();

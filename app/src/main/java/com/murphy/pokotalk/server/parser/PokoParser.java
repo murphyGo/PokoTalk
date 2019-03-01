@@ -132,12 +132,10 @@ public class PokoParser {
         StrangerList strangerList = collection.getStrangerList();
 
         result.setMessageId(jsonObject.getInt("messageId"));
-        result.setContent(jsonObject.getString("content"));
         result.setImportanceLevel(
                 parseMessageImportanceLevel(jsonObject.getInt("importance")));
         result.setNbNotReadUser(jsonObject.getInt("nbread"));
         result.setDate(parseDateString(jsonObject.getString("date")));
-        result.setMessageType(jsonObject.getInt("messageType"));
         int userId = jsonObject.getInt("userId");
         User writer;
 
@@ -165,8 +163,34 @@ public class PokoParser {
         }
 
         result.setWriter(writer);
+        parseMessageContent(result, jsonObject);
 
         return result;
+    }
+
+    /** parse message content from jsonObject and update given message
+     * precondition: writer of message must be set before calling this method */
+    public static PokoMessage parseMessageContent(PokoMessage message, JSONObject jsonObject)
+            throws JSONException {
+        message.setMessageType(jsonObject.getInt("messageType"));
+
+        switch (message.getMessageType()) {
+            case PokoMessage.TEXT_MESSAGE: {
+                message.setContent(jsonObject.getString("content"));
+                break;
+            }
+            case PokoMessage.MEMBER_EXIT: {
+                message.setSpecialContent(message.getWriter().getNickname() + "님이 방을 나가셨습니다.");
+                break;
+            }
+            default: {
+                message.setContent("알 수 없는 타입");
+                message.setSpecialContent("알 수 없는 타입");
+                break;
+            }
+        }
+
+        return message;
     }
 
     public static int parseMessageImportanceLevel(int level) throws ParseException {

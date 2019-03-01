@@ -149,6 +149,7 @@ public class TextMessageItem extends MessageItem {
 
     public String calendarToString(Calendar calendar) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm");
+        simpleDateFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm");
         simpleDateFormat.setTimeZone(Constants.timeZone);
         return simpleDateFormat.format(calendar.getTime());
     }

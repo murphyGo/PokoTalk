@@ -22,9 +22,9 @@ public abstract class SortingList<K, V extends Item> extends ItemList<K, V>{
         return true;
     }
 
-    protected void addHashMapAndArrayList(V v) {
+    protected int addHashMapAndArrayList(V v) {
         hashMap.put(getKey(v), v);
-        listSorter.addItemSorted(v);
+        return listSorter.addItemSorted(v);
     }
 
     public void moveItemToFront(V item) {
@@ -39,13 +39,6 @@ public abstract class SortingList<K, V extends Item> extends ItemList<K, V>{
                 listSorter.addItemSorted(item);
             }
         }
-    }
-
-    public void addItemSortedByKey(V item) {
-        if (item == null)
-            return;
-
-        listSorter.addItemSorted(item);
     }
 
     public void sortItemsByKey() {

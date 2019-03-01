@@ -32,11 +32,11 @@ public abstract class List<K, V extends Item> {
     }
 
     public V removeItemByKey(K k) {
-        V v = getItemByKey(k);
+        V v = hashMap.remove(k);
         if (v == null)
             return null;
 
-        arrayList.remove(hashMap.remove(k));
+        arrayList.remove(v);
         return v;
     }
 

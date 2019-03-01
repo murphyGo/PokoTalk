@@ -33,7 +33,7 @@ public class GroupListUI extends SortingList<Integer, Group> {
     public ListSorter getListSorter() {
         return new ListSorter<Calendar, Group>(getList()) {
             @Override
-            public Calendar getKey(Group item) {
+            public Calendar getItemKey(Group item) {
                 MessageList messageList = item.getMessageList();
                 PokoMessage lastMessage = messageList.getLastMessage();
                 if (lastMessage == null)
@@ -56,16 +56,17 @@ public class GroupListUI extends SortingList<Integer, Group> {
     }
 
     @Override
-    protected void addHashMapAndArrayList(Group group) {
+    protected int addHashMapAndArrayList(Group group) {
         ContactList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByGroupId(group.getGroupId());
         Log.v("ADD GROUP TO LIST", group.getGroupId() + " relation " +
                 (relation == null ? "null" : relation.toString()));
         if (relation != null && group.getMessageList().getLastMessage() == null) {
             contactChatGroupWithNoMessage.put(getKey(group), group);
+            return -1;
         } else {
-            super.addHashMapAndArrayList(group);
             Log.v("size of arraylist", arrayList.size() + "");
+            return super.addHashMapAndArrayList(group);
         }
     }
 

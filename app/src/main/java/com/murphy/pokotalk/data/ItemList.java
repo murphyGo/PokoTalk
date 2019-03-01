@@ -62,7 +62,10 @@ public abstract class ItemList<K, V extends Item> extends List<K, V> {
         }
 
         for (int i = 0; i < notUpdatedItems.size(); i++) {
-            removeItemByKey(getKey(notUpdatedItems.get(i)));
+            V item = notUpdatedItems.get(i);
+            if (!item.isSurviveOnListUpdate()) {
+                removeItemByKey(getKey(notUpdatedItems.get(i)));
+            }
         }
 
         updateListStarted = false;

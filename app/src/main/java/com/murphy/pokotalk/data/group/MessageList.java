@@ -27,8 +27,8 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
     public ListSorter getListSorter() {
         return new ListSorter<Integer, PokoMessage>(getList()) {
             @Override
-            public Integer getKey(PokoMessage item) {
-                return item.getMessageId();
+            public Integer getItemKey(PokoMessage item) {
+                return getKey(item);
             }
 
             @Override
@@ -57,10 +57,10 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
     }
 
     @Override
-    protected void addHashMapAndArrayList(PokoMessage message) {
+    protected int addHashMapAndArrayList(PokoMessage message) {
         if (!message.isAcked())
             unackedMessages.add(message);
-        super.addHashMapAndArrayList(message);
+        return super.addHashMapAndArrayList(message);
     }
 
     @Override

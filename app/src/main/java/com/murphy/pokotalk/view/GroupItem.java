@@ -27,7 +27,6 @@ public class GroupItem extends FrameLayout {
     private PokoMessage lastMessage;
     private int nbMembers;
     private int nbNewMessage;
-    private Calendar lastMessageDate;
     private Context context;
     private TextView groupNameView;
     private TextView lastMessageView;
@@ -161,11 +160,6 @@ public class GroupItem extends FrameLayout {
         }
     }
 
-    public void setLastMessageDate(Calendar lastMessageDate) {
-        this.lastMessageDate = lastMessageDate;
-        lastMessageDateView.setText(getLastMessageDateString(lastMessageDate));
-    }
-
     public String getGroupName() {
         return groupName;
     }
@@ -173,7 +167,6 @@ public class GroupItem extends FrameLayout {
     public String getAlias() {
         return alias;
     }
-
 
     public PokoMessage getLastMessage() {
         return lastMessage;
@@ -187,10 +180,6 @@ public class GroupItem extends FrameLayout {
 
     public int getNbNewMessage() {
         return nbNewMessage;
-    }
-
-    public Calendar getLastMessageDate() {
-        return lastMessageDate;
     }
 
     public Group getGroup() {

@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.file.contact;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoMultiItemsFile;
+import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.ContactList;
@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class ContactGroupFile extends PokoMultiItemsFile<ContactList.ContactGroupRelation> {
+public class ContactGroupFile extends PokoSequencialAccessFile<ContactList.ContactGroupRelation> {
     protected ContactList contactList;
     protected ArrayList<ContactList.ContactGroupRelation> contactGroupRelations;
 

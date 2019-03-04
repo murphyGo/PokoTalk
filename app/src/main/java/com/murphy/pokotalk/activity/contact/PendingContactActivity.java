@@ -13,6 +13,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.PendingContactListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.PendingContactList;
@@ -48,16 +49,27 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         invitingList = data.getInvitingContactList();
 
         /* Create and set adapters */
-        invitedListAdapter = new PendingContactListAdapter(this);
-        invitingListAdapter = new PendingContactListAdapter(this);
-        invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
-        invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
-        invitedListAdapter.getPokoList().copyFromPokoList(invitedList);
-        invitingListAdapter.getPokoList().copyFromPokoList(invitingList);
-        invitedListView.setAdapter(invitedListAdapter);
-        invitingListView.setAdapter(invitingListAdapter);
-        invitedListAdapter.setInvited(true);
-        invitingListAdapter.setInvited(false);
+        /* Create adapter and set to ListView */
+        try {
+            DataLock.getInstance().acquireWriteLock();
+
+            invitedListAdapter = new PendingContactListAdapter(this);
+            invitingListAdapter = new PendingContactListAdapter(this);
+            invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
+            invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
+            PendingContactList invitedListUI = (PendingContactList) invitedListAdapter.getPokoList();
+            PendingContactList invitingListUI = (PendingContactList) invitingListAdapter.getPokoList();
+            invitedListUI.copyFromPokoList(invitedList);
+            invitingListUI.copyFromPokoList(invitingList);
+            invitedListView.setAdapter(invitedListAdapter);
+            invitingListView.setAdapter(invitingListAdapter);
+            invitedListAdapter.setInvited(true);
+            invitingListAdapter.setInvited(false);
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         /* Get server and attach event callback */
         server = PokoServer.getInstance(this);

@@ -16,6 +16,7 @@ public class Constants {
     public static final String chatDateChangeFormat = "yyyy년 M월 d일";
 
     /* Location for saved session and application data */
+    public static final String fileEncoding = "UTF8";
     public static final String rootDirectory = "PokoTalk";   // Root directory
     public static final String sessionFile = "session.dat";  // Session info
     public static final String contactFile = "contact.dat";

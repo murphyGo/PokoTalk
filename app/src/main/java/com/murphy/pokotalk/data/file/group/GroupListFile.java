@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.file.group;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoMultiItemsFile;
+import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
@@ -13,7 +13,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class GroupListFile extends PokoMultiItemsFile<Group> {
+public class GroupListFile extends PokoSequencialAccessFile<Group> {
     protected GroupList groupList;
 
     public GroupListFile() {

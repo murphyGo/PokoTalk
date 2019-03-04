@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.file.contact;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoMultiItemsFile;
+import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.Stranger;
@@ -13,7 +13,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class StrangerFile extends PokoMultiItemsFile<Stranger> {
+public class StrangerFile extends PokoSequencialAccessFile<Stranger> {
     protected StrangerList strangerList;
 
     public StrangerFile() {

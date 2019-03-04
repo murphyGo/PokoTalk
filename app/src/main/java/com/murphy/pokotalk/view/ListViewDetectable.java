@@ -13,6 +13,7 @@ public class ListViewDetectable extends ListView {
     protected boolean keepVerticalPosition;
     protected boolean scrollDownAtFirst;
     protected boolean isFirstLoop;
+    protected ReachTopCallback reachTopCallback;
 
     public ListViewDetectable(Context context) {
         super(context);
@@ -40,6 +41,7 @@ public class ListViewDetectable extends ListView {
         keepVerticalPosition = false;
         scrollDownAtFirst = false;
         isFirstLoop = true;
+        reachTopCallback = null;
     }
 
     @Override
@@ -127,5 +129,17 @@ public class ListViewDetectable extends ListView {
         public ListViewDetectable getListView() {
             return ListViewDetectable.this;
         }
+    }
+
+    public ReachTopCallback getReachTopCallback() {
+        return reachTopCallback;
+    }
+
+    public void setReachTopCallback(ReachTopCallback reachTopCallback) {
+        this.reachTopCallback = reachTopCallback;
+    }
+
+    public abstract class ReachTopCallback implements Runnable {
+
     }
 }

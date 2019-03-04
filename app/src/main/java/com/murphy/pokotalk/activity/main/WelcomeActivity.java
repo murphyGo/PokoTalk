@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.service.PokoTalkService;
 
@@ -121,14 +122,23 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         /* Save application data */
         Log.v("POKO", "SAVE DATA");
-        FileManager fileManager = FileManager.getInstance();
-        fileManager.saveSession();
-        fileManager.saveContactList();
-        fileManager.savePendingContactList();
-        fileManager.saveStrangerList();
-        fileManager.saveContactGroupRelations();
-        fileManager.saveGroupList();
-        fileManager.saveMessages();
+        try {
+            DataLock.getInstance().acquireReadLock();
+
+            FileManager fileManager = FileManager.getInstance();
+            fileManager.saveSession();
+            fileManager.saveContactList();
+            fileManager.savePendingContactList();
+            fileManager.saveStrangerList();
+            fileManager.saveContactGroupRelations();
+            fileManager.saveGroupList();
+            fileManager.saveMessages();
+
+            DataLock.getInstance().releaseReadLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
         Log.v("POKO", "SAVE DATA END");
 
         finish();

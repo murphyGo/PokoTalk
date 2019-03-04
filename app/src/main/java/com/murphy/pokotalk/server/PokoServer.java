@@ -10,6 +10,7 @@ import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.listener.chat.AckMessageListener;
 import com.murphy.pokotalk.listener.chat.GetMemberJoinHistory;
 import com.murphy.pokotalk.listener.chat.MessageAckListener;
@@ -138,7 +139,10 @@ public class PokoServer extends ServerSocket {
                     return;
                 }
 
+
+                DataLock.getInstance().acquireWriteLock();
                 Log.v("SERVER DATA " + getEventName(), data.toString());
+                Log.v("HANDLING THREAD " + getEventName(), ""+ Thread.currentThread().getId());
                 /* Start application callback */
                 if (status.isSuccess()) {
                     callSuccess(status, args);
@@ -149,9 +153,12 @@ public class PokoServer extends ServerSocket {
                 /* Start callbacks given by activities */
                 PokoServer.getInstance(null).
                         startActivityCallbacks(getEventName(), status, this.data, args);
+                DataLock.getInstance().releaseWriteLock();
             } catch(JSONException e) {
                 Log.e("Poko", "Bad json status data");
                 return;
+            } catch (InterruptedException e) {
+                Log.e("Poko", "Lock wait interrupted");
             }
         }
 

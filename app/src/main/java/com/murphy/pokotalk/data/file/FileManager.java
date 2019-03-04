@@ -15,6 +15,8 @@ import com.murphy.pokotalk.data.file.session.SessionFile;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 
+import org.json.JSONException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -93,13 +95,21 @@ public class FileManager {
         return readAllFromFile(groupListFile);
     }
 
-    public boolean loadMessages() {
+    public boolean loadLastMessages() {
         GroupList groupList = DataCollection.getInstance().getGroupList();
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {
             MessageFile messageFile = new MessageFile(group);
-            readAllFromFile(messageFile);
+            try {
+                messageFile.openReader();
+                messageFile.readNextLatestMessages(1);
+                messageFile.closeReader();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
 
         return true;
@@ -145,7 +155,7 @@ public class FileManager {
         return true;
     }
 
-    protected boolean readFromFile(PokoFile file) {
+    protected boolean readFromFile(PokoSequencialAccessFile file) {
         try {
             file.openReader();
             file.read();
@@ -158,7 +168,7 @@ public class FileManager {
         return true;
     }
 
-    protected boolean readAllFromFile(PokoMultiItemsFile file) {
+    protected boolean readAllFromFile(PokoSequencialAccessFile file) {
         try {
             file.openReader();
             file.readAll();
@@ -171,7 +181,7 @@ public class FileManager {
         return true;
     }
 
-    protected boolean saveToFile(PokoFile file) {
+    protected boolean saveToFile(PokoSequencialAccessFile file) {
         try {
             file.openWriter();
             file.save();
@@ -183,5 +193,33 @@ public class FileManager {
         }
 
         return true;
+    }
+
+    public SessionFile getSessionFile() {
+        return sessionFile;
+    }
+
+    public ContactListFile getContactListFile() {
+        return contactListFile;
+    }
+
+    public InvitedPendingContactListFile getInvitedFile() {
+        return invitedFile;
+    }
+
+    public InvitingPendingContactListFile getInvitingFile() {
+        return invitingFile;
+    }
+
+    public StrangerFile getStrangerFile() {
+        return strangerFile;
+    }
+
+    public ContactGroupFile getContactGroupFile() {
+        return contactGroupFile;
+    }
+
+    public GroupListFile getGroupListFile() {
+        return groupListFile;
     }
 }

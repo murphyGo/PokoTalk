@@ -34,6 +34,7 @@ import com.murphy.pokotalk.adapter.GroupListAdapter;
 import com.murphy.pokotalk.adapter.MpagerAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
@@ -108,15 +109,33 @@ public class MainActivity extends AppCompatActivity
         }
 
         /* Create adapters */
-        ContactList contactList = collection.getContactList();
-        contactListAdapter = new ContactListAdapter(getApplicationContext());
-        contactListAdapter.setViewCreationCallback(contactCreationCallback);
-        contactListAdapter.getPokoList().copyFromPokoList(contactList);
+        try {
+            DataLock.getInstance().acquireWriteLock();
 
-        GroupList groupList = collection.getGroupList();
-        groupListAdapter = new GroupListAdapter(getApplicationContext());
-        groupListAdapter.setViewCreationCallback(groupCreationCallback);
-        groupListAdapter.getPokoList().copyFromPokoList(groupList);
+            ContactList contactList = collection.getContactList();
+            contactListAdapter = new ContactListAdapter(getApplicationContext());
+            contactListAdapter.setViewCreationCallback(contactCreationCallback);
+            ContactList contactListUI = (ContactList) contactListAdapter.getPokoList();
+            contactListUI.copyFromPokoList(contactList);
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            DataLock.getInstance().acquireWriteLock();
+
+            GroupList groupList = collection.getGroupList();
+            groupListAdapter = new GroupListAdapter(getApplicationContext());
+            groupListAdapter.setViewCreationCallback(groupCreationCallback);
+            GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+            groupListUI.copyFromPokoList(groupList);
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         /* Attach view pager callbacks */
         pagerAdapter.enrollItemCallback(R.layout.contact_list_layout, contactListCreationCallback);
@@ -358,6 +377,7 @@ public class MainActivity extends AppCompatActivity
             Group group = collection.getGroupList().getItemByKey(groupId);
             if (group == null)
                 return;
+
             if (groupListAdapter != null) {
                 groupListAdapter.notifyDataSetChanged();
             }
@@ -412,7 +432,8 @@ public class MainActivity extends AppCompatActivity
                     if (contactListAdapter != null) {
                         Contact contact = (Contact) getData("contact");
                         if (contact != null) {
-                            contactListAdapter.getPokoList().updateItem(contact);
+                            ContactList contactList = (ContactList) contactListAdapter.getPokoList();
+                            contactList.updateItem(contact);
                             contactListAdapter.notifyDataSetChanged();
                         }
                     }
@@ -436,13 +457,14 @@ public class MainActivity extends AppCompatActivity
                     if (contactListAdapter != null) {
                         Integer userId = (Integer) getData("userId");
                         if (userId != null) {
-                            contactListAdapter.getPokoList().removeItemByKey(userId);
+                            ContactList contactList = (ContactList) contactListAdapter.getPokoList();
+                            contactList.removeItemByKey(userId);
                         }
                         PendingContact pendingContact =
                                 (PendingContact) getData("pendingContact");
                         if (pendingContact != null) {
-                            contactListAdapter.getPokoList().
-                                    removeItemByKey(pendingContact.getUserId());
+                            ContactList contactList = (ContactList) contactListAdapter.getPokoList();
+                            contactList.removeItemByKey(pendingContact.getUserId());
                         }
 
                         contactListAdapter.notifyDataSetChanged();
@@ -465,10 +487,10 @@ public class MainActivity extends AppCompatActivity
                 public void run() {
                     Contact contact = (Contact) getData("contact");
                     Group group = (Group) getData("group");
-                    ContactList contactList = collection.getContactList();
                     if (group != null) {
                         if (groupListAdapter != null) {
-                            groupListAdapter.getPokoList().updateItem(group);
+                            GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                            groupListUI.updateItem(group);
                             groupListAdapter.notifyDataSetChanged();
                         }
                         /* Start group chat with contact */
@@ -497,6 +519,7 @@ public class MainActivity extends AppCompatActivity
                         GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.copyFromPokoList(groupList);
                         groupListUI.addEveryContactChatGroupThatHasMessage();
+                        groupListUI.sortItemsByKey();
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }
@@ -541,7 +564,8 @@ public class MainActivity extends AppCompatActivity
                 public void run() {
                     if (groupListAdapter != null) {
                         Integer groupId = (Integer) getData("groupId");
-                        groupListAdapter.getPokoList().removeItemByKey(groupId);
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                        groupListUI.removeItemByKey(groupId);
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }
@@ -587,7 +611,7 @@ public class MainActivity extends AppCompatActivity
                     if (groupListAdapter != null && group != null) {
                         GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.addContactChatGroupIfHasMessage(group);
-                        groupListUI.moveItemToFront(group);
+                        groupListUI.moveItemSortedByKey(group);
                         groupListAdapter.notifyDataSetChanged();
                     }
                 }

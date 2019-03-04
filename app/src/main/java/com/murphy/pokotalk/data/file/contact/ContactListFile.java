@@ -4,7 +4,7 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoMultiItemsFile;
+import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.Contact;
@@ -15,7 +15,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-public class ContactListFile extends PokoMultiItemsFile<Contact> {
+public class ContactListFile extends PokoSequencialAccessFile<Contact> {
     protected ContactList contactList;
 
     public ContactListFile() {

@@ -1,7 +1,6 @@
 package com.murphy.pokotalk.adapter;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -29,9 +28,6 @@ public class MessageListAdapter extends PokoListAdapter<PokoMessage> {
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
         PokoMessage message = items.get(position);
-        if (message.getMessageType() == PokoMessage.APP_DATE_MESSAGE) {
-            Log.v("POKO", "create app date message");
-        }
         MessageItem item = null;
         if (convertView != null) {
             switch (message.getMessageType()) {

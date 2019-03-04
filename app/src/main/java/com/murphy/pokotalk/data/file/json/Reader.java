@@ -3,33 +3,36 @@ package com.murphy.pokotalk.data.file.json;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 
 /** Reads json data from file
  * the file should be concatenation of json object strings */
-public class Reader {
+public abstract class Reader {
     protected TokenContext tokenContext;
-    protected BufferedReader bufferedReader;
     protected StringBuffer stringBuffer;
     protected ArrayDeque<JSONObject> jsonObjects;
+    protected long charsRead;
 
-    public static final int BUFFER_SIZE = 32;
+    public static final int CHAR_BUFFER_SIZE = 128;
+    protected char[] charBuffer;
 
-    public Reader(BufferedReader reader) {
-        bufferedReader = reader;
+    public Reader() {
         tokenContext = new TokenContext();
         stringBuffer = new StringBuffer();
         jsonObjects = new ArrayDeque<>();
+        charBuffer = new char[CHAR_BUFFER_SIZE];
+        clearContext();
     }
 
     public void clearContext() {
         tokenContext.clear();
         stringBuffer.setLength(0);
         jsonObjects.clear();
+        charsRead = 0;
     }
+
 
     /* Read n JSONObjects from reader */
     public ArrayList<JSONObject> readJSONs(int n) throws IOException, JSONException {
@@ -41,31 +44,85 @@ public class Reader {
         return result;
     }
 
+    /* Should override this methods. This method reads data from file input
+     * and write to buffer, start from offset, maximum size of size.
+     */
+    public abstract int readChars(char[] buffer, int offset, int size) throws IOException;
+
+    protected int isUTF8StartingByte(byte b) {
+        if ((b & (byte) 0x80) == 0) {
+            return 0;
+        } else if ((b & (byte) 0xe0) == 0xc0) {
+            return 1;
+        } else if ((b & (byte) 0xf0) == 0xe0) {
+            return 2;
+        } else if ((b & (byte) 0xf8) == 0xf0) {
+            return 3;
+        }
+        return -1;
+    }
+
+    public void clearCharsRead() {
+        charsRead = 0;
+    }
+
+    public long getCharsRead() {
+        return charsRead;
+    }
+
+    /* Reads and discards characters until it meets newline character */
+    public boolean skipUntilNewline() throws IOException, JSONException {
+        int n;
+
+        while ((n = readChars(charBuffer, 0, charBuffer.length)) > 0) {
+            int offset;
+            char c;
+            charsRead += n;
+            for (offset = 0; offset < n; offset++) {
+                c = charBuffer[offset];
+                if (c == '\n') {
+                    putBufferToContext(n,offset + 1);
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    /** Put bytes of buffer of size 'n' to TokenContext starting from offset 'len'
+     * and add all generated JSONObject to list.
+     * */
+    protected void putBufferToContext(int n, int len) throws JSONException {
+        int offset;
+        while ((offset = tokenContext.putCharacterArray(charBuffer, len, n - len)) >= 0) {
+            stringBuffer.append(charBuffer, len, offset + 1);
+            len += offset + 1;
+            JSONObject result = new JSONObject(stringBuffer.toString());
+            stringBuffer.setLength(0);
+            jsonObjects.addLast(result);
+        }
+        stringBuffer.append(charBuffer, len, n - len);
+    }
+
     /* Reads one json object from input */
     public JSONObject readJSON() throws IOException, JSONException {
         if (jsonObjects.size() > 0) {
             return jsonObjects.removeFirst();
         }
 
-        char[] buffer = new char[BUFFER_SIZE];
-
-        int n, offset, len = 0;
-        while ((n = bufferedReader.read(buffer, 0, buffer.length)) > 0) {
-            while ((offset = tokenContext.putCharacterArray(buffer, len, n - len)) >= 0) {
-                stringBuffer.append(buffer, len, len + offset + 1);
-                len += offset + 1;
-                JSONObject result = new JSONObject(stringBuffer.toString());
-                stringBuffer.setLength(0);
-                jsonObjects.addLast(result);
-            }
-            stringBuffer.append(buffer, len, n - len);
+        int n;
+        while ((n = readChars(charBuffer, 0, charBuffer.length)) > 0) {
+            //Log.v("POKO", "READ " + n + " bytes");
+            charsRead += n;
+            putBufferToContext(n, 0);
             if (jsonObjects.size() > 0) {
                 return jsonObjects.removeFirst();
             }
-            len = 0;
         }
 
         if (stringBuffer.length() > 0 && !tokenContext.isValidJSON()) {
+            //Log.v("POKO", stringBuffer.toString());
             throw new JSONException("Bad json data");
         }
 

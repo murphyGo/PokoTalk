@@ -5,10 +5,12 @@ import com.murphy.pokotalk.data.ListSorter;
 import com.murphy.pokotalk.data.SortingList;
 
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.HashMap;
+import java.util.Locale;
 
 /** Message list for message ListView in ChatActivity.
- * It has day change border feature.
+ * It has date change messaging feature.
  */
 public class MessageListUI extends SortingList<Integer, PokoMessage> {
     private HashMap<Integer, PokoMessage> sentMessages;
@@ -18,6 +20,8 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
         sentMessages = new HashMap<>();
     }
 
+    // Key is expanded by factor 8 to have room for 7 app messages
+    // such as date change message.
     @Override
     public Integer getKey(PokoMessage message) {
         int key = message.getMessageId() * 8;
@@ -52,19 +56,27 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
         if (arrayList.size() > index + 1) {
             PokoMessage nextMessage = arrayList.get(index + 1);
 
-            // Add date change message if date differ from next message
-            if (nextMessage.getMessageType() != PokoMessage.APP_DATE_MESSAGE
-                    && doesMessageDateChange(message, nextMessage)) {
+            if (nextMessage.getMessageType() == PokoMessage.APP_DATE_MESSAGE) {
+                if (compareMessageDate(message, nextMessage) == 0) {
+                    // If next message is date change message with date of added message,
+                    // remove it and create on top of added message.
+                    super.removeItemByKey(getKey(nextMessage));
+                }
+            } else if (compareMessageDate(message, nextMessage) < 0) {
+                // Add date change message if date differ from next message
                 addHashMapAndArrayList(index + 1, makeDateChangeMessage(nextMessage));
             }
         }
 
-        if (index - 1 >= 0) {
+        // If this is a message on top, add date change message on top
+        if (index == 0) {
+            addHashMapAndArrayList(0, makeDateChangeMessage(message));
+        } else if (index - 1 >= 0) {
             PokoMessage prevMessage = arrayList.get(index - 1);
 
             // Add date change message if date differ from prev message
             if (prevMessage.getMessageType() != PokoMessage.APP_DATE_MESSAGE
-                    && doesMessageDateChange(prevMessage, message)) {
+                    && compareMessageDate(prevMessage, message) < 0) {
                 addHashMapAndArrayList(index, makeDateChangeMessage(message));
             }
         }
@@ -99,22 +111,39 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
     }
 
     protected PokoMessage makeDateChangeMessage(PokoMessage messageNextDate) {
-        SimpleDateFormat dateChangeFormat = new SimpleDateFormat(Constants.chatDateChangeFormat);
+        SimpleDateFormat dateChangeFormat = new SimpleDateFormat(Constants.chatDateChangeFormat, Constants.locale);
         dateChangeFormat.setTimeZone(Constants.timeZone);
         PokoMessage dateChangeMessage = new PokoMessage();
         dateChangeMessage.setMessageId(messageNextDate.getMessageId());
         dateChangeMessage.setMessageType(PokoMessage.APP_DATE_MESSAGE);
         dateChangeMessage.setSpecialContent(dateChangeFormat.format(messageNextDate.getDate().getTime()));
+        // date will be midnight of that day
+        Calendar date = (Calendar) messageNextDate.getDate().clone();
+        date.setTimeZone(Constants.timeZone);
+        date.set(Calendar.HOUR_OF_DAY, date.get(Calendar.HOUR_OF_DAY) - date.get(Calendar.HOUR_OF_DAY));
+        date.set(Calendar.MINUTE, 0);
+        date.set(Calendar.SECOND, 0);
+        date.set(Calendar.MILLISECOND, 0);
+        dateChangeMessage.setDate(date);
         dateChangeMessage.setSurviveOnListUpdate(true);
 
         return dateChangeMessage;
     }
 
-    protected boolean doesMessageDateChange(PokoMessage prev, PokoMessage next) {
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+    // compares 'date' of message by year, month, day
+    // returns 0 if same, -1 if prev is smaller than next, 1 if prev is greater than next
+    protected int compareMessageDate(PokoMessage prev, PokoMessage next) {
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.KOREA);
         format.setTimeZone(Constants.timeZone);
-        int addDate = Integer.parseInt(format.format(prev.getDate().getTime()));
+        int prevDate = Integer.parseInt(format.format(prev.getDate().getTime()));
         int nextDate = Integer.parseInt(format.format(next.getDate().getTime()));
-        return addDate < nextDate;
+
+        if (prevDate == nextDate) {
+            return 0;
+        } else if (prevDate < nextDate) {
+            return -1;
+        } else {
+            return 1;
+        }
     }
 }

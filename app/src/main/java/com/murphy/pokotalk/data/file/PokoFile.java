@@ -7,21 +7,11 @@ import com.murphy.pokotalk.data.file.json.Reader;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.util.ArrayDeque;
 
 public abstract class PokoFile<T> {
-    protected FileInputStream fileInputStream;
-    protected InputStreamReader inputStreamReader;
-    protected BufferedReader bufferedReader;
-    protected FileOutputStream fileOutputStream;
-    protected OutputStreamWriter outputStreamWriter;
     protected String fullFilePath;
     protected String fullDirectoryPath;
     protected ArrayDeque<String> tokenDeque;
@@ -60,43 +50,7 @@ public abstract class PokoFile<T> {
         }
     }
 
-    public void openReader() throws IOException {
-        Log.v("POKO", "Open reader " + getFullFilePath());
-        makeSureFullDirectoryExists();
-        fileInputStream = new FileInputStream(getFullFilePath());
-        inputStreamReader = new InputStreamReader(fileInputStream);
-        bufferedReader = new BufferedReader(inputStreamReader);
-        jsonReader = new Reader(bufferedReader);
-    }
-
-    public void openWriter() throws IOException {
-        Log.v("POKO", "Open writer " + getFullFilePath());
-        makeSureFullDirectoryExists();
-        fileOutputStream = new FileOutputStream(getFullFilePath());
-        outputStreamWriter = new OutputStreamWriter(fileOutputStream);
-    }
-
-    public void closeReader() throws IOException {
-        Log.v("POKO", "close reader");
-        bufferedReader.close();
-        inputStreamReader.close();
-        fileInputStream.close();
-        bufferedReader = null;
-        inputStreamReader = null;
-        fileOutputStream = null;
-    }
-
-    public void closeWriter() throws IOException {
-        Log.v("POKO", "Close writer");
-        outputStreamWriter.close();
-        fileOutputStream.close();
-        outputStreamWriter = null;
-        fileOutputStream = null;
-    }
-
-    public void flush() throws IOException {
-        outputStreamWriter.flush();
-    }
+    public abstract void flush() throws IOException;
 
     public abstract void save() throws IOException, JSONException;
     public abstract T read() throws IOException, JSONException;
@@ -104,8 +58,8 @@ public abstract class PokoFile<T> {
     /* Reads one json object from input */
     public JSONObject readJSON() throws IOException, JSONException {
         JSONObject jsonObject = jsonReader.readJSON();
-        //if (jsonObject != null)
-        //    Log.v("POKO", "READ JSON " + jsonObject.toString());
+        if (jsonObject != null)
+            Log.v("POKO", "READ JSON " + jsonObject.toString());
         return jsonObject;
     }
 }

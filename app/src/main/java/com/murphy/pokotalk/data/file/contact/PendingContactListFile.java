@@ -1,6 +1,6 @@
 package com.murphy.pokotalk.data.file.contact;
 
-import com.murphy.pokotalk.data.file.PokoMultiItemsFile;
+import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.PendingContact;
@@ -11,7 +11,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 
-public abstract class PendingContactListFile extends PokoMultiItemsFile<PendingContact> {
+public abstract class PendingContactListFile extends PokoSequencialAccessFile<PendingContact> {
     protected PendingContactList pendingContactList;
 
     public PendingContactListFile() {

@@ -1,13 +1,10 @@
 package com.murphy.pokotalk.data.group;
 
-import android.util.Log;
-
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.ListSorter;
 import com.murphy.pokotalk.data.SortingList;
 import com.murphy.pokotalk.data.user.ContactList;
 
-import java.util.Calendar;
 import java.util.HashMap;
 
 /** Group list for user interface(ListView adapter).
@@ -31,18 +28,18 @@ public class GroupListUI extends SortingList<Integer, Group> {
 
     @Override
     public ListSorter getListSorter() {
-        return new ListSorter<Calendar, Group>(getList()) {
+        return new ListSorter<Long, Group>(getList()) {
             @Override
-            public Calendar getItemKey(Group item) {
+            public Long getItemKey(Group item) {
                 MessageList messageList = item.getMessageList();
                 PokoMessage lastMessage = messageList.getLastMessage();
                 if (lastMessage == null)
                     return null;
-                return lastMessage.getDate();
+                return lastMessage.getDate().getTime().getTime();
             }
 
             @Override
-            public int compareKey(Calendar key1, Calendar key2) {
+            public int compareKey(Long key1, Long key2) {
                 if (key1 == null && key2 == null)
                     return 0;
                 else if (key1 == null)
@@ -59,13 +56,11 @@ public class GroupListUI extends SortingList<Integer, Group> {
     protected int addHashMapAndArrayList(Group group) {
         ContactList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByGroupId(group.getGroupId());
-        Log.v("ADD GROUP TO LIST", group.getGroupId() + " relation " +
-                (relation == null ? "null" : relation.toString()));
+
         if (relation != null && group.getMessageList().getLastMessage() == null) {
             contactChatGroupWithNoMessage.put(getKey(group), group);
             return -1;
         } else {
-            Log.v("size of arraylist", arrayList.size() + "");
             return super.addHashMapAndArrayList(group);
         }
     }
@@ -73,10 +68,8 @@ public class GroupListUI extends SortingList<Integer, Group> {
     public boolean addContactChatGroupIfHasMessage(Group group) {
         if (group.getMessageList().getLastMessage() != null) {
             Group removedGroup = contactChatGroupWithNoMessage.remove(getKey(group));
-            Log.v("Removed", removedGroup == null ? "null" : removedGroup.toString());
             if (removedGroup != null) {
                 updateItem(group);
-                Log.v("updated", "updated");
                 return true;
             }
         }

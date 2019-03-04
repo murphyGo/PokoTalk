@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.data.file.json;
 
+import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.group.Group;
@@ -40,6 +41,7 @@ public class Parser {
     public static Calendar epochInMillsToCalendar(long epochInMills) {
         Calendar result =  Calendar.getInstance();
         result.setTimeInMillis(epochInMills);
+        result.setTimeZone(Constants.timeZone);
         return result;
     }
 

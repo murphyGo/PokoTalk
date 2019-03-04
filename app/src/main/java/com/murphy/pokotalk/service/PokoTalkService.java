@@ -22,6 +22,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.main.MainActivity;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.data.group.Group;
@@ -112,15 +113,21 @@ public class PokoTalkService extends Service {
     public void loadAppilcationData() {
         /* Temporarily thread by welcome activity does application data loading */
         /* Load application data */
-        FileManager fileManager = FileManager.getInstance();
-        fileManager.loadSession();
-        fileManager.loadContactList();
-        fileManager.loadPendingContactList();
-        fileManager.loadStragerList();
-        fileManager.loadContactGroupRelations();
-        fileManager.loadGroupList();
-        //TODO: Only load last messages first.
-        fileManager.loadMessages();
+        try {
+            DataLock.getInstance().acquireWriteLock();
+
+            fileManager.loadSession();
+            fileManager.loadContactList();
+            fileManager.loadPendingContactList();
+            fileManager.loadStragerList();
+            fileManager.loadContactGroupRelations();
+            fileManager.loadGroupList();
+            fileManager.loadLastMessages();
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
     /* PokoMessage handler for service requests */

@@ -63,6 +63,9 @@ public abstract class ServerSocket {
             opts.secure = true;
             opts.upgrade = true;
             opts.reconnection = true;
+            opts.reconnectionDelay = 100;
+            opts.reconnectionDelayMax = 500;
+            opts.randomizationFactor = 0.0;
             opts.forceNew = true;
             mSocket = IO.socket(serverURL, opts);
         } catch(URISyntaxException e) {

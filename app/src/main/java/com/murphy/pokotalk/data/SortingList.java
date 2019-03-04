@@ -27,12 +27,6 @@ public abstract class SortingList<K, V extends Item> extends ItemList<K, V>{
         return listSorter.addItemSorted(v);
     }
 
-    public void moveItemToFront(V item) {
-        if (item != null && arrayList.remove(item)) {
-            arrayList.add(0, item);
-        }
-    }
-
     public void moveItemSortedByKey(V item) {
         if (item != null) {
             if (arrayList.remove(item)) {

@@ -14,6 +14,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.MemberCandidateListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
@@ -76,10 +77,19 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
         }
 
         /* Create adapter and set to ListView */
-        candidateListAdapter = new MemberCandidateListAdapter(this);
-        candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
-        candidateListAdapter.getPokoList().copyFromPokoList(nonMemberContactList);
-        candidateListView.setAdapter(candidateListAdapter);
+        try {
+            DataLock.getInstance().acquireWriteLock();
+
+            candidateListAdapter = new MemberCandidateListAdapter(this);
+            candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
+            ContactList contactListUI = (ContactList) candidateListAdapter.getPokoList();
+            contactListUI.copyFromPokoList(nonMemberContactList);
+            candidateListView.setAdapter(candidateListAdapter);
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         /* Button listeners */
         inviteMemberButton.setOnClickListener(inviteButtonClickListener);

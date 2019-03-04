@@ -193,6 +193,7 @@ public class PokoParser {
         return message;
     }
 
+
     public static int parseMessageImportanceLevel(int level) throws ParseException {
         switch (level) {
             case 0:
@@ -217,6 +218,7 @@ public class PokoParser {
         Date lastSeenDate = lastSeenFormat.parse(dateStr);
         Calendar result = Calendar.getInstance();
         result.setTime(lastSeenDate);
+        result.setTimeZone(Constants.timeZone);
 
         return result;
     }

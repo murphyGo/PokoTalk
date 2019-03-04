@@ -10,6 +10,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,7 +29,9 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.GroupMemberListAdapter;
 import com.murphy.pokotalk.adapter.MessageListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.file.group.MessageFile;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.MessageListUI;
@@ -40,6 +43,9 @@ import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.view.ListViewDetectable;
 
+import org.json.JSONException;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -132,16 +138,53 @@ public class ChatActivity extends AppCompatActivity
         navigationView = slideMenuLayout.findViewById(R.id.chatSlideMenu);
         navigationView.setNavigationItemSelectedListener(this);
 
-        /* Member list */
-        memberListAdapter = new GroupMemberListAdapter(this);
-        memberListAdapter.getPokoList().copyFromPokoList(group.getMembers());
-        memberListView = drawerLayout.findViewById(R.id.memberList);
-        memberListView.setAdapter(memberListAdapter);
+        MessageFile messageFile = new MessageFile(group);
+        try {
+            DataLock.getInstance().acquireWriteLock();
+            Log.v("POKO", "READ MESSAGE FROM FILE");
 
-        messageListAdapter = new MessageListAdapter(this);
-        messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
-        messageListView.setAdapter(messageListAdapter);
-        messageListView.setKeepVerticalPosition(true);
+            messageFile.openReader();
+            messageFile.readNextLatestMessages(5);
+            messageFile.closeReader();
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (IOException e) {
+            DataLock.getInstance().releaseWriteLock();
+            e.printStackTrace();
+        } catch (JSONException e) {
+            DataLock.getInstance().releaseWriteLock();
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            DataLock.getInstance().acquireWriteLock();
+
+            /* Member list */
+            memberListAdapter = new GroupMemberListAdapter(this);
+            memberListAdapter.getPokoList().copyFromPokoList(group.getMembers());
+            memberListView = drawerLayout.findViewById(R.id.memberList);
+            memberListView.setAdapter(memberListAdapter);
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        try {
+            DataLock.getInstance().acquireWriteLock();
+
+            messageListAdapter = new MessageListAdapter(this);
+            messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
+            messageListView.setAdapter(messageListAdapter);
+            messageListView.setKeepVerticalPosition(true);
+            messageListView.postScrollToBottom();
+
+            DataLock.getInstance().releaseWriteLock();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);

@@ -7,6 +7,7 @@ public class DataLock {
     private static DataLock instance = null;
     int readNum;
     boolean writing;
+    public static final int INTERRUPT_RETRY = 8;
 
     public DataLock() {
         readNum = 0;
@@ -22,10 +23,22 @@ public class DataLock {
     }
 
     public synchronized void acquireReadLock() throws InterruptedException {
-        while (writing) {
-            wait();
+        int trial = 0;
+
+        while(true) {
+            try {
+                while (writing) {
+                    wait();
+                }
+                readNum++;
+                return;
+            } catch (InterruptedException e) {
+                trial++;
+                if (trial >= INTERRUPT_RETRY) {
+                    throw e;
+                }
+            }
         }
-        readNum++;
     }
 
     public synchronized void releaseReadLock() {
@@ -34,11 +47,23 @@ public class DataLock {
     }
 
     public synchronized void acquireWriteLock() throws InterruptedException {
-        while(writing || readNum > 0) {
-            wait();
+        int trial = 0;
+
+        while(true) {
+            try {
+                while(writing || readNum > 0) {
+                    wait();
+                }
+                Log.v("POKO", "ACQUIRE WRITE LOCK");
+                writing = true;
+                return;
+            } catch (InterruptedException e) {
+                trial++;
+                if (trial >= INTERRUPT_RETRY) {
+                    throw e;
+                }
+            }
         }
-        Log.v("POKO", "ACQUIRE WRITE LOCK");
-        writing = true;
     }
 
     public synchronized void releaseWriteLock() {

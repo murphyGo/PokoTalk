@@ -95,11 +95,12 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
     }
 
     /** Reads next at most n messages from back(latest order).
-     * Returns the number of new read message. */
-    public int readNextLatestMessages(int n) throws JSONException, IOException {
+     * Returns the ArrayList of newly read messages. */
+    public ArrayList<PokoMessage> readNextLatestMessages(int n) throws JSONException, IOException {
         int readNum, totalNum = 0;
         long skipSize, endPosition;
         ArrayList<PokoMessage> readMessages = new ArrayList<>();
+        ArrayList<PokoMessage> newMessages = new ArrayList<>();
 
         while(totalNum < n) {
             //Log.v("POKO", "Outer most loop");
@@ -161,6 +162,7 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
                 PokoMessage newMessage = readMessages.get(i);
                 if (!messageList.updateItem(newMessage)) {
                     readNum++;
+                    newMessages.add(newMessage);
                 }
 
                 if (totalNum + readNum >= n) {
@@ -175,7 +177,7 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
             }
         }
 
-        return totalNum;
+        return newMessages;
     }
 
     @Override

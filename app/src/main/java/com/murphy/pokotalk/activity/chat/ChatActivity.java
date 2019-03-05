@@ -2,6 +2,7 @@ package com.murphy.pokotalk.activity.chat;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -43,9 +44,6 @@ import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.view.ListViewDetectable;
 
-import org.json.JSONException;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 
@@ -137,27 +135,27 @@ public class ChatActivity extends AppCompatActivity
         /* Add slide menu item click listener */
         navigationView = slideMenuLayout.findViewById(R.id.chatSlideMenu);
         navigationView.setNavigationItemSelectedListener(this);
-
+/*
         MessageFile messageFile = new MessageFile(group);
         try {
             DataLock.getInstance().acquireWriteLock();
-            Log.v("POKO", "READ MESSAGE FROM FILE");
+            try {
+                Log.v("POKO", "READ MESSAGE FROM FILE");
 
-            messageFile.openReader();
-            messageFile.readNextLatestMessages(5);
-            messageFile.closeReader();
+                messageFile.openReader();
+                messageFile.readNextLatestMessages(20);
+                messageFile.closeReader();
 
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
             DataLock.getInstance().releaseWriteLock();
-        } catch (IOException e) {
-            DataLock.getInstance().releaseWriteLock();
-            e.printStackTrace();
-        } catch (JSONException e) {
-            DataLock.getInstance().releaseWriteLock();
-            e.printStackTrace();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-
+*/
         try {
             DataLock.getInstance().acquireWriteLock();
 
@@ -180,6 +178,13 @@ public class ChatActivity extends AppCompatActivity
             messageListView.setAdapter(messageListAdapter);
             messageListView.setKeepVerticalPosition(true);
             messageListView.postScrollToBottom();
+            messageListView.setReachTopCallback(new Runnable() {
+                @Override
+                public void run() {
+                    AsyncTask task = new ReadMoreMessageTask();
+                    task.execute(null, null);
+                }
+            });
 
             DataLock.getInstance().releaseWriteLock();
         } catch (InterruptedException e) {
@@ -333,17 +338,25 @@ public class ChatActivity extends AppCompatActivity
     private View.OnClickListener messageSendButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            String content = messageInputView.getText().toString();
-            if (content.length() == 0) {
-                Toast.makeText(getApplicationContext(), "메시지를 입력해주세요.",
-                        Toast.LENGTH_SHORT).show();
-                return;
+            try {
+                DataLock.getInstance().acquireWriteLock();
+
+                String content = messageInputView.getText().toString();
+                if (content.length() == 0) {
+                    Toast.makeText(getApplicationContext(), "메시지를 입력해주세요.",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                sendId++;
+                PokoMessage message = createSentMessage(sendId, content, PokoMessage.NORMAL);
+                server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.NORMAL);
+                group.getMessageList().addSentMessage(message);
+                messageInputView.setText("");
+
+                DataLock.getInstance().releaseWriteLock();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            sendId++;
-            PokoMessage message = createSentMessage(sendId, content, PokoMessage.NORMAL);
-            server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.NORMAL);
-            group.getMessageList().addSentMessage(message);
-            messageInputView.setText("");
         }
     };
 
@@ -412,16 +425,16 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
+                        boolean myMessage = newMessage.isMyMessage(session);
                         /* Ack if it is a new message */
                         int messageId = newMessage.getMessageId();
                         if (!newMessage.isAcked() && newMessage.getNbNotReadUser() > 0
-                                && !newMessage.isMyMessage(session)) {
+                                && !myMessage) {
                             server.sendAckMessage(group.getGroupId(), messageId, messageId);
                         }
 
                         /* If it's my message or fully at bottom, scroll down */
-                        if (newMessage.isMyMessage(session) ||
-                                messageListView.isFullyAtBottom()) {
+                        if (myMessage || messageListView.isFullyAtBottom()) {
                             messageListView.postScrollToBottom();
                         }
                         messageListAdapter.getPokoList().updateItem(newMessage);
@@ -583,6 +596,76 @@ public class ChatActivity extends AppCompatActivity
                 break;
             default:
                 return;
+        }
+    }
+
+    public static boolean firstRead = true;
+
+    class ReadMoreMessageTask extends AsyncTask<Object, Void, ArrayList<PokoMessage>> {
+
+        @Override
+        protected ArrayList<PokoMessage> doInBackground(Object... args) {
+            MessageFile messageFile = new MessageFile(group);
+            ArrayList<PokoMessage> readMessages = null;
+
+            try {
+                DataLock.getInstance().acquireWriteLock();
+
+                try {
+                    // Now we mark current scroll position
+                    messageListView.markScrollPosition();
+
+                    Log.v("POKO", "Mark position");
+                    messageFile.openReader();
+                    readMessages = messageFile.readNextLatestMessages(20);
+                    messageFile.closeReader();
+
+                    Log.v("POKO", "READ MESSAGE FROM FILE");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    // We must scroll to mark after mark
+                    messageListView.scrollToMark(0);
+                }
+
+                DataLock.getInstance().releaseWriteLock();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            return readMessages;
+        }
+
+        @Override
+        protected void onPostExecute(ArrayList<PokoMessage> readMessages) {
+            if (readMessages == null) {
+                return;
+            }
+
+            try {
+                DataLock.getInstance().acquireWriteLock();
+
+                MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
+                for (PokoMessage message : readMessages) {
+                    messageListUI.updateItem(message);
+                }
+
+                messageListAdapter.notifyDataSetChanged();
+                int size = readMessages.size();
+                Log.v("POKO", "READ " + readMessages.size() + " messages");
+                messageListView.scrollToMark(size);
+
+                /* If it is a first read, scrolls to bottom */
+                if (ChatActivity.this.firstRead) {
+                    messageListView.postScrollToBottom();
+                    ChatActivity.this.firstRead = false;
+                }
+
+                Log.v("POKO", "go to mark");
+
+                DataLock.getInstance().releaseWriteLock();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

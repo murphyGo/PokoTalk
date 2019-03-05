@@ -2,6 +2,7 @@ package com.murphy.pokotalk.view;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.View;
 import android.widget.AbsListView;
 import android.widget.ListView;
@@ -13,7 +14,11 @@ public class ListViewDetectable extends ListView {
     protected boolean keepVerticalPosition;
     protected boolean scrollDownAtFirst;
     protected boolean isFirstLoop;
-    protected ReachTopCallback reachTopCallback;
+    protected Runnable reachTopCallback;
+    protected boolean reachedTop;
+    protected boolean blockLayingOutChildren;
+    protected int firstVisiblePositionMark;
+    protected int firstVisibleItemTopMark;
 
     public ListViewDetectable(Context context) {
         super(context);
@@ -35,13 +40,22 @@ public class ListViewDetectable extends ListView {
         init();
     }
 
+    @Override
+    protected void layoutChildren() {
+        if (!blockLayingOutChildren) {
+            super.layoutChildren();
+        }
+    }
+
     private void init() {
         onScrollListnerDetectable = new OnScrollListenerDetectable();
-        super.setOnScrollListener(new OnScrollListenerDetectable());
+        super.setOnScrollListener(onScrollListnerDetectable);
         keepVerticalPosition = false;
         scrollDownAtFirst = false;
         isFirstLoop = true;
         reachTopCallback = null;
+        reachedTop = false;
+        blockLayingOutChildren = false;
     }
 
     @Override
@@ -88,16 +102,65 @@ public class ListViewDetectable extends ListView {
         }
     }
 
+    /** Mark current scroll position. */
+    public void markScrollPosition() {
+        View firstVisibleItem = getChildAt(0);
+        if (firstVisibleItem == null) {
+            firstVisiblePositionMark = -1;
+            Log.v("POKO", "MARK FIRST POSITION -1");
+            return;
+        }
+        firstVisiblePositionMark = getFirstVisiblePosition();
+        firstVisibleItemTopMark = firstVisibleItem.getTop();
+        blockLayingOutChildren = true;
+        Log.v("POKO", "MARK FIRST POSITION " + firstVisiblePositionMark);
+    }
+
+    /** Move to marked scroll position.
+     * If the ListView has no entry when mark, it scrolls to the top. */
+    public void scrollToMark(int positionDelta) {
+        blockLayingOutChildren = false;
+        if (firstVisiblePositionMark < 0) {
+            setSelectionAfterHeaderView();
+        } else {
+            int totalItems = getCount();
+            int finalPosition = firstVisiblePositionMark + positionDelta;
+            if (finalPosition >= totalItems) {
+                finalPosition = totalItems - 1;
+            }
+            smoothScrollToPositionFromTop(finalPosition, firstVisibleItemTopMark, 0);
+        }
+    }
+
+    public Runnable getReachTopCallback() {
+        return reachTopCallback;
+    }
+
+    public void setReachTopCallback(Runnable reachTopCallback) {
+        this.reachTopCallback = reachTopCallback;
+    }
+
     class OnScrollListenerDetectable implements ListView.OnScrollListener {
-        OnScrollListener outerOnScrollListner;
+        OnScrollListener outerOnScrollListener;
         int currentVisibleItemCount;
 
         @Override
         public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
             currentVisibleItemCount = visibleItemCount;
 
-            if (outerOnScrollListner != null)
-                outerOnScrollListner.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+            if (outerOnScrollListener != null)
+                outerOnScrollListener.onScroll(view, firstVisibleItem, visibleItemCount, totalItemCount);
+
+            if (visibleItemCount == 0 || (firstVisibleItem == 0
+                    && getListView().getChildAt(0).getTop() == 0)) {
+                if (!reachedTop && reachTopCallback != null) {
+                    reachTopCallback.run();
+                    reachedTop = true;
+                    Log.v("POKO", "Reached top");
+                }
+            } else {
+                reachedTop = false;
+            }
         }
 
         @Override
@@ -105,12 +168,12 @@ public class ListViewDetectable extends ListView {
             if (scrollState == SCROLL_STATE_IDLE && this.currentVisibleItemCount > 0) {
                 ListViewDetectable listView = getListView();
                 int lastItemIndex = listView.getCount() - 1;
-                int lastVisibileIndex = listView.getLastVisiblePosition();
+                int lastVisibleIndex = listView.getLastVisiblePosition();
                 int lastItemPosition = listView.getLastVisiblePosition() - listView.getFirstVisiblePosition();
                 View lastVisibleChild = listView.getChildAt(lastItemPosition);
 
                 /* Check if ListView it at bottom */
-                if (lastVisibleChild != null && lastVisibileIndex == lastItemIndex
+                if (lastVisibleChild != null && lastVisibleIndex == lastItemIndex
                         && lastVisibleChild.getBottom() <= listView.getHeight()) {
                     setFullyAtBottom(true);
                 } else {
@@ -118,28 +181,16 @@ public class ListViewDetectable extends ListView {
                 }
             }
 
-            if (outerOnScrollListner != null)
-                outerOnScrollListner.onScrollStateChanged(view, scrollState);
+            if (outerOnScrollListener != null)
+                outerOnScrollListener.onScrollStateChanged(view, scrollState);
         }
 
         public void setOuterOnScrollListener(OnScrollListener outerOnScrollListener) {
-            this.outerOnScrollListner = outerOnScrollListener;
+            this.outerOnScrollListener = outerOnScrollListener;
         }
 
         public ListViewDetectable getListView() {
             return ListViewDetectable.this;
         }
-    }
-
-    public ReachTopCallback getReachTopCallback() {
-        return reachTopCallback;
-    }
-
-    public void setReachTopCallback(ReachTopCallback reachTopCallback) {
-        this.reachTopCallback = reachTopCallback;
-    }
-
-    public abstract class ReachTopCallback implements Runnable {
-
     }
 }

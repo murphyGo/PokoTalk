@@ -1,5 +1,7 @@
 package com.murphy.pokotalk.data.group;
 
+import android.util.Log;
+
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.ListSorter;
 import com.murphy.pokotalk.data.SortingList;
@@ -126,6 +128,11 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
         date.set(Calendar.MILLISECOND, 0);
         dateChangeMessage.setDate(date);
         dateChangeMessage.setSurviveOnListUpdate(true);
+
+
+        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.KOREA);
+        format.setTimeZone(Constants.timeZone);
+        Log.v("POKO", "content " + messageNextDate.getContent() + ", " + format.format(date.getTime()));
 
         return dateChangeMessage;
     }

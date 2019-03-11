@@ -4,18 +4,15 @@ import com.murphy.pokotalk.data.ListSorter;
 import com.murphy.pokotalk.data.SortingList;
 import com.murphy.pokotalk.data.user.User;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 
 public class MessageList extends SortingList<Integer, PokoMessage> {
     private HashMap<Integer, PokoMessage> sentMessages;
-    private ArrayList<PokoMessage> unackedMessages;
 
     public MessageList() {
         super();
         sentMessages = new HashMap<>();
-        unackedMessages = new ArrayList<>();
     }
 
     @Override
@@ -38,37 +35,11 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
         };
     }
 
-    public ArrayList<PokoMessage> getUnackedMessages() {
-        return unackedMessages;
-    }
-
     public PokoMessage getLastMessage() {
         if (arrayList.size() == 0)
             return null;
 
         return arrayList.get(arrayList.size() - 1);
-    }
-
-    @Override
-    protected void addHashMapAndArrayList(int index, PokoMessage message) {
-        if (!message.isAcked())
-            unackedMessages.add(message);
-        super.addHashMapAndArrayList(index, message);
-    }
-
-    @Override
-    protected int addHashMapAndArrayList(PokoMessage message) {
-        if (!message.isAcked())
-            unackedMessages.add(message);
-        return super.addHashMapAndArrayList(message);
-    }
-
-    @Override
-    public PokoMessage removeItemByKey(Integer key) {
-        PokoMessage message = hashMap.get(key);
-        if (message != null)
-            unackedMessages.remove(message);
-        return super.removeItemByKey(key);
     }
 
     /** Sent messages are messages sent by user but not acknowledged by server yet.
@@ -95,7 +66,7 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
     }
 
     /* Acknowledges message method from fromId to toId inclusive. */
-    public void ackMessages(int fromId, int toId, boolean decrement, boolean markAcked,
+    public void ackMessages(int fromId, int toId, boolean decrement,
                             User ackUser) {
         if (toId < fromId)
             return;
@@ -132,11 +103,10 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
         }
 
         /* Ack starts from toId back to fromId */
-        ackFromBackToFront(fromId, toIndex, decrement, markAcked, ackUser);
+        ackFromBackToFront(fromId, toIndex, decrement, ackUser);
     }
 
-    private void ackFromBackToFront(int fromId, int toIndex, boolean decrement, boolean markAcked,
-                                    User ackUser) {
+    private void ackFromBackToFront(int fromId, int toIndex, boolean decrement, User ackUser) {
         /* When message with start id exists */
         int curIndex = toIndex;
         do {
@@ -145,10 +115,6 @@ public class MessageList extends SortingList<Integer, PokoMessage> {
                 break;
             if (decrement && !ackUser.equals(curMessage.getWriter())) {
                 curMessage.decrementNbNotReadUser();
-            }
-            if (markAcked && !curMessage.isAcked()) {
-                curMessage.setAcked(true);
-                unackedMessages.remove(curMessage);
             }
         } while (--curIndex >= 0);
     }

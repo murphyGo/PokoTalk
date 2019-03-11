@@ -6,6 +6,7 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
@@ -25,6 +26,7 @@ import com.murphy.pokotalk.activity.main.MainActivity;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.FileManager;
+import com.murphy.pokotalk.data.file.PokoDatabase;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
@@ -46,6 +48,7 @@ public class PokoTalkService extends Service {
     private ArrayDeque<Messenger> waitingRequests = new ArrayDeque<>();
     private final Messenger requestMessenger = new Messenger(new ServiceRequestHandler());
     private NotificationManagerCompat notificationManagerCompat;
+    private PokoDatabase pokoDB;
 
     /* PokoMessage names */
     public static final int NOTIFY_WHEN_LOADED = 0;
@@ -61,6 +64,8 @@ public class PokoTalkService extends Service {
         super.onCreate();
         server = PokoServer.getInstance(this);
         fileManager = FileManager.getInstance();
+        pokoDB = PokoDatabase.getInstance(this);
+
         Log.v("POKO", "POKO service made, process id " + Process.myPid());
 
         /* Settings for notification channels */
@@ -106,6 +111,8 @@ public class PokoTalkService extends Service {
         /* Restart service again */
         Intent broadcastIntent = new Intent("com.murphy.pokotalk.SERVICE_RESTART");
         sendBroadcast(broadcastIntent);
+        pokoDB.close();
+        pokoDB = null;
 
         super.onDestroy();
     }
@@ -115,7 +122,7 @@ public class PokoTalkService extends Service {
         /* Load application data */
         try {
             DataLock.getInstance().acquireWriteLock();
-
+            SQLiteDatabase db = pokoDB.getReadableDatabase();
             fileManager.loadSession();
             fileManager.loadContactList();
             fileManager.loadPendingContactList();

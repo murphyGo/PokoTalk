@@ -11,11 +11,13 @@ public class Group extends Item {
     private int nbNewMessages;
     private UserList members;
     private MessageList messageList;
+    private int ack;
 
     public Group() {
         members = new UserList();
         messageList = new MessageList();
         nbNewMessages = 0;
+        ack = -1;
     }
 
     @Override
@@ -81,5 +83,13 @@ public class Group extends Item {
 
     public void setMessageList(MessageList messages) {
         this.messageList = messages;
+    }
+
+    public int getAck() {
+        return ack;
+    }
+
+    public void setAck(int ack) {
+        this.ack = ack;
     }
 }

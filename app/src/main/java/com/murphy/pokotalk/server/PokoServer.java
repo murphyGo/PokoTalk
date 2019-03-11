@@ -16,6 +16,7 @@ import com.murphy.pokotalk.listener.chat.GetMemberJoinHistory;
 import com.murphy.pokotalk.listener.chat.MessageAckListener;
 import com.murphy.pokotalk.listener.chat.NewMessageListener;
 import com.murphy.pokotalk.listener.chat.ReadMessageListener;
+import com.murphy.pokotalk.listener.chat.ReadNbreadOfMessages;
 import com.murphy.pokotalk.listener.chat.SendMessageListener;
 import com.murphy.pokotalk.listener.connection.OnConnectionListener;
 import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
@@ -274,12 +275,25 @@ public class PokoServer extends ServerSocket {
         }
     }
 
-    public void sendReadMessage(int groupId, int nbMessageMax) {
+    public void sendReadMessage(int groupId, int startMessageId, int nbMessageMax) {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("groupId", groupId);
+            jsonData.put("startMessageId", startMessageId);
             jsonData.put("nbMessageMax", nbMessageMax);
             mSocket.emit(Constants.readMessageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendReadNbreadOfMessages(int groupId, int startMessageId, int endMessageId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("startMessageId", startMessageId);
+            jsonData.put("endMessageId", endMessageId);
+            mSocket.emit(Constants.readNbreadOfMessages, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -360,6 +374,7 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.membersInvitedName, new MembersInvitedListener());
         mSocket.on(Constants.membersExitName, new MembersExitListener());
         mSocket.on(Constants.readMessageName, new ReadMessageListener());
+        mSocket.on(Constants.readNbreadOfMessages, new ReadNbreadOfMessages());
         mSocket.on(Constants.sendMessageName, new SendMessageListener());
         mSocket.on(Constants.newMessageName, new NewMessageListener());
         mSocket.on(Constants.messageAckName, new MessageAckListener());

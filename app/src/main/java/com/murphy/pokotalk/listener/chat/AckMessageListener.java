@@ -5,7 +5,6 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -24,7 +23,6 @@ public class AckMessageListener extends PokoServer.PokoListener {
         try {
             JSONObject jsonObject = (JSONObject) args[0];
             int groupId = jsonObject.getInt("groupId");
-            int fromId = jsonObject.getInt("ackStart");
             int toId = jsonObject.getInt("ackEnd");
 
             Group group = collection.getGroupList().getItemByKey(groupId);
@@ -33,9 +31,7 @@ public class AckMessageListener extends PokoServer.PokoListener {
                 return;
             }
 
-            /* Mark messages that ack has been done */
-            MessageList messageList = group.getMessageList();
-            messageList.ackMessages(fromId, toId, false, true, null);
+            group.setAck(Math.max(group.getAck(), toId));
         } catch (JSONException e) {
             Log.e("POKO ERROR", "bad ack message json data");
         }

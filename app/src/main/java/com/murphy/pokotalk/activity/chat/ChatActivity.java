@@ -32,9 +32,9 @@ import com.murphy.pokotalk.adapter.MessageListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.data.file.group.MessageFile;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
@@ -45,7 +45,6 @@ import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.view.ListViewDetectable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 
 public class ChatActivity extends AppCompatActivity
         implements PopupMenu.OnMenuItemClickListener,
@@ -70,7 +69,7 @@ public class ChatActivity extends AppCompatActivity
     private Group group;
     private int sendId;
     private Session session;
-
+    private boolean firstRead = true;
     public static final int slideMenuWidthDP = 250;
 
     @Override
@@ -200,13 +199,21 @@ public class ChatActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.readMessageName, readMessageListener);
         server.attachActivityCallback(Constants.newMessageName, addMessageListener);
         server.attachActivityCallback(Constants.getMemberJoinHistory, refreshMessageListener);
+        server.attachActivityCallback(Constants.readNbreadOfMessages, messageAckListener);
         server.attachActivityCallback(Constants.messageAckName, messageAckListener);
         server.attachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.attachActivityCallback(Constants.membersExitName, memberExitListener);
         server.attachActivityCallback(Constants.exitGroupName, exitGroupListener);
 
-        /* Read messages */
-        server.sendReadMessage(group.getGroupId(), Constants.nbMessageRead);
+        /* Read new messages after last acked message from server */
+        requestUnackedMessages();
+        /* Ack to last messages */
+        sendAckToLastMessage();
+
+        firstRead = true;
+
+        /* Request nbread of messages read */
+        requestNbreadOfMessages((ArrayList<PokoMessage>) messageListAdapter.getPokoList().getList());
     }
 
     @Override
@@ -215,6 +222,7 @@ public class ChatActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
         server.detachActivityCallback(Constants.newMessageName, addMessageListener);
         server.detachActivityCallback(Constants.getMemberJoinHistory, refreshMessageListener);
+        server.detachActivityCallback(Constants.readNbreadOfMessages, messageAckListener);
         server.detachActivityCallback(Constants.messageAckName, messageAckListener);
         server.detachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
@@ -292,22 +300,6 @@ public class ChatActivity extends AppCompatActivity
         }
     }
 
-    private void ackUnackedMessages() {
-        /* If unacked message exists, try ack */
-        MessageList messageList = group.getMessageList();
-        ArrayList<PokoMessage> unackedMessages = messageList.getUnackedMessages();
-
-        if (unackedMessages.size() > 0) {
-            ArrayList<Integer> messageIds = new ArrayList<>();
-            for (PokoMessage message : unackedMessages) {
-                messageIds.add(message.getMessageId());
-            }
-
-            int fromId = Collections.min(messageIds), toId = Collections.max(messageIds);
-            server.sendAckMessage(group.getGroupId(), fromId, toId);
-        }
-    }
-
     private void creationError(String errMsg) {
         Toast.makeText(getApplicationContext(), errMsg,
                 Toast.LENGTH_SHORT).show();
@@ -368,21 +360,29 @@ public class ChatActivity extends AppCompatActivity
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    /* Ack unacked messages */
-                    ackUnackedMessages();
                     /* Update all messages */
                     Group readGroup = (Group) getData("group");
-                    ArrayList<PokoMessage> messages = (ArrayList<PokoMessage>) getData("messages");
-                    if (readGroup == null || messages == null)
+                    ArrayList<PokoMessage> readMessages = (ArrayList<PokoMessage>) getData("messages");
+                    if (readGroup == null || readMessages == null)
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        for (PokoMessage message : messages) {
-                            MessageListUI adapterList = (MessageListUI) messageListAdapter.getPokoList();
+                        MessageListUI adapterList = (MessageListUI) messageListAdapter.getPokoList();
+                        for (PokoMessage message : readMessages) {
                             adapterList.updateItem(message);
                         }
                         messageListAdapter.notifyDataSetChanged();
                         messageListView.postScrollToBottom();
+
+                        // Ack to last message.
+                        if (readMessages.size() > 0) {
+                            sendAckToLastMessage();
+                        }
+
+                        // If server gave maximum number of message request next messages
+                        if (readMessages.size() >= Constants.nbMessageRead) {
+                            requestUnackedMessages();
+                        }
                     }
                 }
             });
@@ -428,9 +428,8 @@ public class ChatActivity extends AppCompatActivity
                         boolean myMessage = newMessage.isMyMessage(session);
                         /* Ack if it is a new message */
                         int messageId = newMessage.getMessageId();
-                        if (!newMessage.isAcked() && newMessage.getNbNotReadUser() > 0
-                                && !myMessage) {
-                            server.sendAckMessage(group.getGroupId(), messageId, messageId);
+                        if (newMessage.getNbNotReadUser() > 0 && !myMessage) {
+                            server.sendAckMessage(group.getGroupId(), 0, messageId);
                         }
 
                         /* If it's my message or fully at bottom, scroll down */
@@ -599,21 +598,77 @@ public class ChatActivity extends AppCompatActivity
         }
     }
 
-    public static boolean firstRead = true;
+    /* Get new messages */
+    protected void requestUnackedMessages() {
+        /* Read new messages after last message from server */
+        server.sendReadMessage(group.getGroupId(),
+                group.getAck() + 1,
+                Constants.nbMessageRead);
+    }
+
+    protected void sendAckToLastMessage() {
+        // Get last message
+        MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
+        PokoMessage lastMessage = messageListUI.getLastMessage();
+        if (lastMessage != null) {
+            int lastMessageId = lastMessage.getMessageId();
+            int ack = group.getAck();
+
+            if (lastMessageId > ack) {
+                // Ack till last message.
+                server.sendAckMessage(group.getGroupId(), 0, lastMessageId);
+            }
+        }
+    }
+
+    /* Request server to nbread of messages with nbread greater than 0.
+     * (not seen by every member yet) */
+    protected void requestNbreadOfMessages(ArrayList<PokoMessage> messages) {
+        int minId, maxId;
+
+        if (messages.size() == 0) {
+            return;
+        }
+
+        PokoMessage firstMessage = messages.get(0);
+        minId = firstMessage.getMessageId();
+        maxId = minId;
+
+        /* Find minimum and maximum message id */
+        for (int i = 1; i < messages.size(); i++) {
+            PokoMessage message = messages.get(i);
+            int messageId = message.getMessageId();
+            Log.v("POKO", "CHECK MESSAGE ID "+ messageId);
+            if (message.getNbNotReadUser() > 0) {
+                if (minId > messageId) {
+                    minId = messageId;
+                }
+
+                if (maxId < messageId) {
+                    maxId = messageId;
+                }
+            }
+        }
+
+        Log.v("POKO", "request nbread min "+ minId + ", max " + maxId);
+        server.sendReadNbreadOfMessages(group.getGroupId(), minId, maxId);
+    }
 
     class ReadMoreMessageTask extends AsyncTask<Object, Void, ArrayList<PokoMessage>> {
 
         @Override
         protected ArrayList<PokoMessage> doInBackground(Object... args) {
-            MessageFile messageFile = new MessageFile(group);
+            MessageFile messageFile = FileManager.getInstance().getMessageFile(group);
             ArrayList<PokoMessage> readMessages = null;
 
             try {
                 DataLock.getInstance().acquireWriteLock();
 
                 try {
-                    // Now we mark current scroll position
-                    messageListView.markScrollPosition();
+                    // Now we mark current scroll position w.r.t second visible item
+                    // because first item is always date change message and it will be removed.
+                    // So we mark position of second item that will remain after update.
+                    messageListView.markScrollPosition(1);
 
                     Log.v("POKO", "Mark position");
                     messageFile.openReader();
@@ -637,34 +692,39 @@ public class ChatActivity extends AppCompatActivity
 
         @Override
         protected void onPostExecute(ArrayList<PokoMessage> readMessages) {
-            if (readMessages == null) {
-                return;
+            if (readMessages != null) {
+                try {
+                    DataLock.getInstance().acquireWriteLock();
+
+                    MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
+                    // We now count delta of number of date change message.
+                    messageListUI.startCountDateChangeMessage();
+                    for (PokoMessage message : readMessages) {
+                        messageListUI.updateItem(message);
+                    }
+
+                    int dateChangeMessageNumDelta = messageListUI.endCountDateChangeMessage();
+
+                    messageListAdapter.notifyDataSetChanged();
+                    int size = readMessages.size() + dateChangeMessageNumDelta;
+                    Log.v("POKO", "READ " + readMessages.size() + " messages");
+                    messageListView.scrollToMark(size);
+
+                    Log.v("POKO", "go to mark");
+
+                    DataLock.getInstance().releaseWriteLock();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                /* Request nbread of messages read */
+                requestNbreadOfMessages(readMessages);
             }
 
-            try {
-                DataLock.getInstance().acquireWriteLock();
-
-                MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
-                for (PokoMessage message : readMessages) {
-                    messageListUI.updateItem(message);
-                }
-
-                messageListAdapter.notifyDataSetChanged();
-                int size = readMessages.size();
-                Log.v("POKO", "READ " + readMessages.size() + " messages");
-                messageListView.scrollToMark(size);
-
-                /* If it is a first read, scrolls to bottom */
-                if (ChatActivity.this.firstRead) {
-                    messageListView.postScrollToBottom();
-                    ChatActivity.this.firstRead = false;
-                }
-
-                Log.v("POKO", "go to mark");
-
-                DataLock.getInstance().releaseWriteLock();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            /* If it is a first read, scrolls to bottom */
+            if (ChatActivity.this.firstRead) {
+                messageListView.postScrollToBottom();
+                ChatActivity.this.firstRead = false;
             }
         }
     }

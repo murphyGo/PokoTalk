@@ -1,7 +1,5 @@
 package com.murphy.pokotalk.data.group;
 
-import android.util.Log;
-
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.ListSorter;
 import com.murphy.pokotalk.data.SortingList;
@@ -15,11 +13,14 @@ import java.util.Locale;
  * It has date change messaging feature.
  */
 public class MessageListUI extends SortingList<Integer, PokoMessage> {
-    private HashMap<Integer, PokoMessage> sentMessages;
+    protected HashMap<Integer, PokoMessage> sentMessages;
+    protected boolean countDateChangeMessage;
+    protected int dateChangeMessageNumDelta;
 
     public MessageListUI() {
         super();
         sentMessages = new HashMap<>();
+        countDateChangeMessage = false;
     }
 
     // Key is expanded by factor 8 to have room for 7 app messages
@@ -63,16 +64,28 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
                     // If next message is date change message with date of added message,
                     // remove it and create on top of added message.
                     super.removeItemByKey(getKey(nextMessage));
+
+                    if (countDateChangeMessage) {
+                        dateChangeMessageNumDelta--;
+                    }
                 }
             } else if (compareMessageDate(message, nextMessage) < 0) {
                 // Add date change message if date differ from next message
                 addHashMapAndArrayList(index + 1, makeDateChangeMessage(nextMessage));
+
+                if (countDateChangeMessage) {
+                    dateChangeMessageNumDelta++;
+                }
             }
         }
 
         // If this is a message on top, add date change message on top
         if (index == 0) {
             addHashMapAndArrayList(0, makeDateChangeMessage(message));
+
+            if (countDateChangeMessage) {
+                dateChangeMessageNumDelta++;
+            }
         } else if (index - 1 >= 0) {
             PokoMessage prevMessage = arrayList.get(index - 1);
 
@@ -80,6 +93,10 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
             if (prevMessage.getMessageType() != PokoMessage.APP_DATE_MESSAGE
                     && compareMessageDate(prevMessage, message) < 0) {
                 addHashMapAndArrayList(index, makeDateChangeMessage(message));
+
+                if (countDateChangeMessage) {
+                    dateChangeMessageNumDelta++;
+                }
             }
         }
 
@@ -129,11 +146,6 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
         dateChangeMessage.setDate(date);
         dateChangeMessage.setSurviveOnListUpdate(true);
 
-
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd", Locale.KOREA);
-        format.setTimeZone(Constants.timeZone);
-        Log.v("POKO", "content " + messageNextDate.getContent() + ", " + format.format(date.getTime()));
-
         return dateChangeMessage;
     }
 
@@ -152,5 +164,22 @@ public class MessageListUI extends SortingList<Integer, PokoMessage> {
         } else {
             return 1;
         }
+    }
+
+    public void startCountDateChangeMessage() {
+        countDateChangeMessage = true;
+        dateChangeMessageNumDelta = 0;
+    }
+
+    public int endCountDateChangeMessage() {
+        countDateChangeMessage = false;
+        return dateChangeMessageNumDelta;
+    }
+
+    public PokoMessage getLastMessage() {
+        if (arrayList.size() == 0)
+            return null;
+
+        return arrayList.get(arrayList.size() - 1);
     }
 }

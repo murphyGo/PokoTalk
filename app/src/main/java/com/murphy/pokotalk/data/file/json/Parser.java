@@ -103,6 +103,7 @@ public class Parser {
         }
 
         group.setNbNewMessages(jsonGroup.getInt("nbNewMessages"));
+        group.setAck(jsonGroup.getInt("ack"));
 
         /* Parse members */
         for (int i = 0; i < jsonMembers.length(); i++) {
@@ -141,7 +142,6 @@ public class Parser {
             message.setSpecialContent(null);
         }
         message.setNbNotReadUser(userJson.getInt("nbNotReadUser"));
-        message.setAcked(userJson.getBoolean("acked"));
 
         /* Parse writer user */
         JSONObject jsonWriter = userJson.getJSONObject("writer");

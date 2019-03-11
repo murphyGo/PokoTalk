@@ -43,9 +43,7 @@ public abstract class PokoMultiItemsFile<T> extends PokoFile<T> {
         for (int i = 0; i < size; i++) {
             T item = getItemAt(i);
             if (item != null) {
-                preSaveItem(item);
-                saveItem(item);
-                postSaveItem(item);
+                saveItemProcess(item);
             }
         }
     }
@@ -56,5 +54,11 @@ public abstract class PokoMultiItemsFile<T> extends PokoFile<T> {
         while((item = read()) != null) {
             addItem(item);
         }
+    }
+
+    public void saveItemProcess(T item) throws IOException, JSONException {
+        preSaveItem(item);
+        saveItem(item);
+        postSaveItem(item);
     }
 }

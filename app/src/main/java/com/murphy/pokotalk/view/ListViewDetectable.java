@@ -17,8 +17,8 @@ public class ListViewDetectable extends ListView {
     protected Runnable reachTopCallback;
     protected boolean reachedTop;
     protected boolean blockLayingOutChildren;
-    protected int firstVisiblePositionMark;
-    protected int firstVisibleItemTopMark;
+    protected int pivotVisiblePositionMark;
+    protected int pivotVisibleItemTopMark;
 
     public ListViewDetectable(Context context) {
         super(context);
@@ -97,38 +97,40 @@ public class ListViewDetectable extends ListView {
                     return;
                 int firstVisibleItemTop = firstVisibleItem.getTop();
                 int yDelta = h - oldh;
-                smoothScrollToPositionFromTop(firstVisiblePosition, firstVisibleItemTop + yDelta, 0);
+                setSelectionFromTop(firstVisiblePosition, firstVisibleItemTop + yDelta);
             }
         }
     }
 
-    /** Mark current scroll position. */
-    public void markScrollPosition() {
-        View firstVisibleItem = getChildAt(0);
-        if (firstVisibleItem == null) {
-            firstVisiblePositionMark = -1;
+    /** Mark current scroll position with respect to visible item position. */
+    public void markScrollPosition(int visiblePosition) {
+        View pivotVisibleItem = getChildAt(visiblePosition);
+        if (pivotVisibleItem == null) {
+            pivotVisiblePositionMark = -1;
             Log.v("POKO", "MARK FIRST POSITION -1");
             return;
         }
-        firstVisiblePositionMark = getFirstVisiblePosition();
-        firstVisibleItemTopMark = firstVisibleItem.getTop();
+        pivotVisiblePositionMark = getFirstVisiblePosition() + visiblePosition;
+        pivotVisibleItemTopMark = pivotVisibleItem.getTop();
         blockLayingOutChildren = true;
-        Log.v("POKO", "MARK FIRST POSITION " + firstVisiblePositionMark);
+        Log.v("POKO", "MARK PIVOT POSITION " + pivotVisiblePositionMark);
     }
 
     /** Move to marked scroll position.
      * If the ListView has no entry when mark, it scrolls to the top. */
     public void scrollToMark(int positionDelta) {
         blockLayingOutChildren = false;
-        if (firstVisiblePositionMark < 0) {
+        if (pivotVisiblePositionMark < 0) {
             setSelectionAfterHeaderView();
         } else {
             int totalItems = getCount();
-            int finalPosition = firstVisiblePositionMark + positionDelta;
-            if (finalPosition >= totalItems) {
+            int finalPosition = pivotVisiblePositionMark + positionDelta;
+            if (finalPosition < 0) {
+                finalPosition = 0;
+            } else if (finalPosition >= totalItems) {
                 finalPosition = totalItems - 1;
             }
-            smoothScrollToPositionFromTop(finalPosition, firstVisibleItemTopMark, 0);
+            setSelectionFromTop(finalPosition, pivotVisibleItemTopMark);
         }
     }
 

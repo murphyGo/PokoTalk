@@ -30,12 +30,14 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
     protected static int READ_AHEAD_LIMIT = 4096;
     protected static long READ_SIZE = 1024;
     protected long messageOffset;
+    protected int lastMessageId;
 
     public MessageFile(Group group) {
         super();
         this.group = group;
         messageList = group.getMessageList();
         messageOffset = -1;
+        lastMessageId = -1;
     }
 
     @Override
@@ -70,7 +72,15 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
             return null;
         }
 
-        return Parser.parseMessage(jsonMessage);
+        PokoMessage message = Parser.parseMessage(jsonMessage);
+
+        /* Test message id max */
+        int messageId = message.getMessageId();
+        if (messageId > lastMessageId) {
+            lastMessageId = messageId;
+        }
+
+        return message;
     }
 
     @Override
@@ -94,7 +104,7 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
         bufferedReader = new BufferedReader(inputStreamReader);
     }
 
-    /** Reads next at most n messages from back(latest order).
+    /** Reads next at least n messages from back(latest order).
      * Returns the ArrayList of newly read messages. */
     public ArrayList<PokoMessage> readNextLatestMessages(int n) throws JSONException, IOException {
         int readNum, totalNum = 0;
@@ -105,6 +115,8 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
         while(totalNum < n) {
             //Log.v("POKO", "Outer most loop");
             readNum = 0;
+            readMessages.clear();
+
             /* Reset file to 0 offset */
             try {
                 bufferedReader.reset();
@@ -163,10 +175,14 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
                 if (!messageList.updateItem(newMessage)) {
                     readNum++;
                     newMessages.add(newMessage);
-                }
 
-                if (totalNum + readNum >= n) {
-                    break;
+                    /* Test message id max */
+                    int newMessageId = newMessage.getMessageId();
+                    if (newMessageId > lastMessageId) {
+                        lastMessageId = newMessageId;
+                    }
+
+                    Log.v("POKO", "Group " + group.getGroupId() + " Read message " + newMessageId + ", " + getLastMessageId());
                 }
             }
 
@@ -184,11 +200,21 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
     public void saveItem(PokoMessage item) throws IOException, JSONException {
         JSONObject jsonMessage = Serializer.makeMessageJSON(item);
         outputStreamWriter.write(jsonMessage.toString());
+
+        /* Test message id max */
+        int messageId = item.getMessageId();
+        if (messageId > lastMessageId) {
+            lastMessageId = messageId;
+        }
     }
 
     @Override
     public void preSaveItem(PokoMessage item) throws IOException {
         // each json item is separated with new line character
         outputStreamWriter.write("\n");
+    }
+
+    public int getLastMessageId() {
+        return lastMessageId;
     }
 }

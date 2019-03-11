@@ -1,6 +1,7 @@
 package com.murphy.pokotalk.data.file;
 
 import android.os.Environment;
+import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
@@ -14,6 +15,8 @@ import com.murphy.pokotalk.data.file.group.MessageFile;
 import com.murphy.pokotalk.data.file.session.SessionFile;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.PokoMessage;
 
 import org.json.JSONException;
 
@@ -21,6 +24,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /* Manages saving data as a file, reading from and writing to files */
 public class FileManager {
@@ -33,6 +37,7 @@ public class FileManager {
     protected StrangerFile strangerFile;
     protected ContactGroupFile contactGroupFile;
     protected GroupListFile groupListFile;
+    protected HashMap<Integer, MessageFile> messageFiles;
 
     public FileManager() {
         sessionFile = new SessionFile();
@@ -42,6 +47,7 @@ public class FileManager {
         strangerFile = new StrangerFile();
         contactGroupFile = new ContactGroupFile();
         groupListFile = new GroupListFile();
+        messageFiles = new HashMap<>();
     }
 
     public static FileManager getInstance() {
@@ -95,12 +101,26 @@ public class FileManager {
         return readAllFromFile(groupListFile);
     }
 
+    public MessageFile getMessageFile(Group group) {
+        if (group == null) {
+            return null;
+        }
+
+        MessageFile messageFile =  messageFiles.get(group.getGroupId());
+        if (messageFile == null) {
+            messageFile = new MessageFile(group);
+            messageFiles.put(group.getGroupId(), messageFile);
+        }
+
+        return messageFile;
+    }
+
     public boolean loadLastMessages() {
         GroupList groupList = DataCollection.getInstance().getGroupList();
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {
-            MessageFile messageFile = new MessageFile(group);
+            MessageFile messageFile = getMessageFile(group);
             try {
                 messageFile.openReader();
                 messageFile.readNextLatestMessages(1);
@@ -148,8 +168,48 @@ public class FileManager {
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {
-            MessageFile messageFile = new MessageFile(group);
-            saveToFile(messageFile);
+            saveMessagesForGroup(group);
+        }
+
+        return true;
+    }
+
+    public boolean saveMessagesForGroup(Group group) {
+        if (group == null) {
+            return false;
+        }
+
+        MessageFile messageFile = getMessageFile(group);
+        MessageList messageList = group.getMessageList();
+        PokoMessage lastReadMessage = messageList.getItemByKey(messageFile.getLastMessageId());
+        if (lastReadMessage == null) {
+            return false;
+        }
+
+        ArrayList<PokoMessage> pokoMessages = messageList.getList();
+        int index = pokoMessages.indexOf(lastReadMessage);
+        if (index < 0) {
+            return false;
+        }
+
+        try {
+            Log.v("POKO", "WRITE MESSAGE FOR GROUP " + group.getGroupId());
+            Log.v("POKO", "Last file message " + messageFile.getLastMessageId());
+            messageFile.openWriter(true);
+            for (index = index + 1; index < pokoMessages.size(); index++) {
+                try {
+                    messageFile.saveItemProcess(pokoMessages.get(index));
+                    Log.v("POKO", "Write message " + pokoMessages.get(index).getMessageId());
+                    Log.v("POKO", "Last file message " + messageFile.getLastMessageId());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            messageFile.closeWriter();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
 
         return true;
@@ -183,7 +243,7 @@ public class FileManager {
 
     protected boolean saveToFile(PokoSequencialAccessFile file) {
         try {
-            file.openWriter();
+            file.openWriter(false);
             file.save();
             file.flush();
             file.closeWriter();

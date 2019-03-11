@@ -79,6 +79,7 @@ public class Serializer {
         jsonGroup.put("groupName", group.getGroupName());
         jsonGroup.put("alias", group.getAlias());
         jsonGroup.put("nbNewMessages", group.getNbNewMessages());
+        jsonGroup.put("ack", group.getAck());
 
         for (int i = 0; i < members.size(); i++) {
             User member = members.get(i);
@@ -107,7 +108,6 @@ public class Serializer {
         jsonMessage.put("specialContent", message.getSpecialContent());
         jsonMessage.put("nbNotReadUser", message.getNbNotReadUser());
         jsonMessage.put("writer", makeMemberJSON(message.getWriter()));
-        jsonMessage.put("acked", message.isAcked());
 
         return jsonMessage;
     }

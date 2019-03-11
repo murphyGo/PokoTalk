@@ -33,10 +33,10 @@ public abstract class PokoSequencialAccessFile<T> extends PokoMultiItemsFile<T> 
         };
     }
 
-    public void openWriter() throws IOException {
+    public void openWriter(boolean append) throws IOException {
         Log.v("POKO", "Open writer " + getFullFilePath());
         makeSureFullDirectoryExists();
-        fileOutputStream = new FileOutputStream(getFullFilePath());
+        fileOutputStream = new FileOutputStream(getFullFilePath(), append);
         outputStreamWriter = new OutputStreamWriter(fileOutputStream, Constants.fileEncoding);
     }
 

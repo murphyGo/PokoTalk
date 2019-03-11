@@ -46,7 +46,7 @@ public class MessageAckListener extends PokoServer.PokoListener {
 
             /* Decrement nbNotReadUser of acked messages */
             MessageList messageList = group.getMessageList();
-            messageList.ackMessages(fromId, toId, true,false, user);
+            messageList.ackMessages(fromId, toId, true, user);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad message ack json data");
         }

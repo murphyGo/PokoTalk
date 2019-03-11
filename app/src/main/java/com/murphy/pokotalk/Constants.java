@@ -7,7 +7,7 @@ public class Constants {
     public static final String[] serverURLs = {"https://192.168.0.2",
             "https://172.30.1.24"};
     public static final int serverPort = 4000;
-    public static final String serverURL = serverURLs[1] + ":" + serverPort;    /* Server Address */
+    public static final String serverURL = serverURLs[0] + ":" + serverPort;    /* Server Address */
     public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     public static final Locale locale = Locale.KOREA;
     public static final TimeZone timeZone = TimeZone.getTimeZone("Asia/Seoul");
@@ -71,6 +71,7 @@ public class Constants {
     /* Chat event names */
     public static final String joinContactChatName = "joinContactChat";
     public static final String readMessageName = "readMessage";
+    public static final String readNbreadOfMessages = "readNbreadOfMessages";
     public static final String sendMessageName = "sendMessage";
     public static final String ackMessageName = "ackMessage";
     public static final String joinChatName = "joinChat";

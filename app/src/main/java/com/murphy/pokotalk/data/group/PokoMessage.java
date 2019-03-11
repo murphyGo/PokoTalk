@@ -16,7 +16,6 @@ public class PokoMessage extends Item {
     private String specialContent;
     private Calendar date;
     private int nbNotReadUser;    // number of users has not read this message
-    private boolean acked;        // the user acked this message?
 
     /* PokoMessage type constants */
     public static final int TEXT_MESSAGE = 0;
@@ -32,7 +31,7 @@ public class PokoMessage extends Item {
     public static final int VERY_IMPORTANT = 2;
 
     public PokoMessage() {
-        setAcked(false);
+
     }
 
     public void update(Item item) {
@@ -111,14 +110,6 @@ public class PokoMessage extends Item {
     public void decrementNbNotReadUser() {
         if (--nbNotReadUser < 0)
             nbNotReadUser = 0;
-    }
-
-    public boolean isAcked() {
-        return acked;
-    }
-
-    public void setAcked(boolean acked) {
-        this.acked = acked;
     }
 
     public boolean isMyMessage(Session session) {

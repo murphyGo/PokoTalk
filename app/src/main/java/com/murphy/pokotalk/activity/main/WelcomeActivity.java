@@ -11,19 +11,15 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
-import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.data.DataLock;
-import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.service.PokoTalkService;
 
 import java.util.ArrayList;
@@ -116,32 +112,6 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
         PokoTalkService.unbindPokoTalkService(this, this);
 
         super.onDestroy();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        /* Save application data */
-        Log.v("POKO", "SAVE DATA");
-        try {
-            DataLock.getInstance().acquireReadLock();
-
-            FileManager fileManager = FileManager.getInstance();
-            fileManager.saveSession();
-            fileManager.saveContactList();
-            fileManager.savePendingContactList();
-            fileManager.saveStrangerList();
-            fileManager.saveContactGroupRelations();
-            fileManager.saveGroupList();
-            fileManager.saveMessages();
-
-            DataLock.getInstance().releaseReadLock();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        Log.v("POKO", "SAVE DATA END");
-
-        finish();
     }
 
     @Override

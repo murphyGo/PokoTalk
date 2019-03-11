@@ -1,8 +1,13 @@
 package com.murphy.pokotalk.data.file.json;
 
+import android.database.Cursor;
+
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.file.schema.GroupsSchema;
+import com.murphy.pokotalk.data.file.schema.MessagesSchema;
+import com.murphy.pokotalk.data.file.schema.UsersSchema;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -21,6 +26,135 @@ import java.util.Calendar;
 public class Parser {
     protected static DataCollection collection = DataCollection.getInstance();
 
+    public static Contact parseUser(Cursor cursor) {
+        return parseContact(cursor);
+    }
+
+    public static Calendar epochInMillsToCalendar(long epochInMills) {
+        Calendar result =  Calendar.getInstance();
+        result.setTimeInMillis(epochInMills);
+        result.setTimeZone(Constants.timeZone);
+        return result;
+    }
+
+    public static Stranger parseStranger(Cursor cursor) {
+        Stranger user = new Stranger();
+        user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID)));
+        user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.EMAIL)));
+        user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.NICKNAME)));
+        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE)));
+
+        return user;
+    }
+
+    public static PendingContact parsePendingContact(Cursor cursor) {
+        PendingContact user = new PendingContact();
+        user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID)));
+        user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.EMAIL)));
+        user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.NICKNAME)));
+        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE)));
+
+        return user;
+    }
+
+    public static Contact parseContact(Cursor cursor) {
+        Contact user = new Contact();
+        int lastSeenIndex = cursor.getColumnIndexOrThrow(UsersSchema.Entry.LAST_SEEN);
+
+        user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID)));
+        user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.EMAIL)));
+        user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.NICKNAME)));
+        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE)));
+        if (cursor.isNull(lastSeenIndex)) {
+            user.setLastSeen(null);
+        } else {
+            user.setLastSeen(epochInMillsToCalendar(cursor.getLong(lastSeenIndex)));
+        }
+
+        return user;
+    }
+
+    public static Group parseGroup(Cursor cursor) {
+        Group group = new Group();
+
+        int nameIndex = cursor.getColumnIndexOrThrow(GroupsSchema.Entry.NAME);
+        int aliasIndex = cursor.getColumnIndexOrThrow(GroupsSchema.Entry.ALIAS);
+
+        group.setGroupId(cursor.getInt(cursor.getColumnIndexOrThrow(GroupsSchema.Entry.GROUP_ID)));
+        group.setNbNewMessages(cursor.getInt(cursor.getColumnIndexOrThrow(GroupsSchema.Entry.NB_NEW_MESSAGES)));
+        group.setAck(cursor.getInt(cursor.getColumnIndexOrThrow(GroupsSchema.Entry.ACK)));
+
+
+        if (cursor.isNull(nameIndex)) {
+            group.setGroupName(null);
+        } else {
+            group.setGroupName(cursor.getString(nameIndex));
+        }
+
+        if (cursor.isNull(aliasIndex)) {
+            group.setAlias(null);
+        } else {
+            group.setAlias(cursor.getString(aliasIndex));
+        }
+
+        return group;
+    }
+
+    public static PokoMessage parseMessage(Cursor cursor) throws Exception {
+        Contact user = Session.getInstance().getUser();
+        PokoMessage message = new PokoMessage();
+
+        // Get indexes
+        int contentsIndex = cursor.getColumnIndexOrThrow(MessagesSchema.Entry.CONTENTS);
+        int specialContentsIndex = cursor.getColumnIndexOrThrow(MessagesSchema.Entry.SPECIAL_CONTENTS);
+        int nbNotReadIndex = cursor.getColumnIndexOrThrow(MessagesSchema.Entry.NB_NOT_READ);
+        int importanceIndex = cursor.getColumnIndexOrThrow(MessagesSchema.Entry.IMPORTANCE);
+
+        // Parse data and set to PokoMessage object
+        message.setMessageId(cursor.getInt(cursor.getColumnIndexOrThrow(MessagesSchema.Entry.MESSAGE_ID)));
+        message.setMessageType(cursor.getInt(cursor.getColumnIndexOrThrow(MessagesSchema.Entry.MESSAGE_TYPE)));
+        message.setDate(epochInMillsToCalendar(
+                cursor.getLong(cursor.getColumnIndexOrThrow(MessagesSchema.Entry.DATE))));
+
+        if (cursor.isNull(importanceIndex)) {
+            message.setImportanceLevel(PokoMessage.NORMAL);
+        } else {
+            message.setImportanceLevel(cursor.getInt(importanceIndex));
+        }
+        if (cursor.isNull(contentsIndex)) {
+            message.setContent("");
+        } else {
+            message.setContent(cursor.getString(contentsIndex));
+        }
+        if (cursor.isNull(specialContentsIndex)) {
+            message.setSpecialContent(null);
+        } else {
+            message.setSpecialContent(cursor.getString(specialContentsIndex));
+        }
+        if (cursor.isNull(nbNotReadIndex)) {
+            message.setNbNotReadUser(0);
+        } else {
+            message.setNbNotReadUser(cursor.getInt(nbNotReadIndex));
+        }
+
+        /* Parse writer user */
+        int memberUserId = cursor.getInt(cursor.getColumnIndexOrThrow(MessagesSchema.Entry.USER_ID));
+        User member = collection.getUserById(memberUserId);
+        if (member == null) {
+            if (user.getUserId() == memberUserId) {
+                message.setWriter(user);
+            } else {
+                throw new Exception("Can not find writer");
+            }
+        } else {
+            message.setWriter(member);
+        }
+
+        return message;
+    }
+
+
+    /** Parsing methods using jsonObjects */
     public static Session parseSessionJSON(JSONObject jsonSession) throws JSONException {
         Session session = Session.getInstance();
         String sessionId = jsonSession.getString("sessionId");
@@ -36,13 +170,6 @@ public class Parser {
 
     public static Contact parseUserJSON(JSONObject userJson) throws JSONException {
         return parseContact(userJson);
-    }
-
-    public static Calendar epochInMillsToCalendar(long epochInMills) {
-        Calendar result =  Calendar.getInstance();
-        result.setTimeInMillis(epochInMills);
-        result.setTimeZone(Constants.timeZone);
-        return result;
     }
 
     public static Stranger parseStranger(JSONObject userJson) throws JSONException {

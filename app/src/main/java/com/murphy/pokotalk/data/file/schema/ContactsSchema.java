@@ -10,8 +10,9 @@ public class ContactsSchema {
     public static final String SQL_CREATE_TABLE =
             "CREATE TABLE IF NOT EXISTS " + Entry.TABLE_NAME + " (" +
                     Entry.USER_ID + " INTEGER NOT NULL PRIMARY KEY, " +
-                    Entry.LAST_SEEN + " INTEGER, " +
                     Entry.GROUP_CHAT_ID + " INTEGER, " +
+                    Entry.PENDING + " INTEGER NOT NULL, " +
+                    Entry.INVITED + " INTEGER, " +
                     "FOREIGN KEY (" + Entry.USER_ID + ") REFERENCES " +
                     UsersSchema.Entry.TABLE_NAME + " (" + UsersSchema.Entry.USER_ID + ") " +
                     "ON UPDATE CASCADE ON DELETE CASCADE, " +
@@ -26,7 +27,8 @@ public class ContactsSchema {
     public static class Entry implements BaseColumns {
         public static final String TABLE_NAME = "Contacts";
         public static final String USER_ID = "userId";
-        public static final String LAST_SEEN = "lastSeen";
         public static final String GROUP_CHAT_ID = "groupChatId";
+        public static final String PENDING = "pending";
+        public static final String INVITED = "invited";
     }
 }

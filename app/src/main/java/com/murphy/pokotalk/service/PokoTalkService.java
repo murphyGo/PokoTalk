@@ -6,7 +6,6 @@ import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.IBinder;
@@ -27,6 +26,7 @@ import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.data.file.PokoDatabase;
+import com.murphy.pokotalk.data.file.PokoDatabaseManager;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
@@ -122,18 +122,19 @@ public class PokoTalkService extends Service {
         /* Load application data */
         try {
             DataLock.getInstance().acquireWriteLock();
-            SQLiteDatabase db = pokoDB.getReadableDatabase();
-            fileManager.loadSession();
-            fileManager.loadContactList();
-            fileManager.loadPendingContactList();
-            fileManager.loadStragerList();
-            fileManager.loadContactGroupRelations();
-            fileManager.loadGroupList();
-            fileManager.loadLastMessages();
 
-            DataLock.getInstance().releaseWriteLock();
+            try {
+                PokoDatabaseManager.loadSessionData(this);
+                PokoDatabaseManager.loadUserData(this);
+                PokoDatabaseManager.loadGroupData(this);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
+            DataLock.getInstance().releaseWriteLock();
         }
     }
 

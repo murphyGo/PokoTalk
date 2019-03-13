@@ -53,20 +53,23 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         try {
             DataLock.getInstance().acquireWriteLock();
 
-            invitedListAdapter = new PendingContactListAdapter(this);
-            invitingListAdapter = new PendingContactListAdapter(this);
-            invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
-            invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
-            PendingContactList invitedListUI = (PendingContactList) invitedListAdapter.getPokoList();
-            PendingContactList invitingListUI = (PendingContactList) invitingListAdapter.getPokoList();
-            invitedListUI.copyFromPokoList(invitedList);
-            invitingListUI.copyFromPokoList(invitingList);
-            invitedListView.setAdapter(invitedListAdapter);
-            invitingListView.setAdapter(invitingListAdapter);
-            invitedListAdapter.setInvited(true);
-            invitingListAdapter.setInvited(false);
+            try {
+                invitedListAdapter = new PendingContactListAdapter(this);
+                invitingListAdapter = new PendingContactListAdapter(this);
+                invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
+                invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
+                PendingContactList invitedListUI = (PendingContactList) invitedListAdapter.getPokoList();
+                PendingContactList invitingListUI = (PendingContactList) invitingListAdapter.getPokoList();
+                invitedListUI.copyFromPokoList(invitedList);
+                invitingListUI.copyFromPokoList(invitingList);
+                invitedListView.setAdapter(invitedListAdapter);
+                invitingListView.setAdapter(invitingListAdapter);
+                invitedListAdapter.setInvited(true);
+                invitingListAdapter.setInvited(false);
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
+            }
 
-            DataLock.getInstance().releaseWriteLock();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

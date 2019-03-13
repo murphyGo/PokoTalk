@@ -1,16 +1,21 @@
 package com.murphy.pokotalk.listener.chat;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
-import com.murphy.pokotalk.server.parser.PokoParser;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.server.parser.PokoParser;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,6 +23,7 @@ import org.json.JSONObject;
 
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ReadMessageListener extends PokoServer.PokoListener {
     @Override
@@ -49,12 +55,15 @@ public class ReadMessageListener extends PokoServer.PokoListener {
                 JSONObject jsonMessage = messages.getJSONObject(i);
                 PokoMessage message = PokoParser.parseMessage(jsonMessage);
                 messageList.updateItem(message);
-                readMessages.add(messageList.getItemByKey(messageList.getKey(message)));
                 message = messageList.getItemByKey(messageList.getKey(message));
+                readMessages.add(message);
 
                 /* If the message is history, send get history */
                 if (message.getMessageType() == PokoMessage.MEMBER_JOIN) {
-                    PokoServer.getInstance(null).sendGetMemberJoinHistory(groupId, message.getMessageId());
+                    PokoServer server = PokoServer.getInstance(null);
+                    if (server != null) {
+                        server.sendGetMemberJoinHistory(groupId, message.getMessageId());
+                    }
                 }
             }
 
@@ -72,5 +81,46 @@ public class ReadMessageListener extends PokoServer.PokoListener {
     @Override
     public void callError(Status status, Object... args) {
         Log.e("POKO ERROR", "Failed to read messages");
+    }
+
+    @Override
+    public PokoAsyncDatabaseJob getDatabaseJob() {
+        return new DatabaseJob();
+    }
+
+    static class DatabaseJob extends PokoAsyncDatabaseJob {
+        @Override
+        protected void doJob(HashMap<String, Object> data) {
+            Group group = (Group) data.get("group");
+            ArrayList<PokoMessage> messages = (ArrayList<PokoMessage>) data.get("messages");
+
+            if (group == null || messages == null) {
+                return;
+            }
+
+            Log.v("POKO", "START TO save messages DATA.");
+
+            /* Get a database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                for (PokoMessage message : messages) {
+                    ContentValues values = Serializer.obtainMessageValues(group, message);
+
+                    // Add message data
+                    PokoDatabaseHelper.insertOrIgnoreMessageData(db, values);
+                }
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "saved messages successfully.");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to save messages data.");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+            }
+        }
     }
 }

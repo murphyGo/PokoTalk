@@ -2,6 +2,8 @@ package com.murphy.pokotalk.activity.chat;
 
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -32,9 +34,11 @@ import com.murphy.pokotalk.adapter.MessageListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.file.FileManager;
-import com.murphy.pokotalk.data.file.group.MessageFile;
+import com.murphy.pokotalk.data.file.PokoDatabase;
+import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
@@ -71,6 +75,7 @@ public class ChatActivity extends AppCompatActivity
     private Session session;
     private boolean firstRead = true;
     public static final int slideMenuWidthDP = 250;
+    public static final int MESSAGE_LOAD_NUM = 20;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -134,58 +139,40 @@ public class ChatActivity extends AppCompatActivity
         /* Add slide menu item click listener */
         navigationView = slideMenuLayout.findViewById(R.id.chatSlideMenu);
         navigationView.setNavigationItemSelectedListener(this);
-/*
-        MessageFile messageFile = new MessageFile(group);
+
         try {
             DataLock.getInstance().acquireWriteLock();
             try {
-                Log.v("POKO", "READ MESSAGE FROM FILE");
-
-                messageFile.openReader();
-                messageFile.readNextLatestMessages(20);
-                messageFile.closeReader();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (JSONException e) {
-                e.printStackTrace();
+                /* Member list */
+                memberListAdapter = new GroupMemberListAdapter(this);
+                memberListAdapter.getPokoList().copyFromPokoList(group.getMembers());
+                memberListView = drawerLayout.findViewById(R.id.memberList);
+                memberListView.setAdapter(memberListAdapter);
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
             }
-            DataLock.getInstance().releaseWriteLock();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-*/
-        try {
-            DataLock.getInstance().acquireWriteLock();
-
-            /* Member list */
-            memberListAdapter = new GroupMemberListAdapter(this);
-            memberListAdapter.getPokoList().copyFromPokoList(group.getMembers());
-            memberListView = drawerLayout.findViewById(R.id.memberList);
-            memberListView.setAdapter(memberListAdapter);
-
-            DataLock.getInstance().releaseWriteLock();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         try {
             DataLock.getInstance().acquireWriteLock();
-
-            messageListAdapter = new MessageListAdapter(this);
-            messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
-            messageListView.setAdapter(messageListAdapter);
-            messageListView.setKeepVerticalPosition(true);
-            messageListView.postScrollToBottom();
-            messageListView.setReachTopCallback(new Runnable() {
-                @Override
-                public void run() {
-                    AsyncTask task = new ReadMoreMessageTask();
-                    task.execute(null, null);
-                }
-            });
-
-            DataLock.getInstance().releaseWriteLock();
+            try {
+                messageListAdapter = new MessageListAdapter(this);
+                messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
+                messageListView.setAdapter(messageListAdapter);
+                messageListView.setKeepVerticalPosition(true);
+                messageListView.postScrollToBottom();
+                messageListView.setReachTopCallback(new Runnable() {
+                    @Override
+                    public void run() {
+                        AsyncTask task = new ReadMoreMessageTask();
+                        task.execute(null, null);
+                    }
+                });
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -332,20 +319,21 @@ public class ChatActivity extends AppCompatActivity
         public void onClick(View v) {
             try {
                 DataLock.getInstance().acquireWriteLock();
-
-                String content = messageInputView.getText().toString();
-                if (content.length() == 0) {
-                    Toast.makeText(getApplicationContext(), "메시지를 입력해주세요.",
-                            Toast.LENGTH_SHORT).show();
-                    return;
+                try {
+                    String content = messageInputView.getText().toString();
+                    if (content.length() == 0) {
+                        Toast.makeText(getApplicationContext(), "메시지를 입력해주세요.",
+                                Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    sendId++;
+                    PokoMessage message = createSentMessage(sendId, content, PokoMessage.NORMAL);
+                    server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.NORMAL);
+                    group.getMessageList().addSentMessage(message);
+                    messageInputView.setText("");
+                } finally {
+                    DataLock.getInstance().releaseWriteLock();
                 }
-                sendId++;
-                PokoMessage message = createSentMessage(sendId, content, PokoMessage.NORMAL);
-                server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.NORMAL);
-                group.getMessageList().addSentMessage(message);
-                messageInputView.setText("");
-
-                DataLock.getInstance().releaseWriteLock();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -658,31 +646,66 @@ public class ChatActivity extends AppCompatActivity
 
         @Override
         protected ArrayList<PokoMessage> doInBackground(Object... args) {
-            MessageFile messageFile = FileManager.getInstance().getMessageFile(group);
-            ArrayList<PokoMessage> readMessages = null;
+            ArrayList<PokoMessage> readMessages = new ArrayList<>();
 
             try {
                 DataLock.getInstance().acquireWriteLock();
 
                 try {
+                    // Find first messageId to start reading message.
+                    MessageList messageList = group.getMessageList();
+                    PokoMessage firstMessage = messageList.getList().get(0);
+                    int startId;
+                    if (firstMessage == null) {
+                        startId = -1;
+                    } else {
+                        startId = firstMessage.getMessageId() - 1;
+                    }
+
                     // Now we mark current scroll position w.r.t second visible item
                     // because first item is always date change message and it will be removed.
                     // So we mark position of second item that will remain after update.
                     messageListView.markScrollPosition(1);
 
                     Log.v("POKO", "Mark position");
-                    messageFile.openReader();
-                    readMessages = messageFile.readNextLatestMessages(20);
-                    messageFile.closeReader();
+
+                    // Get a database for reading
+                    PokoDatabase pokoDatabase = PokoDatabase.getInstance(getApplicationContext());
+                    SQLiteDatabase db = pokoDatabase.getReadableDatabase();
+
+                    // Query to read a next at most MESSAGE_LOAD_NUM messages
+                    Cursor cursor;
+                    if (startId < 0) {
+                        cursor = PokoDatabaseHelper.readMessageDataFromBack(db,
+                                group.getGroupId(), 0, MESSAGE_LOAD_NUM);
+                    } else {
+                        cursor = PokoDatabaseHelper.readMessageDataFromBackByMessageId(db,
+                                group.getGroupId(), startId, MESSAGE_LOAD_NUM);
+                    }
+
+                    // Parse all messages and add to message list
+                    while (cursor.moveToNext()) {
+                        try {
+                            PokoMessage message = Parser.parseMessage(cursor);
+                            if (!messageList.updateItem(message)) {
+                                readMessages.add(message);
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            Log.v("POKO", "Failed to parse message");
+                        }
+                    }
+                    cursor.close();
 
                     Log.v("POKO", "READ MESSAGE FROM FILE");
                 } catch (Exception e) {
                     e.printStackTrace();
                     // We must scroll to mark after mark
                     messageListView.scrollToMark(0);
+                } finally {
+                    DataLock.getInstance().releaseWriteLock();
                 }
 
-                DataLock.getInstance().releaseWriteLock();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -695,24 +718,25 @@ public class ChatActivity extends AppCompatActivity
             if (readMessages != null) {
                 try {
                     DataLock.getInstance().acquireWriteLock();
+                    try {
+                        MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
+                        // We now count delta of number of date change message.
+                        messageListUI.startCountDateChangeMessage();
+                        for (PokoMessage message : readMessages) {
+                            messageListUI.updateItem(message);
+                        }
 
-                    MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
-                    // We now count delta of number of date change message.
-                    messageListUI.startCountDateChangeMessage();
-                    for (PokoMessage message : readMessages) {
-                        messageListUI.updateItem(message);
+                        int dateChangeMessageNumDelta = messageListUI.endCountDateChangeMessage();
+
+                        messageListAdapter.notifyDataSetChanged();
+                        int size = readMessages.size() + dateChangeMessageNumDelta;
+                        Log.v("POKO", "READ " + readMessages.size() + " messages");
+                        messageListView.scrollToMark(size);
+
+                        Log.v("POKO", "go to mark");
+                    } finally {
+                        DataLock.getInstance().releaseWriteLock();
                     }
-
-                    int dateChangeMessageNumDelta = messageListUI.endCountDateChangeMessage();
-
-                    messageListAdapter.notifyDataSetChanged();
-                    int size = readMessages.size() + dateChangeMessageNumDelta;
-                    Log.v("POKO", "READ " + readMessages.size() + " messages");
-                    messageListView.scrollToMark(size);
-
-                    Log.v("POKO", "go to mark");
-
-                    DataLock.getInstance().releaseWriteLock();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

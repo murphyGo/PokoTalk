@@ -1,9 +1,8 @@
-package com.murphy.pokotalk.data.file.group;
+package com.murphy.pokotalk.data.file.deprecated;
 
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Reader;
 import com.murphy.pokotalk.data.file.json.Serializer;

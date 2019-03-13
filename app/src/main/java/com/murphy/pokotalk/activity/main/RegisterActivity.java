@@ -51,40 +51,14 @@ public class RegisterActivity extends AppCompatActivity {
             }
         });
 
-        server.attachActivityCallback(Constants.accountRegisteredName, new ActivityCallback() {
-            @Override
-            public void onSuccess(Status status, Object... args) {
+        server.attachActivityCallback(Constants.accountRegisteredName, accountRegisteredListener);
+    }
 
-                final JSONObject jsonObject = (JSONObject) args[0];
+    @Override
+    protected void onDestroy() {
+        server.detachActivityCallback(Constants.accountRegisteredName, accountRegisteredListener);
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "가입하셨습니다! 로그인 해주세요.",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
-
-                /* Go back to LoginActivity */
-                Intent intent = new Intent();
-                intent.putExtra("status", "ok");
-
-                setResult(RESULT_OK, intent);
-                finish();
-            }
-
-            @Override
-            public void onError(Status status, Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // show message
-                        Toast.makeText(getApplicationContext(),
-                                "가입에 실패하였습니다. 다시 시도해주세요", Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        });
+        super.onDestroy();
     }
 
     private boolean isEmail(String email) {
@@ -132,4 +106,39 @@ public class RegisterActivity extends AppCompatActivity {
 
         return true;
     }
+
+    private ActivityCallback accountRegisteredListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+
+            final JSONObject jsonObject = (JSONObject) args[0];
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "가입하셨습니다! 로그인 해주세요.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+
+            /* Go back to LoginActivity */
+            Intent intent = new Intent();
+            intent.putExtra("status", "ok");
+
+            setResult(RESULT_OK, intent);
+            finish();
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // show message
+                    Toast.makeText(getApplicationContext(),
+                            "가입에 실패하였습니다. 다시 시도해주세요", Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
 }

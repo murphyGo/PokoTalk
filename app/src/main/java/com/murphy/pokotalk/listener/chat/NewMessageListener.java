@@ -1,21 +1,27 @@
 package com.murphy.pokotalk.listener.chat;
 
+import android.content.ContentValues;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
-import com.murphy.pokotalk.server.parser.PokoParser;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.server.parser.PokoParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
+import java.util.HashMap;
 
 public class NewMessageListener extends PokoServer.PokoListener {
     @Override
@@ -73,5 +79,45 @@ public class NewMessageListener extends PokoServer.PokoListener {
     @Override
     public void callError(Status status, Object... args) {
         Log.e("POKO ERROR", "Failed to get new message");
+    }
+
+    @Override
+    public PokoAsyncDatabaseJob getDatabaseJob() {
+        return new DatabaseJob();
+    }
+
+    static class DatabaseJob extends PokoAsyncDatabaseJob {
+        @Override
+        protected void doJob(HashMap<String, Object> data) {
+            Group group = (Group) data.get("group");
+            PokoMessage message = (PokoMessage) data.get("message");
+
+            if (group == null || message == null) {
+                return;
+            }
+
+            Log.v("POKO", "START TO save message DATA.");
+
+            /* Get a database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                // Get content value of message
+                ContentValues values = Serializer.obtainMessageValues(group, message);
+
+                // Add message data
+                PokoDatabaseHelper.insertOrIgnoreMessageData(db, values);
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "saved message successfully.");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to save message data.");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+            }
+        }
     }
 }

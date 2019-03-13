@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.data.file.contact;
+package com.murphy.pokotalk.data.file.deprecated;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;

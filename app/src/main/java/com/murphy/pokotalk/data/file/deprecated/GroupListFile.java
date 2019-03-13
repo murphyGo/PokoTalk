@@ -1,8 +1,8 @@
-package com.murphy.pokotalk.data.file.group;
+package com.murphy.pokotalk.data.file.deprecated;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoSequencialAccessFile;
+import com.murphy.pokotalk.data.file.deprecated.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;

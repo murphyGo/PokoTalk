@@ -68,54 +68,66 @@ public class LoginActivity extends AppCompatActivity {
             }
         });
 
-        server.attachActivityCallback(Constants.passwordLoginName, new ActivityCallback() {
-            @Override
-            public void onSuccess(Status status, Object... args) {
-                JSONObject jsonObject = (JSONObject) args[0];
-                try {
-                    final String sessionId = jsonObject.getString("sessionId");
-
-                    /* Start session */
-                    Session session = Session.getInstance();
-                    session.setSessionId(sessionId);
-                    session.login(getApplicationContext());
-                } catch (JSONException e) {
-                    return;
-                }
-            }
-
-            @Override
-            public void onError(Status status, Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "이메일 또는 비밀번호가 틀립니다.",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        });
-
-        server.attachActivityCallback(Constants.sessionLoginName, new ActivityCallback() {
-            @Override
-            public void onSuccess(Status status, final Object... args) {
-                    Intent intent = new Intent();
-                    intent.putExtra("login", "success");
-                    setResult(RESULT_OK, intent);
-
-                    finish();
-            }
-
-            @Override
-            public void onError(Status status, Object... args) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(getApplicationContext(), "로그인 실패...",
-                                Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-        });
+        server.attachActivityCallback(Constants.passwordLoginName, passwordLoginListener);
+        server.attachActivityCallback(Constants.sessionLoginName, sessionLoginListener);
     }
+
+    @Override
+    protected void onDestroy() {
+        server.detachActivityCallback(Constants.passwordLoginName, passwordLoginListener);
+        server.detachActivityCallback(Constants.sessionLoginName, sessionLoginListener);
+
+        super.onDestroy();
+    }
+
+    private ActivityCallback passwordLoginListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            JSONObject jsonObject = (JSONObject) args[0];
+            try {
+                final String sessionId = jsonObject.getString("sessionId");
+
+                /* Start session */
+                Session session = Session.getInstance();
+                session.setSessionId(sessionId);
+                session.login(getApplicationContext());
+            } catch (JSONException e) {
+                return;
+            }
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "이메일 또는 비밀번호가 틀립니다.",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
+
+    private ActivityCallback sessionLoginListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, final Object... args) {
+            Intent intent = new Intent();
+            intent.putExtra("login", "success");
+            setResult(RESULT_OK, intent);
+
+            finish();
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    Toast.makeText(getApplicationContext(), "로그인 실패...",
+                            Toast.LENGTH_LONG).show();
+                }
+            });
+        }
+    };
 }
+

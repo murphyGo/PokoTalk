@@ -1,6 +1,7 @@
 package com.murphy.pokotalk.activity.main;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
@@ -69,6 +70,7 @@ public class MainActivity extends AppCompatActivity
     private GroupListAdapter groupListAdapter;
     private Messenger serviceMessenger = null;
     private Messenger myMessenger = new Messenger(new ServiceCallback());
+    private boolean bindService = false;
 
     /* Intent commands */
     public static final int START_GROUP_CHAT = 1;
@@ -112,13 +114,17 @@ public class MainActivity extends AppCompatActivity
         try {
             DataLock.getInstance().acquireWriteLock();
 
-            ContactList contactList = collection.getContactList();
-            contactListAdapter = new ContactListAdapter(getApplicationContext());
-            contactListAdapter.setViewCreationCallback(contactCreationCallback);
-            ContactList contactListUI = (ContactList) contactListAdapter.getPokoList();
-            contactListUI.copyFromPokoList(contactList);
+            try {
+                ContactList contactList = collection.getContactList();
+                contactListAdapter = new ContactListAdapter(getApplicationContext());
+                contactListAdapter.setViewCreationCallback(contactCreationCallback);
+                ContactList contactListUI = (ContactList) contactListAdapter.getPokoList();
+                contactListUI.copyFromPokoList(contactList);
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
 
-            DataLock.getInstance().releaseWriteLock();
+            }
+
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -126,13 +132,16 @@ public class MainActivity extends AppCompatActivity
         try {
             DataLock.getInstance().acquireWriteLock();
 
-            GroupList groupList = collection.getGroupList();
-            groupListAdapter = new GroupListAdapter(getApplicationContext());
-            groupListAdapter.setViewCreationCallback(groupCreationCallback);
-            GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
-            groupListUI.copyFromPokoList(groupList);
+            try {
+                GroupList groupList = collection.getGroupList();
+                groupListAdapter = new GroupListAdapter(getApplicationContext());
+                groupListAdapter.setViewCreationCallback(groupCreationCallback);
+                GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
+                groupListUI.copyFromPokoList(groupList);
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
+            }
 
-            DataLock.getInstance().releaseWriteLock();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -161,8 +170,9 @@ public class MainActivity extends AppCompatActivity
         Log.v("POKO", "MainActivity starts, process id " + Process.myPid());
 
         /* Services */
-        PokoTalkService.startPokoTalkService(this);
-        PokoTalkService.bindPokoTalkService(this, this);
+        Context context = getApplicationContext();
+        PokoTalkService.startPokoTalkService(context);
+        PokoTalkService.bindPokoTalkService(context, this);
 
         /* Get intent and start operation if given */
         Intent intent = getIntent();
@@ -198,7 +208,10 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
 
-        PokoTalkService.unbindPokoTalkService(this, this);
+        if (bindService) {
+            PokoTalkService.unbindPokoTalkService(getApplicationContext(), this);
+            bindService = false;
+        }
 
         super.onDestroy();
     }
@@ -713,6 +726,7 @@ public class MainActivity extends AppCompatActivity
             serviceMessenger = new Messenger(service);
             Message message = Message.obtain(null, PokoTalkService.APP_STARTED);
             serviceMessenger.send(message);
+            bindService = true;
         } catch (RemoteException e) {
             e.printStackTrace();
         }
@@ -720,8 +734,9 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onServiceDisconnected(ComponentName name) {
-        PokoTalkService.startPokoTalkService(this);
-        PokoTalkService.bindPokoTalkService(this, this);
+        Context context = getApplicationContext();
+        PokoTalkService.startPokoTalkService(context);
+        PokoTalkService.bindPokoTalkService(context, this);
     }
 
     class ServiceCallback extends Handler {

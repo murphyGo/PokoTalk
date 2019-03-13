@@ -80,13 +80,15 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
         try {
             DataLock.getInstance().acquireWriteLock();
 
-            candidateListAdapter = new MemberCandidateListAdapter(this);
-            candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
-            ContactList contactListUI = (ContactList) candidateListAdapter.getPokoList();
-            contactListUI.copyFromPokoList(nonMemberContactList);
-            candidateListView.setAdapter(candidateListAdapter);
-
-            DataLock.getInstance().releaseWriteLock();
+            try {
+                candidateListAdapter = new MemberCandidateListAdapter(this);
+                candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
+                ContactList contactListUI = (ContactList) candidateListAdapter.getPokoList();
+                contactListUI.copyFromPokoList(nonMemberContactList);
+                candidateListView.setAdapter(candidateListAdapter);
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

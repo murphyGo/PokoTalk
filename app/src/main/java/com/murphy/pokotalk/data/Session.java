@@ -1,7 +1,14 @@
 package com.murphy.pokotalk.data;
 
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
+import com.murphy.pokotalk.data.file.PokoDatabase;
+import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.file.PokoDatabaseQuery;
+import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.server.PokoServer;
 
@@ -88,5 +95,27 @@ public class Session {
 
     public static void reset() {
         instance = null;
+    }
+
+    public static void checkSessionData() {
+        PokoDatabase pokoDatabase = PokoDatabase.getInstance(null);
+        SQLiteDatabase db = pokoDatabase.getReadableDatabase();
+        int userId = getInstance().getUser().getUserId();
+
+        String[] selectionArgs = {Integer.toString(userId)};
+        Cursor userCursor = PokoDatabaseHelper.query(db, PokoDatabaseQuery.readUserData, selectionArgs);
+
+        try {
+            if (!userCursor.moveToNext()) {
+                return;
+            }
+
+            Contact user = Parser.parseUser(userCursor);
+            Log.v("POKO", "USER CHECK " + user.getNickname() + "(" + user.getEmail() + "), " + user.getUserId());
+
+            return;
+        } finally {
+            userCursor.close();
+        }
     }
 }

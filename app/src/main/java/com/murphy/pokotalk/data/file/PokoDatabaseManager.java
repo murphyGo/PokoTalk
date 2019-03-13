@@ -3,6 +3,7 @@ package com.murphy.pokotalk.data.file;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
 
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
@@ -23,42 +24,115 @@ import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
 
+import java.util.ArrayDeque;
+import java.util.HashMap;
+
 /** PokoDataabseManager reads and writes from/to database on device of user. */
 public class PokoDatabaseManager {
+    protected ArrayDeque<JobSchedule> jobQueue;
+    protected PokoAsyncDatabaseJob runningJob;
+    protected static PokoDatabaseManager instance = null;
+
+    public PokoDatabaseManager() {
+        runningJob = null;
+        jobQueue = new ArrayDeque<>();
+    }
+
+    public static PokoDatabaseManager getInstance() {
+        if (instance == null) {
+            instance = new PokoDatabaseManager();
+        }
+
+        return instance;
+    }
+
+    public synchronized void enqueueJob(PokoAsyncDatabaseJob job, HashMap<String, Object> data) {
+        if (job == null) {
+            return;
+        }
+
+        JobSchedule schedule = new JobSchedule(job, data);
+        if (runningJob == null && jobQueue.size() == 0) {
+            startJob(schedule);
+        } else {
+            jobQueue.addLast(schedule);
+        }
+    }
+
+    public synchronized void startNextJob() {
+        runningJob = null;
+        if (jobQueue.size() > 0) {
+            JobSchedule schedule = jobQueue.removeFirst();
+            startJob(schedule);
+        }
+    }
+
+    public synchronized void startJob(JobSchedule entry) {
+        if (runningJob == null) {
+            runningJob = entry.job;
+            entry.job.execute(entry.data);
+        }
+    }
+
+    class JobSchedule {
+        PokoAsyncDatabaseJob job;
+        HashMap<String, Object> data;
+
+        public JobSchedule(PokoAsyncDatabaseJob job, HashMap<String, Object> data) {
+            this.job = job;
+            this.data = data;
+        }
+    }
+
+    /** These methods accesses to application data structure.
+     * So data lock must be acquired before calling these methods.
+     */
     public static Session loadSessionData(Context context) {
         PokoDatabase database = PokoDatabase.getInstance(context);
 
         SQLiteDatabase db = database.getReadableDatabase();
-        Cursor cursor = PokoDatabaseHelper.query(db, PokoDatabaseQuery.readSessionData, null);
+        Cursor sessionCursor = PokoDatabaseHelper.query(db, PokoDatabaseQuery.readSessionData, null);
 
         try {
-            if (!cursor.moveToNext()) {
+            if (!sessionCursor.moveToNext()) {
                 return null;
             }
 
-            String sessionId = cursor.getString(cursor.getColumnIndexOrThrow(SessionSchema.Entry.SESSION_ID));
-            long expire = cursor.getLong(cursor.getColumnIndexOrThrow(SessionSchema.Entry.SESSION_EXPIRE));
-            int userId = cursor.getInt(cursor.getColumnIndexOrThrow(SessionSchema.Entry.USER_ID));
-            cursor.close();
+            String sessionId = sessionCursor.getString(
+                    sessionCursor.getColumnIndexOrThrow(SessionSchema.Entry.SESSION_ID));
+            long expire = sessionCursor.getLong(
+                    sessionCursor.getColumnIndexOrThrow(SessionSchema.Entry.SESSION_EXPIRE));
+            int userId = sessionCursor.getInt(
+                    sessionCursor.getColumnIndexOrThrow(SessionSchema.Entry.USER_ID));
 
             String[] selectionArgs = {Integer.toString(userId)};
-            cursor = PokoDatabaseHelper.query(db, PokoDatabaseQuery.readUserData, selectionArgs);
+            Cursor userCursor = PokoDatabaseHelper.query(db, PokoDatabaseQuery.readUserData, selectionArgs);
 
-            if (!cursor.moveToNext()) {
-                return null;
+            try {
+                if (!userCursor.moveToNext()) {
+                    return null;
+                }
+
+                /* Set session and user objects */
+                Session session = Session.getInstance();
+                session.setSessionExpire(Parser.epochInMillsToCalendar(expire));
+                session.setSessionId(sessionId);
+
+                Contact user = Parser.parseUser(userCursor);
+                Contact oldUser = session.getUser();
+                if (oldUser == null) {
+                    session.setUser(user);
+                } else {
+                    oldUser.update(user);
+                }
+                Log.v("POKO", "LOGINED WITH USER " + session.getUser().getNickname() + ", " + session.getUser().getUserId());
+
+                return session;
+            } finally {
+                userCursor.close();
             }
-
-            /* Set session and user objects */
-            Session session = Session.getInstance();
-            session.setSessionExpire(Parser.epochInMillsToCalendar(expire));
-            session.setSessionId(sessionId);
-
-            Contact user = Parser.parseUser(cursor);
-            session.setUser(user);
-
-            return session;
         } finally {
-            cursor.close();
+            sessionCursor.close();
         }
     }
 
@@ -88,6 +162,8 @@ public class PokoDatabaseManager {
             while (cursor.moveToNext()) {
                 int userId = cursor.getInt(userIdIndex);
 
+                Stranger ss = Parser.parseStranger(cursor);
+                Log.v("POKO", "READ USER " + ss.getNickname() + " , " + userId);
                 // Ignore the session user
                 if (userId == user.getUserId()) {
                     continue;
@@ -97,6 +173,7 @@ public class PokoDatabaseManager {
                     // Stranger will have pending attribute Null
                     Stranger stranger = Parser.parseStranger(cursor);
                     strangerList.updateItem(stranger);
+                    Log.v("POKO", "READ STRANGER " + stranger.getNickname());
                 } else {
                     int pending = cursor.getInt(pendingIndex);
                     if (pending > 0) {
@@ -109,11 +186,12 @@ public class PokoDatabaseManager {
                         } else {
                             invitingPendingContactList.updateItem(pendingContact);
                         }
+                        Log.v("POKO", "READ PENDING CONTACT " + pendingContact.getNickname());
                     } else {
                         // Contact
                         Contact contact = Parser.parseContact(cursor);
                         contactList.updateItem(contact);
-
+                        Log.v("POKO", "READ CONTACT " + contact.getNickname() + contact.getUserId());
                         // See contact group chat data
                         if (!cursor.isNull(groupChatIdIndex)) {
                             int contactGroupId = cursor.getInt(groupChatIdIndex);
@@ -154,7 +232,8 @@ public class PokoDatabaseManager {
 
             // Query group members and last message
             Cursor memberCursor = PokoDatabaseHelper.readGroupMemberData(db, group.getGroupId());
-            Cursor messageCursor = PokoDatabaseHelper.readMessageData(db, group.getGroupId(), 0 , 1);
+            Cursor messageCursor = PokoDatabaseHelper.
+                    readMessageDataFromBack(db, group.getGroupId(), 0 , 1);
 
             // Get indexes for attributes
             int userIdIndex = memberCursor.getColumnIndexOrThrow(GroupMembersSchema.Entry.USER_ID);
@@ -165,6 +244,7 @@ public class PokoDatabaseManager {
                     int userId = memberCursor.getInt(userIdIndex);
                     User member = collection.getUserById(userId);
                     if (member == null) {
+                        Log.v("POKO", "Can not find group member");
                         throw new Exception("Can not find group member");
                     }
 
@@ -177,7 +257,7 @@ public class PokoDatabaseManager {
             // Parse message data
             try {
                 if (messageCursor.moveToNext()) {
-                    PokoMessage message = Parser.parseMessage(cursor);
+                    PokoMessage message = Parser.parseMessage(messageCursor);
 
                     messageList.updateItem(message);
                 }

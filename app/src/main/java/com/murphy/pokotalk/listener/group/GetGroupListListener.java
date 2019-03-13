@@ -1,9 +1,12 @@
 package com.murphy.pokotalk.listener.group;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
@@ -17,6 +20,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.text.ParseException;
+import java.util.HashMap;
 
 public class GetGroupListListener extends PokoServer.PokoListener {
     @Override
@@ -66,5 +70,41 @@ public class GetGroupListListener extends PokoServer.PokoListener {
     @Override
     public void callError(Status status, Object... args) {
         Log.e("POKO ERROR", "Failed to get group list");
+    }
+
+    @Override
+    public PokoAsyncDatabaseJob getDatabaseJob() {
+        return new DatabaseJob();
+    }
+
+    static class DatabaseJob extends PokoAsyncDatabaseJob {
+        @Override
+        protected void doJob(HashMap<String, Object> data) {
+            GroupList groupList = DataCollection.getInstance().getGroupList();
+            Log.v("POKO", "START TO WRITE group list DATA");
+
+            /* Get database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                // Delete all group data
+                PokoDatabaseHelper.deleteAllGroupData(db);
+
+                // Insert or update all group data
+                for (Group group : groupList.getList()) {
+                    PokoDatabaseHelper.insertOrUpdateGroupData(db, group);
+                }
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "WRITE group list DATA successfully");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to save group list data");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+            }
+        }
     }
 }

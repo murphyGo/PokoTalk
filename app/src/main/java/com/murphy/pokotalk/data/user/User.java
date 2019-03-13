@@ -50,6 +50,7 @@ public class User extends Item {
     @Override
     public void update(Item item) {
         User user = (User) item;
+        setEmail(user.getEmail());
         setNickname(user.getNickname());
         setPicture(user.getPicture());
     }

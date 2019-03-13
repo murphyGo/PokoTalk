@@ -1,6 +1,15 @@
 package com.murphy.pokotalk.data.file.json;
 
+import android.content.ContentValues;
+
+import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.file.schema.ContactsSchema;
+import com.murphy.pokotalk.data.file.schema.GroupMembersSchema;
+import com.murphy.pokotalk.data.file.schema.GroupsSchema;
+import com.murphy.pokotalk.data.file.schema.MessagesSchema;
+import com.murphy.pokotalk.data.file.schema.SessionSchema;
+import com.murphy.pokotalk.data.file.schema.UsersSchema;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -17,6 +26,110 @@ import java.util.ArrayList;
 import java.util.Calendar;
 
 public class Serializer {
+
+    public static ContentValues obtainSessionValues(Session session) {
+        ContentValues values = new ContentValues();
+        values.put(SessionSchema.Entry.SESSION_ID, session.getSessionId());
+        values.put(SessionSchema.Entry.SESSION_EXPIRE, calendarToEpochInMills(session.getSessionExpire()));
+        values.put(SessionSchema.Entry.USER_ID, session.getUser().getUserId());
+
+        return values;
+    }
+
+    public static ContentValues obtainUserValues(User user) {
+        ContentValues values = new ContentValues();
+        String picture = user.getPicture();
+        Calendar lastSeen = null;
+        if (user instanceof Contact) {
+            lastSeen = ((Contact) user).getLastSeen();
+        }
+
+        values.put(UsersSchema.Entry.USER_ID, user.getUserId());
+        values.put(UsersSchema.Entry.EMAIL, user.getEmail());
+        values.put(UsersSchema.Entry.NICKNAME, user.getNickname());
+        if (picture != null) {
+            values.put(UsersSchema.Entry.PICTURE, picture);
+        }
+
+        if (lastSeen != null) {
+            values.put(UsersSchema.Entry.LAST_SEEN, calendarToEpochInMills(lastSeen));
+        }
+
+        return values;
+    }
+
+    public static ContentValues obtainContactValues(User user, boolean isInvited) {
+        ContentValues values = new ContentValues();
+        int pending = 0;
+        int invited = isInvited ? 1 : 0;
+        Integer groupChatId = null;
+        if (user instanceof Contact) {
+            Contact contact = (Contact) user;
+            ContactList contactList = DataCollection.getInstance().getContactList();
+            ContactList.ContactGroupRelation relation =
+                    contactList.getContactGroupRelationByUserId(contact.getUserId());
+
+            if (relation != null) {
+                groupChatId = relation.getGroupId();
+            }
+
+        } else if (user instanceof PendingContact) {
+            pending = 1;
+        }
+
+        values.put(ContactsSchema.Entry.USER_ID, user.getUserId());
+        values.put(ContactsSchema.Entry.PENDING, pending);
+        values.put(ContactsSchema.Entry.INVITED, invited);
+        if (groupChatId != null) {
+            values.put(ContactsSchema.Entry.GROUP_CHAT_ID, groupChatId);
+        }
+
+        return values;
+    }
+
+    public static ContentValues obtainGroupValues(Group group) {
+        ContentValues values = new ContentValues();
+        String name = group.getGroupName();
+        String alias = group.getAlias();
+
+        values.put(GroupsSchema.Entry.GROUP_ID, group.getGroupId());
+        values.put(GroupsSchema.Entry.NB_NEW_MESSAGES, group.getNbNewMessages());
+        values.put(GroupsSchema.Entry.ACK, group.getAck());
+        if (name != null) {
+            values.put(GroupsSchema.Entry.NAME, group.getGroupName());
+        }
+
+        if (alias != null) {
+            values.put(GroupsSchema.Entry.ALIAS, group.getAlias());
+        }
+
+        return values;
+    }
+
+    public static ContentValues obtainGroupMemberValues(Group group, User user) {
+        ContentValues values = new ContentValues();
+
+        values.put(GroupMembersSchema.Entry.GROUP_ID, group.getGroupId());
+        values.put(GroupMembersSchema.Entry.USER_ID, user.getUserId());
+
+        return values;
+    }
+
+    public static ContentValues obtainMessageValues(Group group, PokoMessage message) {
+        ContentValues values = new ContentValues();
+
+        values.put(MessagesSchema.Entry.GROUP_ID, group.getGroupId());
+        values.put(MessagesSchema.Entry.MESSAGE_ID, message.getMessageId());
+        values.put(MessagesSchema.Entry.MESSAGE_TYPE, message.getMessageType());
+        values.put(MessagesSchema.Entry.USER_ID, message.getWriter().getUserId());
+        values.put(MessagesSchema.Entry.NB_NOT_READ, message.getNbNotReadUser());
+        values.put(MessagesSchema.Entry.IMPORTANCE, message.getImportanceLevel());
+        values.put(MessagesSchema.Entry.DATE, calendarToEpochInMills(message.getDate()));
+        values.put(MessagesSchema.Entry.CONTENTS, message.getContent());
+        values.put(MessagesSchema.Entry.SPECIAL_CONTENTS, message.getSpecialContent());
+
+        return values;
+    }
 
     public static JSONObject makeSessionJSON(Session session) throws JSONException {
         JSONObject jsonSession = new JSONObject();

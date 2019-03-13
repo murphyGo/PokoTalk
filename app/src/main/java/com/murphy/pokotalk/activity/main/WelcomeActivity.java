@@ -11,6 +11,7 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -64,6 +65,7 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
             } else {
+
             }
         }
 
@@ -96,22 +98,17 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
     }
 
     @Override
-    protected void onStart() {
-
-        super.onStart();
-    }
-
-    @Override
-    protected void onStop() {
-        super.onStop();
-    }
-
-    @Override
     protected void onDestroy() {
         /* Unbind service */
         PokoTalkService.unbindPokoTalkService(this, this);
 
         super.onDestroy();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        setResult(RESULT_OK);
+        finish();
     }
 
     @Override

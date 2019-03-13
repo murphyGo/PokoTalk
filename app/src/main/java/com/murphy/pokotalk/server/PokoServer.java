@@ -11,6 +11,8 @@ import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.file.PokoDatabaseManager;
 import com.murphy.pokotalk.listener.chat.AckMessageListener;
 import com.murphy.pokotalk.listener.chat.GetMemberJoinHistory;
 import com.murphy.pokotalk.listener.chat.MessageAckListener;
@@ -140,21 +142,31 @@ public class PokoServer extends ServerSocket {
                     return;
                 }
 
-
                 DataLock.getInstance().acquireWriteLock();
-                Log.v("SERVER DATA " + getEventName(), data.toString());
-                Log.v("HANDLING THREAD " + getEventName(), ""+ Thread.currentThread().getId());
-                /* Start application callback */
-                if (status.isSuccess()) {
-                    callSuccess(status, args);
-                } else {
-                    callError(status, args);
-                }
+                try {
+                    Log.v("SERVER DATA " + getEventName(), data.toString());
+                    Log.v("HANDLING THREAD " + getEventName(), ""+ Thread.currentThread().getId());
+                    /* Start application callback */
+                    if (status.isSuccess()) {
+                        callSuccess(status, args);
+                    } else {
+                        callError(status, args);
+                    }
 
-                /* Start callbacks given by activities */
-                PokoServer.getInstance(null).
-                        startActivityCallbacks(getEventName(), status, this.data, args);
-                DataLock.getInstance().releaseWriteLock();
+                    /* If status is success and there is a database job,
+                     * start job. */
+                    PokoAsyncDatabaseJob job = getDatabaseJob();
+                    if (status.isSuccess() && job != null) {
+                        PokoDatabaseManager.getInstance().enqueueJob(job, this.data);
+                    }
+
+                    /* Start callbacks given by activities */
+                    PokoServer.getInstance(null).
+                            startActivityCallbacks(getEventName(), status, this.data, args);
+
+                } finally {
+                    DataLock.getInstance().releaseWriteLock();
+                }
             } catch(JSONException e) {
                 Log.e("Poko", "Bad json status data");
                 return;
@@ -165,6 +177,7 @@ public class PokoServer extends ServerSocket {
 
         public abstract void callSuccess(Status status, Object... args);
         public abstract void callError(Status status, Object... args);
+        public abstract PokoAsyncDatabaseJob getDatabaseJob();
     }
 
     /* Methods for message send */

@@ -24,7 +24,6 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.main.MainActivity;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.file.FileManager;
 import com.murphy.pokotalk.data.file.PokoDatabase;
 import com.murphy.pokotalk.data.file.PokoDatabaseManager;
 import com.murphy.pokotalk.data.group.Group;
@@ -42,7 +41,6 @@ import java.util.ArrayDeque;
  */
 public class PokoTalkService extends Service {
     private PokoServer server;
-    private FileManager fileManager;
     private boolean sessionLoaded = false;
     private boolean appStarted = false;
     private ArrayDeque<Messenger> waitingRequests = new ArrayDeque<>();
@@ -63,7 +61,6 @@ public class PokoTalkService extends Service {
     public void onCreate() {
         super.onCreate();
         server = PokoServer.getInstance(this);
-        fileManager = FileManager.getInstance();
         pokoDB = PokoDatabase.getInstance(this);
 
         Log.v("POKO", "POKO service made, process id " + Process.myPid());
@@ -117,7 +114,7 @@ public class PokoTalkService extends Service {
         super.onDestroy();
     }
 
-    public void loadAppilcationData() {
+    public void loadApplicationData() {
         /* Temporarily thread by welcome activity does application data loading */
         /* Load application data */
         try {
@@ -129,12 +126,12 @@ public class PokoTalkService extends Service {
                 PokoDatabaseManager.loadGroupData(this);
             } catch (Exception e) {
                 e.printStackTrace();
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
             }
 
         } catch (InterruptedException e) {
             e.printStackTrace();
-        } finally {
-            DataLock.getInstance().releaseWriteLock();
         }
     }
 
@@ -172,10 +169,6 @@ public class PokoTalkService extends Service {
         return server;
     }
 
-    public FileManager getFileManager() {
-        return fileManager;
-    }
-
     /* Session loaded things */
 
     /* This AsyncTask loads session and user data,
@@ -189,7 +182,7 @@ public class PokoTalkService extends Service {
                 return null;
             }
 
-            service.loadAppilcationData();
+            service.loadApplicationData();
             Session session = Session.getInstance();
             /* Try to login if session data is loaded */
             if (session.sessionIdExists()) {
@@ -288,7 +281,7 @@ public class PokoTalkService extends Service {
             Group group = (Group) getData("group");
             PokoMessage message = (PokoMessage) getData("message");
             if (group != null && message != null && !appStarted) {
-                Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId()); 
+                Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
                 sendNotificationForMessage(group, message);
             }
         }

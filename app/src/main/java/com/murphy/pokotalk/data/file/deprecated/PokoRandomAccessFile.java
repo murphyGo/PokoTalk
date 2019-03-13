@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.data.file;
+package com.murphy.pokotalk.data.file.deprecated;
 
 import android.util.Log;
 

@@ -1,12 +1,11 @@
 package com.murphy.pokotalk.data;
 
-import android.util.Log;
-
 /** Lock for concurrency control of accessing PokoTalk data */
 public class DataLock {
     private static DataLock instance = null;
-    int readNum;
-    boolean writing;
+    private static DataLock databaseJobInstance = null;
+    protected int readNum;
+    protected boolean writing;
     public static final int INTERRUPT_RETRY = 8;
 
     public DataLock() {
@@ -22,6 +21,14 @@ public class DataLock {
         return instance;
     }
 
+    public static DataLock getDatabaseJobInstance() {
+        if (databaseJobInstance == null) {
+            databaseJobInstance = new DataLock();
+        }
+
+        return databaseJobInstance;
+    }
+
     public synchronized void acquireReadLock() throws InterruptedException {
         int trial = 0;
 
@@ -33,6 +40,7 @@ public class DataLock {
                 readNum++;
                 return;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 trial++;
                 if (trial >= INTERRUPT_RETRY) {
                     throw e;
@@ -54,10 +62,11 @@ public class DataLock {
                 while(writing || readNum > 0) {
                     wait();
                 }
-                Log.v("POKO", "ACQUIRE WRITE LOCK");
+
                 writing = true;
                 return;
             } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 trial++;
                 if (trial >= INTERRUPT_RETRY) {
                     throw e;
@@ -68,7 +77,6 @@ public class DataLock {
 
     public synchronized void releaseWriteLock() {
         writing = false;
-        Log.v("POKO", "RELEASE WRITE LOCK");
         notifyAll();
     }
 }

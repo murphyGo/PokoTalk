@@ -63,6 +63,14 @@ public class DataCollection {
         PendingContactList invitingContactList = getInvitingContactList();
         StrangerList strangerList = getStrangerList();
 
+        User u = Session.getInstance().getUser();
+        if (u != null) {
+            if (u.getUserId() == user.getUserId()) {
+                u.update(user);
+                return false;
+            }
+        }
+
         if (user instanceof Contact) {
             contactList.updateItem((Contact) user);
         } else if (user instanceof PendingContact &&
@@ -90,6 +98,13 @@ public class DataCollection {
     public User getUserById(int userId) {
         User result;
 
+        User user = Session.getInstance().getUser();
+        if (user != null) {
+            if (user.getUserId() == userId) {
+                return user;
+            }
+        }
+
         if ((result = getContactList().getItemByKey(userId)) != null)
             return result;
         else if ((result = getInvitedContactList().getItemByKey(userId)) != null)
@@ -103,7 +118,7 @@ public class DataCollection {
     }
 
     /** Removes user with id from list and move to StrangerList
-     * If the user is Stranger, do nothing.
+     * If the user is Stranger or session user, do nothing.
      * @param userId
      * @return Stranger user moved to StrangerList
      */
@@ -113,6 +128,13 @@ public class DataCollection {
         PendingContactList invitedContactList = getInvitedContactList();
         PendingContactList invitingContactList = getInvitingContactList();
         StrangerList strangerList = getStrangerList();
+
+        User user = Session.getInstance().getUser();
+        if (user != null) {
+            if (user.getUserId() == userId) {
+                return null;
+            }
+        }
 
         /* If the user is Stranger, do nothing */
         Stranger stranger = strangerList.getItemByKey(userId);

@@ -1,18 +1,10 @@
-package com.murphy.pokotalk.data.file;
+package com.murphy.pokotalk.data.file.deprecated;
 
 import android.os.Environment;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.contact.ContactGroupFile;
-import com.murphy.pokotalk.data.file.contact.ContactListFile;
-import com.murphy.pokotalk.data.file.contact.InvitedPendingContactListFile;
-import com.murphy.pokotalk.data.file.contact.InvitingPendingContactListFile;
-import com.murphy.pokotalk.data.file.contact.StrangerFile;
-import com.murphy.pokotalk.data.file.group.GroupListFile;
-import com.murphy.pokotalk.data.file.group.MessageFile;
-import com.murphy.pokotalk.data.file.session.SessionFile;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;

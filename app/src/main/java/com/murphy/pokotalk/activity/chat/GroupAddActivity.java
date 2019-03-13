@@ -46,14 +46,17 @@ public class GroupAddActivity extends AppCompatActivity {
         try {
             DataLock.getInstance().acquireWriteLock();
 
-            DataCollection collection = DataCollection.getInstance();
-            adapter = new MemberCandidateListAdapter(this);
-            adapter.setViewCreationCallback(candidateCallback);
-            ContactList contactListUI = (ContactList) adapter.getPokoList();
-            contactListUI.copyFromPokoList(collection.getContactList());
-            memberCandidateListView.setAdapter(adapter);
+            try {
+                DataCollection collection = DataCollection.getInstance();
+                adapter = new MemberCandidateListAdapter(this);
+                adapter.setViewCreationCallback(candidateCallback);
+                ContactList contactListUI = (ContactList) adapter.getPokoList();
+                contactListUI.copyFromPokoList(collection.getContactList());
+                memberCandidateListView.setAdapter(adapter);
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
+            }
 
-            DataLock.getInstance().releaseWriteLock();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -85,12 +88,7 @@ public class GroupAddActivity extends AppCompatActivity {
             if (groupName.length() == 0) {
                 groupName = null;
             }
-            /*
-            if (members.size() == 0) {
-                Toast.makeText(getApplicationContext(),
-                        "친구를 1명 이상 선택해 주세요!", Toast.LENGTH_SHORT).show();
-                return;
-            }*/
+
             ArrayList<String> emails = new ArrayList<>();
             for (Contact contact : members) {
                 emails.add(contact.getEmail());

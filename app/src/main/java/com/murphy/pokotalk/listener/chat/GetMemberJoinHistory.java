@@ -1,9 +1,12 @@
 package com.murphy.pokotalk.listener.chat;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.PokoMessage;
@@ -13,6 +16,8 @@ import com.murphy.pokotalk.server.Status;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
 
 public class GetMemberJoinHistory extends PokoServer.PokoListener {
     @Override
@@ -70,5 +75,42 @@ public class GetMemberJoinHistory extends PokoServer.PokoListener {
     @Override
     public void callError(Status status, Object... args) {
         Log.e("POKO ERROR", "Failed to get member join history");
+    }
+
+    @Override
+    public PokoAsyncDatabaseJob getDatabaseJob() {
+        return new DatabaseJob();
+    }
+
+    static class DatabaseJob extends PokoAsyncDatabaseJob {
+        @Override
+        protected void doJob(HashMap<String, Object> data) {
+            Group group = (Group) data.get("group");
+            PokoMessage message = (PokoMessage) data.get("message");
+
+            if (group == null || message == null) {
+                return;
+            }
+
+            Log.v("POKO", "START TO update member join DATA.");
+
+            /* Get a database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                // Update special content of the message
+                PokoDatabaseHelper.updateSpacialContentsOfMessage(db, group, message);
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "updated member join data successfully.");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to update member join data.");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+            }
+        }
     }
 }

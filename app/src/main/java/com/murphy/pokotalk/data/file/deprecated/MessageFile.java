@@ -171,7 +171,7 @@ public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
 
             for (int i = readMessages.size() - 1; i >= 0; i--) {
                 PokoMessage newMessage = readMessages.get(i);
-                if (!messageList.updateItem(newMessage)) {
+                if (messageList.updateItem(newMessage) == newMessage) {
                     readNum++;
                     newMessages.add(newMessage);
 

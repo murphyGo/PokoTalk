@@ -30,7 +30,7 @@ import de.hdodenhof.circleimageview.CircleImageView;
 public class WelcomeActivity extends AppCompatActivity implements ServiceConnection {
     private CircleImageView pokoImage;
     private TextView appNameText;
-    private final int splash_time = 600;
+    private final int splash_time = 200;
     private boolean writePermission;
     private Thread thread;
     private Messenger serviceMessenger;

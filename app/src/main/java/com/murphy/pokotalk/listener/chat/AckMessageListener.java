@@ -36,7 +36,11 @@ public class AckMessageListener extends PokoServer.PokoListener {
                 return;
             }
 
+            // Update group ack
             group.setAck(Math.max(group.getAck(), toId));
+
+            // Refresh nbNewMessages of group
+            group.refreshNbNewMessages();
 
             putData("group", group);
         } catch (JSONException e) {
@@ -73,6 +77,9 @@ public class AckMessageListener extends PokoServer.PokoListener {
             try {
                 // Update ack of group
                 PokoDatabaseHelper.updateGroupAck(db, group);
+
+                // Update nbNewMessage of group
+                PokoDatabaseHelper.updateGroupNbNewMessage(db, group);
 
                 db.setTransactionSuccessful();
                 Log.v("POKO", "updated group ack successfully.");

@@ -11,11 +11,7 @@ import com.murphy.pokotalk.data.user.Stranger;
 import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
 
-import java.util.concurrent.Semaphore;
-
 public class DataCollection {
-    private Session session;
-    private String rootDirectory;
     private ContactList contactList;
     private PendingContactList invitedContactList;
     private PendingContactList invitingContactList;
@@ -24,7 +20,6 @@ public class DataCollection {
     private EventList eventList;
     private static DataCollection instance;
     private Group chattingGroup;
-    private Semaphore groupSemaphore;
 
     public DataCollection() {
         contactList = new ContactList();
@@ -33,8 +28,6 @@ public class DataCollection {
         strangerList = new StrangerList();
         groupList = new GroupList();
         eventList = new EventList();
-        session = Session.getInstance();
-        groupSemaphore = new Semaphore(1);
     }
 
     public static DataCollection getInstance() {
@@ -42,15 +35,6 @@ public class DataCollection {
             instance = new DataCollection();
 
         return instance;
-    }
-
-    /* Load application data(user data, contacts, groups...) after session is decided */
-    public void loadApplicationData() {
-
-    }
-
-    public static void reset() {
-        instance = null;
     }
 
     /** Insert or update user on proper user list depending on user type
@@ -173,30 +157,43 @@ public class DataCollection {
         return stranger;
     }
 
-    /* Group access semaphore
-     * One must acquire this semaphore when
-      * 1. Writes NbNotReadUser of Group
-      * 2. Accesses chattingGroup property */
-    public void acquireGroupSemaphore() throws InterruptedException {
-        groupSemaphore.acquire(1);
-    }
+    public int getTotalNewMessgaeNumber() {
+        int result = 0;
+        GroupList groupList = getGroupList();
 
-    public void releaseGroupSemaphore() {
-        groupSemaphore.release();
+        for (Group group : groupList.getList()) {
+            result += group.getNbNewMessages();
+        }
+
+        return result;
     }
 
     /* Chat methods */
-    public void startChat(Group group) {
-        setChattingGroup(group);
-        group.setNbNewMessages(0);
+    // Starts a chat, returns true if started chat.
+    // if other chat is going already, it fails and returns false.
+    public synchronized boolean startChat(Group group) {
+        if (getChattingGroup() != null) {
+            return false;
+        }
+        this.chattingGroup = group;
+        return true;
     }
 
-    public void endChat() {
-        setChattingGroup(null);
+
+    // End a chat so that user can start another chat.
+    // It ends chat only when given group is the group holding chat.
+    public synchronized void endChat(Group group) {
+        if (this.chattingGroup == group) {
+            this.chattingGroup = null;
+        }
     }
 
-    public boolean isChatting() {
+    public synchronized boolean isChatting() {
         return getChattingGroup() != null;
+    }
+
+    public synchronized Group getChattingGroup() {
+        return chattingGroup;
     }
 
     /* Getter methods */
@@ -220,14 +217,5 @@ public class DataCollection {
 
     public EventList getEventList() {
         return eventList;
-    }
-
-    public Group getChattingGroup() {
-        return chattingGroup;
-    }
-
-    /* Setter methods*/
-    public void setChattingGroup(Group chattingGroup) {
-        this.chattingGroup = chattingGroup;
     }
 }

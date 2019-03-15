@@ -1,8 +1,12 @@
 package com.murphy.pokotalk.data.group;
 
 import com.murphy.pokotalk.data.Item;
+import com.murphy.pokotalk.data.ListSorter;
+import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
+
+import java.util.ArrayList;
 
 public class Group extends Item {
     private String groupName;
@@ -27,6 +31,25 @@ public class Group extends Item {
         setAlias(group.getAlias());
         setNbNewMessages(group.getNbNewMessages());
         setMembers(group.getMembers());
+    }
+
+    public void refreshNbNewMessages() {
+        Session session = Session.getInstance();
+        MessageList messageList = getMessageList();
+        ArrayList<PokoMessage> messages = messageList.getList();
+
+        ListSorter<Integer, PokoMessage> sorter =
+                (ListSorter<Integer, PokoMessage>) messageList.getListSorter();
+        int startIndex = sorter.findAddPositionWithBsByKey(getAck()) + 1;
+        int unackedNewMessages = 0;
+
+        for (int i = startIndex; i < messages.size(); i++) {
+            PokoMessage message = messages.get(i);
+            if (!message.isMyMessage(session)) {
+                unackedNewMessages++;
+            }
+        }
+        setNbNewMessages(unackedNewMessages);
     }
 
     public String getGroupName() {

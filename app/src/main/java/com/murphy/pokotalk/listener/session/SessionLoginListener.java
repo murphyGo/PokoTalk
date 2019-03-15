@@ -9,6 +9,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.file.schema.SessionSchema;
 import com.murphy.pokotalk.data.user.Contact;
@@ -53,7 +54,7 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             String picture = userInfo.getString("picture");
 
             /* Parse last seen string to Calendar */
-            Calendar lastSeen = PokoParser.parseDateString(userInfo.getString("lastSeen"));
+            Calendar lastSeen = Parser.epochInMillsToCalendar(userInfo.getLong("lastSeen"));
 
             Log.v("USER DATA", userInfo.toString());
             Log.v("EXPIRE", PokoParser.formatCalendar(sessionExpire));
@@ -68,6 +69,11 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             } else {
                 session.setUser(user);
             }
+
+            /* Request contact list and group list of the user */
+            PokoServer server = PokoServer.getInstance(null);
+            server.sendGetContactList();
+            server.sendGetGroupList();
 
             putData("session", session);
         } catch(Exception e) {

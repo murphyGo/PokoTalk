@@ -3,7 +3,6 @@ package com.murphy.pokotalk.data.file;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.util.Log;
 
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.file.schema.ContactsSchema;
@@ -32,7 +31,7 @@ public class PokoDatabaseHelper {
         for (User member : memberList.getList()) {
             ContentValues userValues = Serializer.obtainUserValues(member);
             ContentValues memberValues = Serializer.obtainGroupMemberValues(group, member);
-            Log.v("POKO", "UPDATE GROUP MEMBER DATA " + member.getNickname() + ", " + member.getUserId());
+            //Log.v("POKO", "UPDATE GROUP MEMBER DATA " + member.getNickname() + ", " + member.getUserId());
             PokoDatabaseHelper.insertOrUpdateUserData(db, member, userValues);
             PokoDatabaseHelper.insertOrIgnoreGroupMemberData(db, memberValues);
         }
@@ -96,7 +95,18 @@ public class PokoDatabaseHelper {
         // Create selection args for where clause.
         String[] selectionArgs = {Integer.toString(group.getGroupId())};
 
-        return update(db, PokoDatabaseQuery.updateGroupAck, values, selectionArgs);
+        return update(db, PokoDatabaseQuery.updateGroup, values, selectionArgs);
+    }
+
+    // Updates nbNewMessage field.
+    public static long updateGroupNbNewMessage(SQLiteDatabase db, Group group) {
+        ContentValues values = new ContentValues();
+        values.put(GroupsSchema.Entry.NB_NEW_MESSAGES, Integer.toString(group.getNbNewMessages()));
+
+        // Create selection args for where clause.
+        String[] selectionArgs = {Integer.toString(group.getGroupId())};
+
+        return update(db, PokoDatabaseQuery.updateGroup, values, selectionArgs);
     }
 
     // Update special contents of message

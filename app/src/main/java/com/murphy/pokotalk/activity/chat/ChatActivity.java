@@ -182,6 +182,7 @@ public class ChatActivity extends AppCompatActivity
         sendMessageButton.setOnClickListener(messageSendButtonListener);
 
         /* Attach server event callbacks */
+        server.attachActivityCallback(Constants.sessionLoginName, sessionLoginListener);
         server.attachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.attachActivityCallback(Constants.readMessageName, readMessageListener);
         server.attachActivityCallback(Constants.newMessageName, addMessageListener);
@@ -196,15 +197,15 @@ public class ChatActivity extends AppCompatActivity
         requestUnackedMessages();
         /* Ack to last messages */
         sendAckToLastMessage();
+        /* Request nbNotRead of messages read */
+        requestNbreadOfMessages(group.getMessageList().getList());
 
         firstRead = true;
-
-        /* Request nbread of messages read */
-        requestNbreadOfMessages((ArrayList<PokoMessage>) messageListAdapter.getPokoList().getList());
     }
 
     @Override
     protected void onDestroy() {
+        server.detachActivityCallback(Constants.sessionLoginName, sessionLoginListener);
         server.detachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
         server.detachActivityCallback(Constants.newMessageName, addMessageListener);
@@ -214,6 +215,8 @@ public class ChatActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
         server.detachActivityCallback(Constants.exitGroupName, exitGroupListener);
+
+        closeChatting();
 
         super.onDestroy();
     }
@@ -225,7 +228,6 @@ public class ChatActivity extends AppCompatActivity
         if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
             drawerLayout.closeDrawer(Gravity.RIGHT);
         } else {
-            closeChatting();
             super.onBackPressed();
         }
     }
@@ -260,14 +262,10 @@ public class ChatActivity extends AppCompatActivity
     }
 
     private void openChatting() {
-        try {
-            collection.acquireGroupSemaphore();
-            collection.startChat(group);
-            collection.releaseGroupSemaphore();
-        } catch (InterruptedException e) {
+        if (!collection.startChat(group)) {
+            // chat failed to start.
             Toast.makeText(this, "채팅 실행 중 문제가 발생했습니다.",
                     Toast.LENGTH_SHORT);
-            setResult(RESULT_CANCELED);
             finish();
         }
     }
@@ -277,14 +275,7 @@ public class ChatActivity extends AppCompatActivity
         intent.putExtra("groupId", group.getGroupId());
         setResult(RESULT_OK, intent);
 
-        try {
-            collection.acquireGroupSemaphore();
-            collection.endChat();
-            collection.releaseGroupSemaphore();
-        } catch (InterruptedException e) {
-            Toast.makeText(this, "채팅 종료 중 문제가 발생했습니다.",
-                    Toast.LENGTH_SHORT);
-        }
+        collection.endChat(group);
     }
 
     private void creationError(String errMsg) {
@@ -309,7 +300,6 @@ public class ChatActivity extends AppCompatActivity
     private View.OnClickListener backspaceButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            closeChatting();
             finish();
         }
     };
@@ -341,6 +331,31 @@ public class ChatActivity extends AppCompatActivity
     };
 
     /* Server event listeners */
+    // This callback get called when connection to server gets lost and
+    // the user reconnects and login. So we request data to be up to date.
+    private ActivityCallback sessionLoginListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            /* Request unacked messages */
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    /* Read new messages after last acked message from server */
+                    requestUnackedMessages();
+                    /* Ack to last messages */
+                    sendAckToLastMessage();
+                    /* Request nbNotRead of messages read */
+                    requestNbreadOfMessages(group.getMessageList().getList());
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
     private ActivityCallback readMessageListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
@@ -626,7 +641,7 @@ public class ChatActivity extends AppCompatActivity
         for (int i = 1; i < messages.size(); i++) {
             PokoMessage message = messages.get(i);
             int messageId = message.getMessageId();
-            Log.v("POKO", "CHECK MESSAGE ID "+ messageId);
+
             if (message.getNbNotReadUser() > 0) {
                 if (minId > messageId) {
                     minId = messageId;
@@ -684,20 +699,21 @@ public class ChatActivity extends AppCompatActivity
                     }
 
                     // Parse all messages and add to message list
-                    while (cursor.moveToNext()) {
-                        try {
-                            PokoMessage message = Parser.parseMessage(cursor);
-                            if (!messageList.updateItem(message)) {
-                                readMessages.add(message);
+                    try {
+                        while (cursor.moveToNext()) {
+                            try {
+                                PokoMessage message = Parser.parseMessage(cursor);
+                                if (messageList.updateItem(message) == message) {
+                                    readMessages.add(message);
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                                Log.v("POKO", "Failed to parse message");
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            Log.v("POKO", "Failed to parse message");
                         }
+                    } finally {
+                        cursor.close();
                     }
-                    cursor.close();
-
-                    Log.v("POKO", "READ MESSAGE FROM FILE");
                 } catch (Exception e) {
                     e.printStackTrace();
                     // We must scroll to mark after mark
@@ -733,7 +749,6 @@ public class ChatActivity extends AppCompatActivity
                         Log.v("POKO", "READ " + readMessages.size() + " messages");
                         messageListView.scrollToMark(size);
 
-                        Log.v("POKO", "go to mark");
                     } finally {
                         DataLock.getInstance().releaseWriteLock();
                     }
@@ -741,7 +756,7 @@ public class ChatActivity extends AppCompatActivity
                     e.printStackTrace();
                 }
 
-                /* Request nbread of messages read */
+                /* Request nbNotRead of messages read */
                 requestNbreadOfMessages(readMessages);
             }
 

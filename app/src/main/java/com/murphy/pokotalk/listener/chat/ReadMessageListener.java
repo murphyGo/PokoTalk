@@ -54,12 +54,13 @@ public class ReadMessageListener extends PokoServer.PokoListener {
             for (int i = 0; i < messages.length(); i++) {
                 JSONObject jsonMessage = messages.getJSONObject(i);
                 PokoMessage message = PokoParser.parseMessage(jsonMessage);
-                messageList.updateItem(message);
-                message = messageList.getItemByKey(messageList.getKey(message));
+                // Update item and assign message the message updated in the list.
+                message = messageList.updateItem(message);
                 readMessages.add(message);
 
                 /* If the message is history, send get history */
-                if (message.getMessageType() == PokoMessage.MEMBER_JOIN) {
+                if (message.getSpecialContent() == null
+                        && message.getMessageType() == PokoMessage.MEMBER_JOIN) {
                     PokoServer server = PokoServer.getInstance(null);
                     if (server != null) {
                         server.sendGetMemberJoinHistory(groupId, message.getMessageId());
@@ -73,6 +74,7 @@ public class ReadMessageListener extends PokoServer.PokoListener {
             putData("messages", readMessages);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad read message json data");
+            e.printStackTrace();
         } catch (ParseException e){
             Log.e("POKO ERROR", "Failed to parse date");
         }
@@ -112,6 +114,9 @@ public class ReadMessageListener extends PokoServer.PokoListener {
                     // Add message data
                     PokoDatabaseHelper.insertOrIgnoreMessageData(db, values);
                 }
+
+                // Update nbNewMessage of group
+                PokoDatabaseHelper.updateGroupNbNewMessage(db, group);
 
                 db.setTransactionSuccessful();
                 Log.v("POKO", "saved messages successfully.");

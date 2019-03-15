@@ -123,4 +123,32 @@ public class PokoMessage extends Item {
     public void setSpecialContent(String specialContent) {
         this.specialContent = specialContent;
     }
+
+    public String getRealContent() {
+        switch (getMessageType()) {
+            case TEXT_MESSAGE: {
+                return getContent();
+            }
+            case MEMBER_JOIN: {
+                String content = getSpecialContent();
+                if (content == null) {
+                    return getWriter().getNickname() + " 님이 초대하셨습니다.";
+                } else {
+                    return content;
+                }
+            }
+            case MEMBER_EXIT: {
+                return getSpecialContent();
+            }
+            case IMAGE: {
+                return "사진";
+            }
+            case FILESHARE: {
+                return "파일";
+            }
+            default: {
+                return "";
+            }
+        }
+    }
 }

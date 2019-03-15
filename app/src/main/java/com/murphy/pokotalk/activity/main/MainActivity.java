@@ -10,7 +10,6 @@ import android.os.IBinder;
 import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
-import android.os.RemoteException;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
 import android.support.v4.view.ViewPager;
@@ -70,7 +69,6 @@ public class MainActivity extends AppCompatActivity
     private GroupListAdapter groupListAdapter;
     private Messenger serviceMessenger = null;
     private Messenger myMessenger = new Messenger(new ServiceCallback());
-    private boolean bindService = false;
 
     /* Intent commands */
     public static final int START_GROUP_CHAT = 1;
@@ -105,9 +103,6 @@ public class MainActivity extends AppCompatActivity
         if (!session.sessionIdExists()) {
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, RequestCode.LOGIN.value);
-        } else if (session.hasLogined()) {
-            server.sendGetContactList();
-            server.sendGetGroupList();
         }
 
         /* Create adapters */
@@ -168,8 +163,9 @@ public class MainActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
         server.attachActivityCallback(Constants.getMemberJoinHistory, newMessageCallback);
         Log.v("POKO", "MainActivity starts, process id " + Process.myPid());
+        Log.v("POKO", "POKO ON CREATE");
 
-        /* Services */
+        /* Bind to service */
         Context context = getApplicationContext();
         PokoTalkService.startPokoTalkService(context);
         PokoTalkService.bindPokoTalkService(context, this);
@@ -183,7 +179,37 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    protected void onStop() {
+        Log.v("POKO", "POKO ON STOP");
+        super.onStop();
+    }
+
+    @Override
+    protected void onStart() {
+        Log.v("POKO", "POKO ON START");
+        super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        Log.v("POKO", "POKO ON RESUME");
+        super.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        Log.v("POKO", "POKO ON PAUSE");
+    }
+
+    @Override
     protected void onDestroy() {
+        Log.v("POKO", "POKO ON DESTROY");
+
+        /* Unbind from service */
+        PokoTalkService.unbindPokoTalkService(getApplicationContext(), this);
+
         server.detachActivityCallback(Constants.sessionLoginName, sessionLoginCallback);
         server.detachActivityCallback(Constants.getContactListName, getContactListCallback);
         server.detachActivityCallback(Constants.getPendingContactListName, getContactListCallback);
@@ -199,19 +225,6 @@ public class MainActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.sendMessageName, newMessageCallback);
         server.detachActivityCallback(Constants.newMessageName, newMessageCallback);
         server.detachActivityCallback(Constants.getMemberJoinHistory, newMessageCallback);
-
-        /* Send app closed message */
-        try {
-            Message message = Message.obtain(null, PokoTalkService.APP_CLOSED);
-            serviceMessenger.send(message);
-        } catch(RemoteException e) {
-            e.printStackTrace();
-        }
-
-        if (bindService) {
-            PokoTalkService.unbindPokoTalkService(getApplicationContext(), this);
-            bindService = false;
-        }
 
         super.onDestroy();
     }
@@ -722,14 +735,7 @@ public class MainActivity extends AppCompatActivity
     /* Service callbacks */
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
-        try {
-            serviceMessenger = new Messenger(service);
-            Message message = Message.obtain(null, PokoTalkService.APP_STARTED);
-            serviceMessenger.send(message);
-            bindService = true;
-        } catch (RemoteException e) {
-            e.printStackTrace();
-        }
+        serviceMessenger = new Messenger(service);
     }
 
     @Override
@@ -743,10 +749,10 @@ public class MainActivity extends AppCompatActivity
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {
-                case PokoTalkService.APP_STARTED: {
+                case PokoTalkService.APP_FOREGROUND: {
 
                 }
             }
         }
-    };
+    }
 }

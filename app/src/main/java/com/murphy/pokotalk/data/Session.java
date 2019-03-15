@@ -26,7 +26,7 @@ public class Session {
         logined = false;
     }
 
-    public static Session getInstance() {
+    public synchronized static Session getInstance() {
         if (instance == null)
             instance = new Session();
 

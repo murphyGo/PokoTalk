@@ -2,7 +2,6 @@ package com.murphy.pokotalk.view;
 
 import android.app.Activity;
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -11,8 +10,8 @@ import android.widget.TextView;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 
@@ -119,7 +118,6 @@ public class GroupItem extends FrameLayout {
         } else {
             nbNewMessageView.setVisibility(View.VISIBLE);
             nbNewMessageView.setText(Integer.toString(nbNewMessage));
-            Log.v("SET TEXT VIEW", Integer.toString(nbNewMessage));
         }
     }
 

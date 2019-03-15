@@ -1,10 +1,10 @@
 package com.murphy.pokotalk.server.parser;
 
-import android.util.Log;
-
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.event.Event;
+import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -35,7 +35,6 @@ public class PokoParser {
         Contact result = new Contact();
         ContactList contactList = collection.getContactList();
 
-        Log.v("efw", jsonObject.toString());
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
@@ -48,7 +47,7 @@ public class PokoParser {
             }
         }
         if (jsonObject.has("lastSeen") && !jsonObject.isNull("lastSeen"))
-            result.setLastSeen(parseDateString(jsonObject.getString("lastSeen")));
+            result.setLastSeen(Parser.epochInMillsToCalendar(jsonObject.getLong("lastSeen")));
         else
             result.setLastSeen(null);
 
@@ -135,7 +134,7 @@ public class PokoParser {
         result.setImportanceLevel(
                 parseMessageImportanceLevel(jsonObject.getInt("importance")));
         result.setNbNotReadUser(jsonObject.getInt("nbread"));
-        result.setDate(parseDateString(jsonObject.getString("date")));
+        result.setDate(Parser.epochInMillsToCalendar(jsonObject.getLong("date")));
         int userId = jsonObject.getInt("userId");
         User writer;
 
@@ -143,8 +142,12 @@ public class PokoParser {
         User user2 = invitedList.getItemByKey(userId);
         User user3 = invitingList.getItemByKey(userId);
         User user4 = strangerList.getItemByKey(userId);
+        User user = Session.getInstance().getUser();
 
-        if (user1 != null) {
+        // Check if it is my message or other user's message
+        if (user != null && user.getUserId() == userId) {
+            writer = user;
+        } else if (user1 != null) {
             writer = user1;
         } else if (user2 != null) {
             writer = user2;
@@ -184,8 +187,8 @@ public class PokoParser {
                 break;
             }
             default: {
-                message.setContent("알 수 없는 타입");
-                message.setSpecialContent("알 수 없는 타입");
+                message.setContent(null);
+                message.setSpecialContent(null);
                 break;
             }
         }

@@ -3,8 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="64dp"
-    android:orientation="horizontal">
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
 
     <LinearLayout
         android:id="@+id/messageLayout"
@@ -13,13 +13,16 @@
         android:layoutDirection="ltr"
         android:orientation="horizontal">
 
-        <ImageView
+        <de.hdodenhof.circleimageview.CircleImageView xmlns:app="http://schemas.android.com/apk/res-auto"
             android:id="@+id/image"
-            android:layout_width="80dp"
-            android:layout_height="80dp"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
             android:layout_weight="0"
-            android:padding="0dp"
-            android:src="@drawable/user" />
+            android:layout_margin="5dp"
+            android:src="@drawable/user"
+            app:civ_border_color="#000000"
+            app:civ_border_width="1dp" />
+
 
         <RelativeLayout
             android:layout_width="match_parent"
@@ -49,7 +52,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
                 android:layout_below="@id/title"
-                android:text="그립읍니다."
+                android:text="알겠읍니다."
+                android:maxLines="4"
                 android:textSize="16sp"
                 style="@style/TextAppearance.Compat.Notification"/>
 

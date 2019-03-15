@@ -125,7 +125,6 @@ public class PokoDatabaseManager {
                 } else {
                     oldUser.update(user);
                 }
-                Log.v("POKO", "LOGINED WITH USER " + session.getUser().getNickname() + ", " + session.getUser().getUserId());
 
                 return session;
             } finally {
@@ -162,8 +161,6 @@ public class PokoDatabaseManager {
             while (cursor.moveToNext()) {
                 int userId = cursor.getInt(userIdIndex);
 
-                Stranger ss = Parser.parseStranger(cursor);
-                Log.v("POKO", "READ USER " + ss.getNickname() + " , " + userId);
                 // Ignore the session user
                 if (userId == user.getUserId()) {
                     continue;

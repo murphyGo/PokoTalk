@@ -18,10 +18,10 @@ public abstract class ItemList<K, V extends Item> extends List<K, V> {
     }
 
     /** Mark the item updated.
-     * Child classes must override this and call super.updateItem
-     * @Return true if item was updated, false if item does not exist and is added
+     * @Return updated existing item if item was updated,
+     * or item given as argument if item does not exist and is added
      */
-    public boolean updateItem(V item) {
+    public V updateItem(V item) {
         if (updateListStarted) {
             updatedItems.put(getKey(item), item);
         }
@@ -29,10 +29,10 @@ public abstract class ItemList<K, V extends Item> extends List<K, V> {
         V found = getItemByKey(getKey(item));
         if (found == null) {
             add(item);
-            return false;
+            return item;
         } else {
             found.update(item);
-            return true;
+            return found;
         }
     }
 

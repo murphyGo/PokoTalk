@@ -145,7 +145,7 @@ public class PokoDatabaseQuery {
                     null,
                     null);
 
-    public static PokoDatabaseQuery updateGroupAck =
+    public static PokoDatabaseQuery updateGroup =
             new PokoDatabaseQuery(QueryType.UPDATE,
                     GroupsSchema.Entry.TABLE_NAME,
                     GroupsSchema.Entry.GROUP_ID + " = ? ",

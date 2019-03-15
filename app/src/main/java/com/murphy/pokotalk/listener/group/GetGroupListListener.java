@@ -47,10 +47,13 @@ public class GetGroupListListener extends PokoServer.PokoListener {
                     PokoMessage lastMessage = PokoParser.parseMessage(jsonLastMessage);
                     group = list.getItemByKey(group.getGroupId());
                     MessageList messageList = group.getMessageList();
-                    messageList.updateItem(lastMessage);
+
+                    // Update item and assign message the message updated in the list.
+                    lastMessage = messageList.updateItem(lastMessage);
 
                     /* If the message is history, send get history */
-                    if (lastMessage.getMessageType() == PokoMessage.MEMBER_JOIN) {
+                    if (lastMessage.getSpecialContent() == null &&
+                            lastMessage.getMessageType() == PokoMessage.MEMBER_JOIN) {
                         PokoServer.getInstance(null).sendGetMemberJoinHistory(group.getGroupId(),
                                 lastMessage.getMessageId());
                     }

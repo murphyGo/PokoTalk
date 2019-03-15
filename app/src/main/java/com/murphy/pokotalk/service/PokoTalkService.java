@@ -1,8 +1,6 @@
 package com.murphy.pokotalk.service;
 
-import android.app.PendingIntent;
 import android.app.Service;
-import android.app.TaskStackBuilder;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -13,22 +11,17 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.Process;
 import android.os.RemoteException;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
-import android.widget.RemoteViews;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.PokoTalkApp;
-import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.activity.main.MainActivity;
+import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.PokoDatabase;
 import com.murphy.pokotalk.data.file.PokoDatabaseManager;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
-import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -45,13 +38,13 @@ public class PokoTalkService extends Service {
     private boolean appStarted = false;
     private ArrayDeque<Messenger> waitingRequests = new ArrayDeque<>();
     private final Messenger requestMessenger = new Messenger(new ServiceRequestHandler());
-    private NotificationManagerCompat notificationManagerCompat;
+    private PokoNotificationManager notificationManager;
     private PokoDatabase pokoDB;
 
     /* PokoMessage names */
     public static final int NOTIFY_WHEN_LOADED = 0;
-    public static final int APP_STARTED = 1;
-    public static final int APP_CLOSED = 2;
+    public static final int APP_FOREGROUND = 1;
+    public static final int APP_BACKGROUND = 2;
 
     public PokoTalkService() {
         super();
@@ -66,7 +59,7 @@ public class PokoTalkService extends Service {
         Log.v("POKO", "POKO service made, process id " + Process.myPid());
 
         /* Settings for notification channels */
-        notificationManagerCompat = NotificationManagerCompat.from(this);
+        notificationManager = new PokoNotificationManager(this);
 
         /* Start AsyncTask */
         new sessionLoadAsyncTask().execute(this);
@@ -115,15 +108,15 @@ public class PokoTalkService extends Service {
     }
 
     public void loadApplicationData() {
-        /* Temporarily thread by welcome activity does application data loading */
-        /* Load application data */
+        /* Loads application data */
         try {
             DataLock.getInstance().acquireWriteLock();
 
             try {
-                PokoDatabaseManager.loadSessionData(this);
-                PokoDatabaseManager.loadUserData(this);
-                PokoDatabaseManager.loadGroupData(this);
+                Context context = getApplicationContext();
+                PokoDatabaseManager.loadSessionData(context);
+                PokoDatabaseManager.loadUserData(context);
+                PokoDatabaseManager.loadGroupData(context);
             } catch (Exception e) {
                 e.printStackTrace();
             } finally {
@@ -146,11 +139,13 @@ public class PokoTalkService extends Service {
                         isSessionLoaded(replyMessenger);
                         return;
                     }
-                    case APP_STARTED: {
+                    case APP_FOREGROUND: {
                         appStarted = true;
+                        Log.v("POKO", "APP STARTED");
                         return;
                     }
-                    case APP_CLOSED: {
+                    case APP_BACKGROUND: {
+                        Log.v("POKO", "APP CLOSED");
                         appStarted = false;
                         return;
                     }
@@ -231,58 +226,26 @@ public class PokoTalkService extends Service {
         messenger.send(message);
     }
 
-    /* New message notification */
-    public void sendNotificationForMessage(Group group, PokoMessage message) {
-        User writer = message.getWriter();
-        RemoteViews remoteViews = new RemoteViews(getPackageName(),
-                R.layout.message_notification_layout);
-        remoteViews.setImageViewResource(R.id.image, R.drawable.user);
-        remoteViews.setTextViewText(R.id.title, writer.getNickname());
-        remoteViews.setTextViewText(R.id.text, message.getContent());
-
-        NotificationCompat.Builder builder =
-                new NotificationCompat.Builder(this, PokoTalkApp.CHANNEL_1_ID);
-
-        // Create an Intent for the activity you want to start
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.putExtra("opcode", MainActivity.START_GROUP_CHAT);
-        intent.putExtra("groupId", group.getGroupId());
-        Log.v("POKO", "NEW MESSAGE GROUP ID2.5 " + group.getGroupId());
-
-// Create the TaskStackBuilder and add the intent, which inflates the back stack
-        TaskStackBuilder stackBuilder = TaskStackBuilder.create(this);
-        stackBuilder.addNextIntentWithParentStack(intent);
-// Get the PendingIntent containing the entire back stack
-        PendingIntent pendingIntent =
-                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
-
-
-        builder.setStyle(new android.support.v4.media.app.NotificationCompat.
-                DecoratedMediaCustomViewStyle()).
-                setSmallIcon(R.drawable.cockatiel_icon).
-                setContentTitle(writer.getNickname()).
-                setContentText(message.getContent()).
-                setContentIntent(pendingIntent).
-                setAutoCancel(true).
-                setCustomContentView(remoteViews).
-                setCustomBigContentView(remoteViews);
-
-        //NotificationCompat.Builder builder =
-         //       new NotificationCompat.Builder(this, PokoTalkApp.CHANNEL_2_ID);
-
-        //notificationManagerCompat.notify(2, builder.build());
-        notificationManagerCompat.notify(1, builder.build());
-    }
-
     /* Activity callbacks */
     private ActivityCallback newMessageCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
             Group group = (Group) getData("group");
             PokoMessage message = (PokoMessage) getData("message");
-            if (group != null && message != null && !appStarted) {
-                Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
-                sendNotificationForMessage(group, message);
+            if (group != null && message != null) {
+                if (appStarted) {
+                    Group chatGroup = DataCollection.getInstance().getChattingGroup();
+                    // Notify when the user is not on chat of new message.
+                    if (chatGroup != group) {
+                        notificationManager.notifyNewMessage(
+                                PokoTalkApp.CHANNEL_2_ID, group, message);
+                    }
+                } else {
+                    // Notify the user with high importance notification.
+                    Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
+                    notificationManager.notifyNewMessage(
+                            PokoTalkApp.CHANNEL_1_ID, group, message);
+                }
             }
         }
 

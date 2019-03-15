@@ -49,18 +49,19 @@ public class NewMessageListener extends PokoServer.PokoListener {
             /* Parse message and add sorted by message id */
             MessageList messageList = group.getMessageList();
             PokoMessage message = PokoParser.parseMessage(jsonMessage);
-            messageList.updateItem(message);
+
+            // Update item and assign message the message updated in the list.
+            message = messageList.updateItem(message);
 
             /* Add NbNewMessage number */
-            collection.acquireGroupSemaphore();
             /* Increment new message number only when the user is not chatting for this group */
             if (collection.getChattingGroup() != group) {
                 group.setNbNewMessages(group.getNbNewMessages() + 1);
             }
-            collection.releaseGroupSemaphore();
 
             /* If the message is history, send get history */
-            if (message.getMessageType() == PokoMessage.MEMBER_JOIN) {
+            if (message.getSpecialContent() == null
+                    && message.getMessageType() == PokoMessage.MEMBER_JOIN) {
                 PokoServer.getInstance(null).sendGetMemberJoinHistory(groupId, message.getMessageId());
             }
 
@@ -71,8 +72,6 @@ public class NewMessageListener extends PokoServer.PokoListener {
             Log.e("POKO ERROR", "Bad new message json data");
         } catch (ParseException e){
             Log.e("POKO ERROR", "Failed to parse date");
-        } catch (InterruptedException e) {
-            Log.e("POKO ERROR", "Failed to add new message number");
         }
     }
 
@@ -109,6 +108,9 @@ public class NewMessageListener extends PokoServer.PokoListener {
 
                 // Add message data
                 PokoDatabaseHelper.insertOrIgnoreMessageData(db, values);
+
+                // Update nbNewMessage of group
+                PokoDatabaseHelper.updateGroupNbNewMessage(db, group);
 
                 db.setTransactionSuccessful();
                 Log.v("POKO", "saved message successfully.");

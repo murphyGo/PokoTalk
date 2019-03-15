@@ -8,14 +8,7 @@ public class EventList extends ItemList<Integer, Event> {
     }
 
     @Override
-    public boolean updateItem(Event item) {
-        return super.updateItem(item);
-    }
-
-    @Override
     public Integer getKey(Event event) {
         return event.getEventId();
     }
-
-
 }

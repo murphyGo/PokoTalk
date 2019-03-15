@@ -8,18 +8,17 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.parser.PokoParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
 import java.util.Calendar;
 import java.util.HashMap;
 
@@ -37,8 +36,8 @@ public class SendMessageListener extends PokoServer.PokoListener {
             int groupId = data.getInt("groupId");
             int messageId = data.getInt("messageId");
             int sendId = data.getInt("sendId");
-            int nbread = data.getInt("nbread");
-            Calendar date = PokoParser.parseDateString(data.getString("date"));
+            int nbNotRead = data.getInt("nbread");
+            Calendar date = Parser.epochInMillsToCalendar(data.getLong("date"));
 
             Group group = collection.getGroupList().getItemByKey(groupId);
             if (group == null) {
@@ -48,7 +47,7 @@ public class SendMessageListener extends PokoServer.PokoListener {
 
             MessageList messageList = group.getMessageList();
             if (!messageList.moveSentMessageToMessageList(
-                    sendId, messageId, nbread, date)) {
+                    sendId, messageId, nbNotRead, date)) {
                 Log.e("POKO ERROR", "Failed to send message to message list");
                 return;
             }
@@ -57,8 +56,6 @@ public class SendMessageListener extends PokoServer.PokoListener {
             putData("message", messageList.getItemByKey(messageId));
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad send message json data");
-        } catch (ParseException e){
-            Log.e("POKO ERROR", "Failed to parse date");
         }
     }
 

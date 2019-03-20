@@ -51,7 +51,7 @@ public class Session {
     }
 
     /* User login with this session id */
-    public boolean login(Context context) {
+    public synchronized boolean login(Context context) {
         if (hasLogined() || sessionId == null)
             return false;
 
@@ -60,7 +60,7 @@ public class Session {
         return true;
     }
 
-    public boolean logout(Context context) {
+    public synchronized boolean logout(Context context) {
         if(!hasLogined())
             return false;
 
@@ -69,7 +69,7 @@ public class Session {
         return true;
     }
 
-    public void setSessionId(String id) {
+    public synchronized void setSessionId(String id) {
         sessionId = id;
     }
 

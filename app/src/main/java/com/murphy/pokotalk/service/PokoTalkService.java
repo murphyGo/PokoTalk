@@ -37,7 +37,7 @@ public class PokoTalkService extends Service {
     private boolean sessionLoaded = false;
     private boolean appStarted = false;
     private ArrayDeque<Messenger> waitingRequests = new ArrayDeque<>();
-    private final Messenger requestMessenger = new Messenger(new ServiceRequestHandler());
+    private final Messenger requestMessenger = new Messenger(new ServiceRequestHandler(this));
     private PokoNotificationManager notificationManager;
     private PokoDatabase pokoDB;
 
@@ -129,24 +129,30 @@ public class PokoTalkService extends Service {
     }
 
     /* PokoMessage handler for service requests */
-    class ServiceRequestHandler extends Handler {
+    static class ServiceRequestHandler extends Handler {
+        PokoTalkService service;
+
+        public ServiceRequestHandler(PokoTalkService service) {
+            this.service = service;
+        }
+
         @Override
         public void handleMessage(Message msg) {
             try {
                 switch(msg.what) {
                     case NOTIFY_WHEN_LOADED: {
                         Messenger replyMessenger = msg.replyTo;
-                        isSessionLoaded(replyMessenger);
+                        service.notifyWhenSessionLoaded(replyMessenger);
                         return;
                     }
                     case APP_FOREGROUND: {
-                        appStarted = true;
+                        service.appStarted = true;
                         Log.v("POKO", "APP STARTED");
                         return;
                     }
                     case APP_BACKGROUND: {
                         Log.v("POKO", "APP CLOSED");
-                        appStarted = false;
+                        service.appStarted = false;
                         return;
                     }
                     default: {
@@ -169,10 +175,11 @@ public class PokoTalkService extends Service {
     /* This AsyncTask loads session and user data,
      * and try to connect to server.
      */
-    class sessionLoadAsyncTask extends AsyncTask {
+    static class sessionLoadAsyncTask
+            extends AsyncTask<PokoTalkService, Void, PokoTalkService> {
         @Override
-        protected Object doInBackground(Object[] objects) {
-            PokoTalkService service = PokoTalkService.this;
+        protected PokoTalkService doInBackground(PokoTalkService[] objects) {
+            PokoTalkService service = objects[0];
             if (service.isSessionLoaded()) {
                 return null;
             }
@@ -184,13 +191,15 @@ public class PokoTalkService extends Service {
                 session.login(service.getApplicationContext());
             }
 
-            return null;
+            return service;
         }
 
         @Override
-        protected void onPostExecute(Object o) {
+        protected void onPostExecute(PokoTalkService service) {
             try {
-                PokoTalkService.this.setSessionLoaded(true);
+                if (service != null) {
+                    service.setSessionLoaded(true);
+                }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
@@ -201,7 +210,7 @@ public class PokoTalkService extends Service {
         return sessionLoaded;
     }
 
-    public synchronized boolean isSessionLoaded(Messenger messenger) throws RemoteException {
+    public synchronized boolean notifyWhenSessionLoaded(Messenger messenger) throws RemoteException {
         if (!sessionLoaded) {
             waitingRequests.addLast(messenger);
         } else {
@@ -221,7 +230,7 @@ public class PokoTalkService extends Service {
         waitingRequests.clear();
     }
 
-    private void sendNotifyWhenLoaded(Messenger messenger) throws RemoteException {
+    private synchronized void sendNotifyWhenLoaded(Messenger messenger) throws RemoteException {
         Message message = Message.obtain(null, NOTIFY_WHEN_LOADED);
         messenger.send(message);
     }
@@ -233,18 +242,21 @@ public class PokoTalkService extends Service {
             Group group = (Group) getData("group");
             PokoMessage message = (PokoMessage) getData("message");
             if (group != null && message != null) {
-                if (appStarted) {
-                    Group chatGroup = DataCollection.getInstance().getChattingGroup();
-                    // Notify when the user is not on chat of new message.
-                    if (chatGroup != group) {
+
+                 // Notify only when it is not my message
+                if (!message.isMyMessage(Session.getInstance())) {
+                    if (appStarted) {
+                        Group chatGroup = DataCollection.getInstance().getChattingGroup();
+                        // Notify with sound in app but when the user is not on chat of new message.
+                        if (chatGroup != group) {
+                            notificationManager.notifySoundInApp();
+                        }
+                    } else {
+                        // Notify the user with high importance notification.
+                        Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
                         notificationManager.notifyNewMessage(
-                                PokoTalkApp.CHANNEL_2_ID, group, message);
+                                PokoTalkApp.CHANNEL_1_ID, group, message);
                     }
-                } else {
-                    // Notify the user with high importance notification.
-                    Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
-                    notificationManager.notifyNewMessage(
-                            PokoTalkApp.CHANNEL_1_ID, group, message);
                 }
             }
         }

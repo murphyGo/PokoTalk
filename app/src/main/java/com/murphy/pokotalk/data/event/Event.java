@@ -1,17 +1,19 @@
 package com.murphy.pokotalk.data.event;
 
 import com.murphy.pokotalk.data.Item;
+import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.ContactList;
 
 import java.util.Calendar;
 
 public class Event extends Item {
-    private int eventId;
-    private String eventName;
-    private String description;
-    private ContactList participants;
-    private Calendar eventDate;
-    private int state;
+    protected int eventId;
+    protected String eventName;
+    protected String description;
+    protected ContactList participants;
+    protected Calendar eventDate;
+    protected int state;
+    protected Group group;
 
     public static final int EVENT_UPCOMING = 0;
     public static final int EVENT_STARTED = 1;
@@ -24,6 +26,7 @@ public class Event extends Item {
         setParticipants(event.getParticipants());
         setEventDate(event.getEventDate());
         setState(event.getState());
+        setGroup(event.getGroup());
     }
 
     public int getEventId() {
@@ -72,5 +75,13 @@ public class Event extends Item {
 
     public void setState(int state) {
         this.state = state;
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 }

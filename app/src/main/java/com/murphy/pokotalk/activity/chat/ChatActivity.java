@@ -336,18 +336,12 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback sessionLoginListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            /* Request unacked messages */
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    /* Read new messages after last acked message from server */
-                    requestUnackedMessages();
-                    /* Ack to last messages */
-                    sendAckToLastMessage();
-                    /* Request nbNotRead of messages read */
-                    requestNbreadOfMessages(group.getMessageList().getList());
-                }
-            });
+            /* Read new messages after last acked message from server */
+            requestUnackedMessages();
+            /* Ack to last messages */
+            sendAckToLastMessage();
+            /* Request nbNotRead of messages read */
+            requestNbreadOfMessages(group.getMessageList().getList());
         }
 
         @Override
@@ -359,13 +353,14 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback readMessageListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group readGroup = (Group) getData("group");
+            final ArrayList<PokoMessage> readMessages =
+                    (ArrayList<PokoMessage>) getData("messages");
             /* Refresh message list */
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     /* Update all messages */
-                    Group readGroup = (Group) getData("group");
-                    ArrayList<PokoMessage> readMessages = (ArrayList<PokoMessage>) getData("messages");
                     if (readGroup == null || readMessages == null)
                         return;
 
@@ -418,12 +413,12 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback addMessageListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group readGroup = (Group) getData("group");
+            final PokoMessage newMessage = (PokoMessage) getData("message");
             /* Refresh message list */
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Group readGroup = (Group) getData("group");
-                    PokoMessage newMessage = (PokoMessage) getData("message");
                     if (readGroup == null || newMessage == null)
                         return;
 
@@ -473,11 +468,11 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback membersInvitedListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group readGroup = (Group) getData("group");
+            final ArrayList<User> members = (ArrayList<User>) getData("members");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Group readGroup = (Group) getData("group");
-                    ArrayList<User> members = (ArrayList<User>) getData("members");
                     if (readGroup == null || members == null)
                         return;
 
@@ -501,11 +496,11 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback memberExitListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group readGroup = (Group) getData("group");
+            final ArrayList<User> members = (ArrayList<User>) getData("members");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Group readGroup = (Group) getData("group");
-                    ArrayList<User> members = (ArrayList<User>) getData("members");
                     if (readGroup == null || members == null)
                         return;
 
@@ -669,11 +664,11 @@ public class ChatActivity extends AppCompatActivity
                 try {
                     // Find first messageId to start reading message.
                     MessageList messageList = group.getMessageList();
-                    PokoMessage firstMessage = messageList.getList().get(0);
                     int startId;
-                    if (firstMessage == null) {
+                    if (messageList.getList().size() == 0) {
                         startId = -1;
                     } else {
+                        PokoMessage firstMessage = messageList.getList().get(0);
                         startId = firstMessage.getMessageId() - 1;
                     }
 

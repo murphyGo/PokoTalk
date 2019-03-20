@@ -55,6 +55,7 @@ public class SendMessageListener extends PokoServer.PokoListener {
             putData("group", group);
             putData("message", messageList.getItemByKey(messageId));
         } catch (JSONException e) {
+            e.printStackTrace();
             Log.e("POKO ERROR", "Bad send message json data");
         }
     }

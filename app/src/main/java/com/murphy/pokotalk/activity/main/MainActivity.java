@@ -451,12 +451,12 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback addContactCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Contact contact = (Contact) getData("contact");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     /* Refresh contact list */
                     if (contactListAdapter != null) {
-                        Contact contact = (Contact) getData("contact");
                         if (contact != null) {
                             ContactList contactList = (ContactList) contactListAdapter.getPokoList();
                             contactList.updateItem(contact);
@@ -476,18 +476,18 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback removeContactCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Integer userId = (Integer) getData("userId");
+            final PendingContact pendingContact =
+                    (PendingContact) getData("pendingContact");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     /* Refresh contact list */
                     if (contactListAdapter != null) {
-                        Integer userId = (Integer) getData("userId");
                         if (userId != null) {
                             ContactList contactList = (ContactList) contactListAdapter.getPokoList();
                             contactList.removeItemByKey(userId);
                         }
-                        PendingContact pendingContact =
-                                (PendingContact) getData("pendingContact");
                         if (pendingContact != null) {
                             ContactList contactList = (ContactList) contactListAdapter.getPokoList();
                             contactList.removeItemByKey(pendingContact.getUserId());
@@ -508,11 +508,11 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback joinContactChatCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, final Object... args) {
+            final Contact contact = (Contact) getData("contact");
+            final Group group = (Group) getData("group");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Contact contact = (Contact) getData("contact");
-                    Group group = (Group) getData("group");
                     if (group != null) {
                         if (groupListAdapter != null) {
                             GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
@@ -561,11 +561,11 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback addGroupCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group group = (Group) getData("group");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (groupListAdapter != null) {
-                        Group group = (Group) getData("group");
                         if (group != null) {
                             GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                             groupListUI.updateItem(group);
@@ -585,11 +585,11 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback removeGroupCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Integer groupId = (Integer) getData("groupId");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     if (groupListAdapter != null) {
-                        Integer groupId = (Integer) getData("groupId");
                         GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.removeItemByKey(groupId);
                         groupListAdapter.notifyDataSetChanged();
@@ -607,10 +607,10 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback readMessageCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group group = (Group) getData("group");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Group group = (Group) getData("group");
                     if (groupListAdapter != null && group != null) {
                         GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.addContactChatGroupIfHasMessage(group);
@@ -630,10 +630,10 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback newMessageCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group group = (Group) getData("group");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Group group = (Group) getData("group");
                     if (groupListAdapter != null && group != null) {
                         GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.addContactChatGroupIfHasMessage(group);

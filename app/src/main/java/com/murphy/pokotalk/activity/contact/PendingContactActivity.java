@@ -128,11 +128,11 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
     private ActivityCallback addPendingContactCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Boolean invited = (Boolean) getData("invited");
+            final PendingContact pendingContact = (PendingContact) getData("pendingContact");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Boolean invited = (Boolean) getData("invited");
-                    PendingContact pendingContact = (PendingContact) getData("pendingContact");
                     if (invited == null || pendingContact == null) {
                         return;
                     }
@@ -156,15 +156,15 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
     private ActivityCallback removePendingContactCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Integer userId = (Integer) getData("userId");
+            final Contact contact = (Contact) getData("contact");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    Integer userId = (Integer) getData("userId");
                     if (userId != null) {
                         invitedListAdapter.getPokoList().removeItemByKey(userId);
                         invitingListAdapter.getPokoList().removeItemByKey(userId);
                     }
-                    Contact contact = (Contact) getData("contact");
                     if (contact != null) {
                         invitedListAdapter.getPokoList().removeItemByKey(contact.getUserId());
                         invitingListAdapter.getPokoList().removeItemByKey(contact.getUserId());

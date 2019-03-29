@@ -70,10 +70,11 @@ public class SessionLoginListener extends PokoServer.PokoListener {
                 session.setUser(user);
             }
 
-            /* Request contact list and group list of the user */
+            /* Get up-to-date contact and group and event list */
             PokoServer server = PokoServer.getInstance(null);
             server.sendGetContactList();
             server.sendGetGroupList();
+            server.sendGetEventList();
 
             putData("session", session);
         } catch(Exception e) {

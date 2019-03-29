@@ -3,7 +3,8 @@ package com.murphy.pokotalk.server.parser;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.event.Event;
+import com.murphy.pokotalk.data.event.EventLocation;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
@@ -15,6 +16,7 @@ import com.murphy.pokotalk.data.user.Stranger;
 import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
+import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -30,6 +32,9 @@ import java.util.TimeZone;
 /* Parse JSONObject and String data from PokoTalk server */
 public class PokoParser {
     public static DataCollection collection = DataCollection.getInstance();
+    public static final int SERVER_EVENT_ACK_NOT_SEEN = 0;
+    public static final int SERVER_EVENT_ACK_SEEN = 1;
+    public static final int SERVER_EVENT_ACK_SEEN_STARTED = 2;
 
     public static Contact parseContact(JSONObject jsonObject) throws JSONException, ParseException {
         Contact result = new Contact();
@@ -210,10 +215,113 @@ public class PokoParser {
         }
     }
 
-    public static Event parseEvent(JSONObject jsonObject) throws JSONException {
+    public static PokoEvent parseEvent(JSONObject jsonObject) throws JSONException {
+        PokoEvent event = new PokoEvent();
+        event.setEventId(jsonObject.getInt("eventId"));
+        event.setEventName(jsonObject.getString("name"));
+        event.setEventDate(Parser.epochInMillsToCalendar(jsonObject.getLong("date")));
+        event.setAck(parseEventAck(jsonObject));
+        event.setLocation(parseLocation(jsonObject));
+        if (jsonObject.has("description")) {
+            event.setDescription(jsonObject.getString("description"));
+        } else {
+            event.setDescription(null);
+        }
+        if (jsonObject.has("started")) {
+            boolean started = jsonObject.getInt("started") > 0;
+            if (started) {
+                event.setState(PokoEvent.EVENT_STARTED);
+            } else {
+                event.setState(PokoEvent.EVENT_UPCOMING);
+            }
+        } else {
+            event.setState(PokoEvent.EVENT_UPCOMING);
+        }
+        if (jsonObject.has("groupId")) {
+            int groupId = jsonObject.getInt("groupId");
+            Group group = DataCollection.getInstance().getGroupList().getItemByKey(groupId);
+            if (group != null) {
+                event.setGroup(group);
+            }
+        }
+        if (jsonObject.has("participants")) {
+            JSONArray jsonParticipants = jsonObject.getJSONArray("participants");
 
-        return null;
+            UserList participants = event.getParticipants();
+            for (int i = 0; i < jsonParticipants.length(); i++) {
+                JSONObject jsonParticipant = (JSONObject) jsonParticipants.get(i);
+
+                /* Get existing user or create new user */
+                User participant = parseStranger(jsonParticipant);
+                User exist = collection.getUserById(participant.getUserId());
+                if (exist == null) {
+                    collection.updateUserList(participant);
+                } else {
+                    participant = exist;
+                }
+
+                /* Add to participant */
+                participants.updateItem(participant);
+            }
+        }
+        return event;
     }
+
+    public static int parseEventAck(JSONObject jsonObject) throws JSONException {
+        if (!jsonObject.has("acked")) {
+            return PokoEvent.ACK_NOT_SEEN;
+        }
+
+        int acked = jsonObject.getInt("acked");
+
+        switch (acked) {
+            case SERVER_EVENT_ACK_NOT_SEEN: {
+                return PokoEvent.ACK_NOT_SEEN;
+            }
+            case SERVER_EVENT_ACK_SEEN: {
+                return PokoEvent.ACK_SEEN;
+            }
+            case SERVER_EVENT_ACK_SEEN_STARTED: {
+                return PokoEvent.ACK_SEEN_STARTED;
+            }
+            default: {
+                return PokoEvent.ACK_NOT_SEEN;
+            }
+        }
+    }
+
+    public static EventLocation parseLocation(JSONObject jsonObject) throws JSONException {
+        if (!jsonObject.has("localization")) {
+            return null;
+        }
+
+        JSONObject jsonLocal = jsonObject.getJSONObject("localization");
+        EventLocation location = new EventLocation();
+        if (jsonLocal.has("title")) {
+            location.setTitle(jsonLocal.getString("title"));
+        } else {
+            location.setTitle(Constants.unknownEventName);
+        }
+        if (jsonLocal.has("category")) {
+            location.setCategory(jsonLocal.getString("category"));
+        } else {
+            location.setCategory(null);
+        }
+        if (jsonLocal.has("description")) {
+            location.setAddress(jsonLocal.getString("description"));
+        } else {
+            location.setAddress(null);
+        }
+        if (jsonLocal.has("latitude") && jsonLocal.has("longitude")) {
+            LatLng latLng = new LatLng(jsonLocal.getDouble("latitude"),
+                    jsonLocal.getDouble("longitude"));
+            location.setLatLng(latLng);
+        } else {
+            location.setLatLng(null);
+        }
+
+        return location;
+     }
 
     public static Calendar parseDateString(String dateStr) throws ParseException {
         SimpleDateFormat lastSeenFormat = new SimpleDateFormat(Constants.serverDateFormat, Locale.KOREA);

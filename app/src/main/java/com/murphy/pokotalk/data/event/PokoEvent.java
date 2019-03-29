@@ -2,31 +2,54 @@ package com.murphy.pokotalk.data.event;
 
 import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.UserList;
 
 import java.util.Calendar;
 
-public class Event extends Item {
+public class PokoEvent extends Item {
     protected int eventId;
     protected String eventName;
     protected String description;
-    protected ContactList participants;
+    protected UserList participants;
     protected Calendar eventDate;
     protected int state;
+    protected int ack;
+    protected EventLocation location;
     protected Group group;
 
+    // Event state
     public static final int EVENT_UPCOMING = 0;
     public static final int EVENT_STARTED = 1;
 
+    // Event ack
+    public static final int ACK_NOT_SEEN = 2;
+    public static final int ACK_SEEN = 3;
+    public static final int ACK_SEEN_STARTED = 4;
+
+    public PokoEvent() {
+        participants = new UserList();
+        group = null;
+        location = null;
+    }
+
     @Override
     public void update(Item item) {
-        Event event = (Event) item;
+        PokoEvent event = (PokoEvent) item;
         setEventName(event.getEventName());
         setDescription(event.getDescription());
         setParticipants(event.getParticipants());
         setEventDate(event.getEventDate());
         setState(event.getState());
         setGroup(event.getGroup());
+        setAck(event.getAck());
+
+        EventLocation location = getLocation();
+        EventLocation location2 = event.getLocation();
+        if (location != null && location2 != null) {
+            location.update(location2);
+        } else {
+            setLocation(location2);
+        }
     }
 
     public int getEventId() {
@@ -53,11 +76,11 @@ public class Event extends Item {
         this.description = description;
     }
 
-    public ContactList getParticipants() {
+    public UserList getParticipants() {
         return participants;
     }
 
-    public void setParticipants(ContactList participants) {
+    public void setParticipants(UserList participants) {
         this.participants = participants;
     }
 
@@ -83,5 +106,21 @@ public class Event extends Item {
 
     public void setGroup(Group group) {
         this.group = group;
+    }
+
+    public EventLocation getLocation() {
+        return location;
+    }
+
+    public void setLocation(EventLocation location) {
+        this.location = location;
+    }
+
+    public int getAck() {
+        return ack;
+    }
+
+    public void setAck(int ack) {
+        this.ack = ack;
     }
 }

@@ -45,7 +45,7 @@ public class MpagerAdapter extends PagerAdapter {
 
         ViewCreationCallback callback = callbacks.get(layouts[position]);
         if (callback != null)
-            callback.run(view);
+            callback.run(view, null);
 
         return view;
     }

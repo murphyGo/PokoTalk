@@ -62,9 +62,9 @@ public class GroupAddActivity extends AppCompatActivity {
         }
     }
 
-    private ViewCreationCallback candidateCallback = new ViewCreationCallback() {
+    private ViewCreationCallback candidateCallback = new ViewCreationCallback<Contact>() {
         @Override
-        public void run(View view) {
+        public void run(View view, Contact c) {
             final MemberCandidateItem candidateView = (MemberCandidateItem) view;
             final Contact contact = candidateView.getContact();
 

@@ -31,9 +31,9 @@ public class AddGroupListener extends PokoServer.PokoListener {
         try {
             JSONObject jsonObject = data.getJSONObject("group");
             Group group = PokoParser.parseGroup(jsonObject);
-            groupList.updateItem(group);
+            group = groupList.updateItem(group);
 
-            putData("group", groupList.getItemByKey(group.getGroupId()));
+            putData("group", group);
         } catch (JSONException e) {
             e.printStackTrace();
             Log.e("POKO ERROR", "Bad new group json data");

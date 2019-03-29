@@ -109,6 +109,7 @@ public class ChatActivity extends AppCompatActivity
             creationError("해당 그룹이 없습니다.");
         }
 
+        /* Start chat for this group */
         openChatting();
 
         /* Set group name */
@@ -263,18 +264,18 @@ public class ChatActivity extends AppCompatActivity
 
     private void openChatting() {
         if (!collection.startChat(group)) {
-            // chat failed to start.
-            Toast.makeText(this, "채팅 실행 중 문제가 발생했습니다.",
-                    Toast.LENGTH_SHORT);
+            // Another chat is going on, finish this chat
             finish();
         }
     }
 
     private void closeChatting() {
+        // Set intent for result to MainActivity
         Intent intent = new Intent();
         intent.putExtra("groupId", group.getGroupId());
         setResult(RESULT_OK, intent);
 
+        // End chat
         collection.endChat(group);
     }
 
@@ -284,7 +285,6 @@ public class ChatActivity extends AppCompatActivity
         setResult(RESULT_CANCELED);
         finish();
     }
-
 
     private PokoMessage createSentMessage(int sendId, String content, @Nullable Integer importanceLevel) {
         PokoMessage message = new PokoMessage();
@@ -550,6 +550,7 @@ public class ChatActivity extends AppCompatActivity
 
     private void open_exit_warning() {
         GroupExitWarningDialog warningDialog = new GroupExitWarningDialog();
+        warningDialog.setGroup(group);
         warningDialog.show(getSupportFragmentManager(), "채팅방 나가기 경고");
     }
 
@@ -584,7 +585,7 @@ public class ChatActivity extends AppCompatActivity
 
     /* Group exit dialog listener */
     @Override
-    public void groupExitOptionApply(int option) {
+    public void groupExitOptionApply(Group group, int option) {
         switch(option) {
             case GroupExitWarningDialog.EXIT_GROUP:
                 server.sendExitGroup(group.getGroupId());

@@ -34,7 +34,7 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
     private boolean writePermission;
     private Thread thread;
     private Messenger serviceMessenger;
-    private final Messenger myMessenger = new Messenger(new ServiceMessageHandler());
+    private Messenger myMessenger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -95,6 +95,9 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
                     Constants.ALL_PERMISSION);
         }
 
+        ServiceMessageHandler handler = new ServiceMessageHandler();
+        handler.setThread(thread);
+        myMessenger = new Messenger(handler);
     }
 
     @Override
@@ -160,7 +163,13 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
         PokoTalkService.startPokoTalkService(this);
     }
 
-    class ServiceMessageHandler extends Handler {
+    static class ServiceMessageHandler extends Handler {
+        Thread thread;
+
+        public void setThread(Thread thread) {
+            this.thread = thread;
+        }
+
         @Override
         public void handleMessage(Message msg) {
             switch (msg.what) {

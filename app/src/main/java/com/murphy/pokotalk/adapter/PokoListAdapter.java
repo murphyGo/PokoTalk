@@ -16,7 +16,7 @@ public abstract class PokoListAdapter<T> extends BaseAdapter {
     protected ArrayList<T> items;
     protected Context context;
     protected HashMap<Long, View> views;
-    protected ViewCreationCallback viewCreationCallback;
+    protected ViewCreationCallback<T> viewCreationCallback;
     protected ItemList pokoList;
 
     public PokoListAdapter(Context context) {
@@ -30,7 +30,7 @@ public abstract class PokoListAdapter<T> extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int position) {
+    public T getItem(int position) {
         return items.get(position);
     }
 
@@ -43,8 +43,9 @@ public abstract class PokoListAdapter<T> extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         View view = createView(position, convertView, parent);
         putView(getItemId(position), view);
+
         if (viewCreationCallback != null)
-            viewCreationCallback.run(view);
+            viewCreationCallback.run(view, getItem(position));
         return view;
     }
 

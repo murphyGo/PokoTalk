@@ -11,6 +11,7 @@ import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseManager;
 import com.murphy.pokotalk.listener.chat.AckMessageListener;
@@ -30,6 +31,12 @@ import com.murphy.pokotalk.listener.contact.GetPendingContactListListener;
 import com.murphy.pokotalk.listener.contact.JoinContactChatListener;
 import com.murphy.pokotalk.listener.contact.NewContactListener;
 import com.murphy.pokotalk.listener.contact.NewPendingContactListener;
+import com.murphy.pokotalk.listener.event.EventAckListener;
+import com.murphy.pokotalk.listener.event.EventCreatedListener;
+import com.murphy.pokotalk.listener.event.EventExitListener;
+import com.murphy.pokotalk.listener.event.EventParticipantExitedListener;
+import com.murphy.pokotalk.listener.event.EventStartedListener;
+import com.murphy.pokotalk.listener.event.GetEventListListener;
 import com.murphy.pokotalk.listener.group.AddGroupListener;
 import com.murphy.pokotalk.listener.group.ExitGroupListener;
 import com.murphy.pokotalk.listener.group.GetGroupListListener;
@@ -38,13 +45,14 @@ import com.murphy.pokotalk.listener.group.MembersInvitedListener;
 import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
 import com.murphy.pokotalk.listener.session.PasswordLoginListener;
 import com.murphy.pokotalk.listener.session.SessionLoginListener;
+import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -252,7 +260,7 @@ public class PokoServer extends ServerSocket {
         mSocket.emit(Constants.getGroupListName);
     }
 
-    public void sendAddGroup(String name, ArrayList<String> emails) {
+    public void sendAddGroup(String name, List<String> emails) {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("name", name);
@@ -312,7 +320,7 @@ public class PokoServer extends ServerSocket {
         }
     }
 
-    public void sendInviteGroupMembers(int groupId, ArrayList<String> emails) {
+    public void sendInviteGroupMembers(int groupId, List<String> emails) {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("groupId", groupId);
@@ -342,6 +350,38 @@ public class PokoServer extends ServerSocket {
             jsonData.put("groupId", groupId);
             jsonData.put("messageId", messageId);
             mSocket.emit(Constants.getMemberJoinHistory, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendGetEventList() {
+        mSocket.emit(Constants.getEventListName);
+    }
+
+    public void sendCreateEvent(String name, String description, List<String> emails,
+                                Calendar date, EventLocation location) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("name", name);
+            jsonData.put("description", description);
+            jsonData.put("date", date.getTime().getTime());
+            JSONArray jsonEmailArray = new JSONArray(emails);
+            jsonData.put("participants", jsonEmailArray);
+
+            if (location != null) {
+                JSONObject jsonLocalization = new JSONObject();
+                LatLng latLng = location.getLatLng();
+                jsonLocalization.put("title", location.getTitle());
+                jsonLocalization.put("category", location.getCategory());
+                jsonLocalization.put("description", location.getAddress());
+                jsonLocalization.put("latitude", latLng.latitude);
+                jsonLocalization.put("longitude", latLng.longitude);
+
+                jsonData.put("localization", jsonLocalization);
+            }
+
+            mSocket.emit(Constants.createEventName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -393,6 +433,12 @@ public class PokoServer extends ServerSocket {
         mSocket.on(Constants.messageAckName, new MessageAckListener());
         mSocket.on(Constants.ackMessageName, new AckMessageListener());
         mSocket.on(Constants.getMemberJoinHistory, new GetMemberJoinHistory());
+        mSocket.on(Constants.getEventListName, new GetEventListListener());
+        mSocket.on(Constants.eventCreatedName, new EventCreatedListener());
+        mSocket.on(Constants.eventExitName, new EventExitListener());
+        mSocket.on(Constants.eventParticipantExitedName, new EventParticipantExitedListener());
+        mSocket.on(Constants.eventAckName, new EventAckListener());
+        mSocket.on(Constants.eventStartedName, new EventStartedListener());
     }
 
     /* Getter and Setters */

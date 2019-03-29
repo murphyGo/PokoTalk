@@ -25,10 +25,12 @@ import com.murphy.pokotalk.Constants.RequestCode;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.chat.ChatActivity;
 import com.murphy.pokotalk.activity.chat.GroupAddActivity;
+import com.murphy.pokotalk.activity.chat.GroupExitWarningDialog;
 import com.murphy.pokotalk.activity.chat.GroupOptionDialog;
 import com.murphy.pokotalk.activity.contact.ContactDetailDialog;
 import com.murphy.pokotalk.activity.contact.ContactOptionDialog;
 import com.murphy.pokotalk.activity.contact.PendingContactActivity;
+import com.murphy.pokotalk.activity.event.EventCreationActivity;
 import com.murphy.pokotalk.adapter.ContactListAdapter;
 import com.murphy.pokotalk.adapter.GroupListAdapter;
 import com.murphy.pokotalk.adapter.MpagerAdapter;
@@ -36,6 +38,7 @@ import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.GroupListUI;
@@ -56,6 +59,7 @@ public class MainActivity extends AppCompatActivity
         ContactDetailDialog.ContactDetailDialogListener,
         ContactOptionDialog.ContactOptionDialogListener,
         GroupOptionDialog.GroupOptionDialogListener,
+        GroupExitWarningDialog.Listener,
         ServiceConnection {
     private PokoServer server;
     private Session session;
@@ -267,9 +271,9 @@ public class MainActivity extends AppCompatActivity
     }
 
     /* View pager callbacks */
-    private ViewCreationCallback contactListCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback contactListCreationCallback = new ViewCreationCallback<Contact>() {
         @Override
-        public void run(View view) {
+        public void run(View view, Contact contact) {
             /* Contact list view settings */
             /* Create contact list adapter */
             ListView contactListLayout = view.findViewById(R.id.contactList);
@@ -281,11 +285,11 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ViewCreationCallback groupListCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback groupListCreationCallback = new ViewCreationCallback<Group>() {
         @Override
-        public void run(View view) {
-            /* Contact list view settings */
-            /* Create contact list adapter */
+        public void run(View view, Group group) {
+            /* Group list view settings */
+            /* Create group list adapter */
             ListView groupListLayout = view.findViewById(R.id.groupList);
             groupListLayout.setAdapter(groupListAdapter);
 
@@ -295,16 +299,23 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ViewCreationCallback eventListCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback eventListCreationCallback = new ViewCreationCallback<PokoEvent>() {
         @Override
-        public void run(View view) {
+        public void run(View view, PokoEvent event) {
+            /* PokoEvent list view settings */
+            /* Create event list adapter */
+            ListView eventListLayout = view.findViewById(R.id.eventList);
+            //eventListLayout.setAdapter(groupListAdapter);
 
+            /* Add button listeners */
+            Button eventAddButton = view.findViewById(R.id.eventAddButton);
+            eventAddButton.setOnClickListener(eventAddButtonClickListener);
         }
     };
 
-    private ViewCreationCallback contactCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback contactCreationCallback = new ViewCreationCallback<Contact>() {
         @Override
-        public void run(View view) {
+        public void run(View view, Contact c) {
             ContactItem contactView = (ContactItem) view;
             final Contact contact = contactView.getContact();
 
@@ -324,9 +335,9 @@ public class MainActivity extends AppCompatActivity
         }
     };
 
-    private ViewCreationCallback groupCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback groupCreationCallback = new ViewCreationCallback<Group>() {
         @Override
-        public void run(View view) {
+        public void run(View view, Group g) {
             GroupItem groupView = (GroupItem) view;
             final Group group = groupView.getGroup();
 
@@ -360,6 +371,14 @@ public class MainActivity extends AppCompatActivity
         public void onClick(View v) {
             Intent intent = new Intent(getApplicationContext(), GroupAddActivity.class);
             startActivityForResult(intent, RequestCode.GROUP_ADD.value);
+        }
+    };
+
+    private View.OnClickListener eventAddButtonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            Intent intent = new Intent(getApplicationContext(), EventCreationActivity.class);
+            startActivityForResult(intent, RequestCode.EVENT_CREATE.value);
         }
     };
 
@@ -414,9 +433,7 @@ public class MainActivity extends AppCompatActivity
     private ActivityCallback sessionLoginCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            /* Get up-to-date contact and group list */
-            server.sendGetContactList();
-            server.sendGetGroupList();
+
         }
 
         @Override
@@ -700,8 +717,20 @@ public class MainActivity extends AppCompatActivity
             case GroupOptionDialog.INVITE_CONTACT:
                 break;
             case GroupOptionDialog.EXIT_GROUP:
+                GroupExitWarningDialog dialog = new GroupExitWarningDialog();
+                dialog.setGroup(group);
+                dialog.show(getSupportFragmentManager(), "Group exit warning");
+                break;
+        }
+    }
+
+    @Override
+    public void groupExitOptionApply(Group group, int option) {
+        switch (option) {
+            case GroupExitWarningDialog.EXIT_GROUP: {
                 server.sendExitGroup(group.getGroupId());
                 break;
+            }
         }
     }
 

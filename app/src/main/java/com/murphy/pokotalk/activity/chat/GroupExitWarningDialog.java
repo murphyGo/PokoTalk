@@ -8,11 +8,13 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatDialogFragment;
 
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.group.Group;
 
 public class GroupExitWarningDialog extends AppCompatDialogFragment {
     private Listener listener;
     public static final int EXIT_GROUP = 0;
     public static final int CANCEL = 1;
+    protected Group group;
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -21,14 +23,14 @@ public class GroupExitWarningDialog extends AppCompatDialogFragment {
                 .setPositiveButton("나가기", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        listener.groupExitOptionApply(EXIT_GROUP);
+                        listener.groupExitOptionApply(group, EXIT_GROUP);
                         dismiss();
                     }
                 })
                 .setNegativeButton("취소", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        listener.groupExitOptionApply(CANCEL);
+                        listener.groupExitOptionApply(group, CANCEL);
                         dismiss();
                     }
                 });
@@ -47,7 +49,15 @@ public class GroupExitWarningDialog extends AppCompatDialogFragment {
     }
 
     public interface Listener {
-        void groupExitOptionApply(int option);
+        void groupExitOptionApply(Group group, int option);
+    }
+
+    public Group getGroup() {
+        return group;
+    }
+
+    public void setGroup(Group group) {
+        this.group = group;
     }
 }
 

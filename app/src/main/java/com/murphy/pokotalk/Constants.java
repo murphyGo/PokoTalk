@@ -5,7 +5,7 @@ import java.util.TimeZone;
 
 public class Constants {
     public static final String[] serverURLs = {"https://192.168.0.2",
-            "https://172.30.1.30"};
+            "https://172.30.1.6"};
     public static final int serverPort = 4000;
     public static final String serverURL = serverURLs[1] + ":" + serverPort;    /* Server Address */
     public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
@@ -36,8 +36,7 @@ public class Constants {
     public static final int READ_EXTERNAL_STORAGE = 0;
     public static final int WRITE_EXTERNAL_STORAGE = 1;
 
-
-    /* Event names
+    /* PokoEvent names
     * event names must not conflict to Socket's predefined event names
     * (etc. EVENT_CONNECT...)*/
 
@@ -80,7 +79,7 @@ public class Constants {
     public static final String messageAckName = "messageAck";
     public static final String getMemberJoinHistory = "getMemberJoinHistory";
 
-    /* Event event names */
+    /* PokoEvent event names */
     public static final String getEventListName = "getEventList";
     public static final String createEventName = "createEvent";
     public static final String eventCreatedName = "eventCreated";
@@ -89,7 +88,7 @@ public class Constants {
     public static final String eventAckName = "eventAck";
     public static final String eventStartedName = "eventStarted";
 
-    /* Event exists but not implemented yet by policy */
+    /* PokoEvent exists but not implemented yet by policy */
     public static final String membersJoinName = "membersJoin";
     public static final String membersLeaveName = "membersLeave";
 
@@ -97,12 +96,14 @@ public class Constants {
     public static final int nbMessageRead = 100;   // Maximum number of messages for chat
     public static final String unknownUserNickname = "알 수 없는 유저";
     public static final String unknownUserEmail = "???";
+    public static final String unknownEventName = "???";
 
     /* Request codes for activity call */
     public enum RequestCode {
         LOGIN(0),
         GROUP_ADD(1),
-        GROUP_CHAT(2);
+        GROUP_CHAT(2),
+        EVENT_CREATE(3);
 
         public final int value;
         RequestCode(int v) {

@@ -5,48 +5,42 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.event.EventList;
-import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.parser.PokoParser;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.HashMap;
 
-public class GetEventListListener extends PokoServer.PokoListener {
+public class EventExitListener extends PokoServer.PokoListener {
     @Override
     public String getEventName() {
-        return Constants.getEventListName;
+        return Constants.eventExitName;
     }
 
     @Override
     public void callSuccess(Status status, Object... args) {
-        JSONObject data = (JSONObject) args[0];
-        EventList list = DataCollection.getInstance().getEventList();
         try {
-            list.startUpdateList();
-            JSONArray events = data.getJSONArray("events");
-            for (int i = 0; i < events.length(); i++) {
-                JSONObject jsonObject = events.getJSONObject(i);
-                /* Parse event */
-                PokoEvent event = PokoParser.parseEvent(jsonObject);
-                list.updateItem(event);
+            JSONObject data = (JSONObject) args[0];
+            DataCollection collection = DataCollection.getInstance();
+            EventList eventList = collection.getEventList();
+            int eventId = data.getInt("eventId");
+
+            if (eventList.removeItemByKey(eventId) == null) {
+                Log.e("POKO ERROR", "No such event to remove with this event id");
             }
+
+            putData("eventId", eventId);
         } catch (JSONException e) {
-            e.printStackTrace();
-            Log.e("POKO ERROR", "Bad event list json data");
-        } finally {
-            list.endUpdateList();
+            Log.e("POKO ERROR", "Bad event exit json data");
         }
     }
 
     @Override
     public void callError(Status status, Object... args) {
-        Log.e("POKO ERROR", "Failed to get event list");
+        Log.e("POKO ERROR", "Failed to get created event");
     }
 
     @Override

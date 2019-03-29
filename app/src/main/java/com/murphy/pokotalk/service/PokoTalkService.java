@@ -248,7 +248,7 @@ public class PokoTalkService extends Service {
                     if (appStarted) {
                         Group chatGroup = DataCollection.getInstance().getChattingGroup();
                         // Notify with sound in app but when the user is not on chat of new message.
-                        if (chatGroup != group) {
+                        if (chatGroup == null || chatGroup.getGroupId() != group.getGroupId()) {
                             notificationManager.notifySoundInApp();
                         }
                     } else {

@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.data.user;
 
+import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.Item;
 
 import java.util.Calendar;
@@ -30,5 +31,10 @@ public class Contact extends User {
 
     public void setLastSeen(Calendar lastSeen) {
         this.lastSeen = lastSeen;
+    }
+
+    @Override
+    public String toString() {
+        return String.format(Constants.locale, "%d:%s(%s)", getUserId(), getNickname(), getEmail());
     }
 }

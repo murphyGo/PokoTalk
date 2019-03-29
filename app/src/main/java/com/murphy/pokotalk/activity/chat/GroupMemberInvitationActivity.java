@@ -98,9 +98,9 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
         backsapceButton.setOnClickListener(backspaceClickListener);
     }
 
-    private ViewCreationCallback candidateCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback candidateCreationCallback = new ViewCreationCallback<Contact>() {
         @Override
-        public void run(View view) {
+        public void run(View view, Contact c) {
             final MemberCandidateItem candidateItem = (MemberCandidateItem) view;
 
             candidateItem.setOnClickListener(new View.OnClickListener() {

@@ -17,26 +17,48 @@ import android.os.Messenger;
 import android.os.RemoteException;
 import android.util.Log;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
 import com.murphy.pokotalk.service.PokoTalkService;
+import com.naver.maps.map.NaverMapSdk;
 
 public class PokoTalkApp extends Application
         implements LifecycleObserver,
         ServiceConnection {
+    private static PokoTalkApp instance;
+    private static final String NAVER_MAP_CLIENT_ID = "rlj06wv3wv";
     public static final String CHANNEL_1_ID = "channel1";
     public static final String CHANNEL_2_ID = "channel2";
     protected Messenger serviceMessenger;
     public boolean foreground;
+    public RequestQueue requestQueue;
+
+    public static PokoTalkApp getInstance() {
+        return instance;
+    }
 
     @Override
     public void onCreate() {
         super.onCreate();
 
+        // Save application instance
+        instance = this;
+
+        // Create notification channels
         createNotificationChannels();
 
+        // Initialize foreground variable
         foreground = false;
 
-        // addObserver
+        // Add application lifecycle observer
         ProcessLifecycleOwner.get().getLifecycle().addObserver(this);
+
+        // Register Naver map client ID
+        NaverMapSdk.getInstance(this).setClient(
+                new NaverMapSdk.NaverCloudPlatformClient(NAVER_MAP_CLIENT_ID));
+
+        // Setup simple Volley request queue
+        requestQueue = Volley.newRequestQueue(this);
     }
 
     // Called when application is in foreground
@@ -130,5 +152,10 @@ public class PokoTalkApp extends Application
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    /* Getters and Setters */
+    public RequestQueue getVolleyRequestQueue() {
+        return requestQueue;
     }
 }

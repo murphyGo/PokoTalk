@@ -182,9 +182,9 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
     };
 
     /* List item creation callback */
-    private ViewCreationCallback invitedContactCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback invitedContactCreationCallback = new ViewCreationCallback<PendingContact>() {
         @Override
-        public void run(View view) {
+        public void run(View view, PendingContact p) {
             PendingContactItem item = (PendingContactItem) view;
             final PendingContact contact = item.getPendingContact();
 
@@ -206,9 +206,9 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         }
     };
 
-    private ViewCreationCallback invitingContactCreationCallback = new ViewCreationCallback() {
+    private ViewCreationCallback invitingContactCreationCallback = new ViewCreationCallback<PendingContact>() {
         @Override
-        public void run(View view) {
+        public void run(View view, PendingContact p) {
             PendingContactItem item = (PendingContactItem) view;
             PendingContact contact = item.getPendingContact();
         }

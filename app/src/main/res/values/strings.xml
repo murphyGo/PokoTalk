@@ -4,4 +4,64 @@
     <string name="drawer_close">close</string>
     <string name="group_exit_warning_message">채팅방에서 나가시면 채팅 목록에서 방이 사라지며,
     지워진 채팅 내용은 다시 복구하기 어렵습니다.</string>
+
+    <string name="event_location_selection_description">
+        이벤트 약속 장소를 선택해 주세요.
+    </string>
+
+    <string name="event_location_selection_button">
+        이 장소로 선택하기
+    </string>
+
+    <string name="event_creation_no_name">
+        이벤트 이름을 입력해 주세요.
+    </string>
+
+    <string name="event_creation_no_date">
+        날짜를 설정해 주세요.
+    </string>
+
+    <string name="event_creation_no_time">
+        시간을 설정해 주세요.
+    </string>
+
+    <string name="event_creation_date">
+        날짜
+    </string>
+
+    <string name="year">
+        년
+    </string>
+
+    <string name="month">
+        월
+    </string>
+
+    <string name="day">
+        일
+    </string>
+
+    <string name="event_creation_time">
+        시간
+    </string>
+
+    <string name="hour">
+        시
+    </string>
+
+    <string name="minute">
+        분
+    </string>
+
+    <string name="event_creation_location_hint">
+        이벤트 장소
+    </string>
+
+    <string name="event_creation_participant">
+        초대할 친구를 모두 선택해 주세요.
+    </string>
+
+    <string name="event_creation_button">
+        이벤트 만들기
+    </string>
 </resources>

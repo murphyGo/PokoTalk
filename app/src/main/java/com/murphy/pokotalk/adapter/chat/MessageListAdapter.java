@@ -1,10 +1,12 @@
-package com.murphy.pokotalk.adapter;
+package com.murphy.pokotalk.adapter.chat;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.murphy.pokotalk.data.group.MessageListUI;
+import com.murphy.pokotalk.adapter.DateChangeListAdapter;
+import com.murphy.pokotalk.data.extra.DateChangeItem;
+import com.murphy.pokotalk.data.group.MessagePokoListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.view.DateChangeMessageItem;
 import com.murphy.pokotalk.view.ListViewDetectable;
@@ -12,22 +14,41 @@ import com.murphy.pokotalk.view.MessageItem;
 import com.murphy.pokotalk.view.SpecialMessageItem;
 import com.murphy.pokotalk.view.TextMessageItem;
 
-public class MessageListAdapter extends PokoListAdapter<PokoMessage> {
+public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
     private boolean bottomAtFirst = true;
 
     public MessageListAdapter(Context context) {
         super(context);
-        setPokoList(new MessageListUI());
+        setPokoList(new MessagePokoListUI());
     }
-
+/*
     @Override
     public long getItemId(int position) {
-        return ((MessageListUI) pokoList).getKey(items.get(position));
+        return ((MessagePokoListUI) pokoList).getKey(items.get(position));
+    }
+*/
+    @Override
+    public View createDateChangeView(DateChangeItem item, View convertView, ViewGroup parent) {
+        DateChangeMessageItem dateChangeMessageItem = null;
+        if (convertView != null) {
+            if (convertView instanceof DateChangeMessageItem) {
+                dateChangeMessageItem = (DateChangeMessageItem) convertView;
+            }
+        }
+
+        if (dateChangeMessageItem == null) {
+            dateChangeMessageItem = new DateChangeMessageItem(context);
+            dateChangeMessageItem.inflate();
+        }
+
+        dateChangeMessageItem.setDateChangeItem(item);
+
+        return dateChangeMessageItem;
     }
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
-        PokoMessage message = items.get(position);
+        PokoMessage message = (PokoMessage) items.get(position);
         MessageItem item = null;
         if (convertView != null) {
             switch (message.getMessageType()) {

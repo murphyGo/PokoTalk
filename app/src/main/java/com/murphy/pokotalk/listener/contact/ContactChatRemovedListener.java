@@ -8,9 +8,9 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -29,8 +29,8 @@ public class ContactChatRemovedListener extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        ContactList contactList = collection.getContactList();
-        GroupList groupList = collection.getGroupList();
+        ContactPokoList contactList = collection.getContactList();
+        GroupPokoList groupList = collection.getGroupList();
 
         try {
             int userId = data.getInt("userId");
@@ -44,7 +44,7 @@ public class ContactChatRemovedListener extends PokoServer.PokoListener {
                 return;
             }
 
-            ContactList.ContactGroupRelation relation =
+            ContactPokoList.ContactGroupRelation relation =
                     contactList.removeContactGroupRelationByUserId(userId);
             if (relation == null) {
                 Log.e("POKO ERROR", "Failed to remove contact group relation");

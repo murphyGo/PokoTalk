@@ -8,8 +8,8 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -31,7 +31,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
     @Override
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
-        GroupList list = DataCollection.getInstance().getGroupList();
+        GroupPokoList list = DataCollection.getInstance().getGroupList();
         try {
             list.startUpdateList();
             JSONArray groups = data.getJSONArray("groups");
@@ -46,7 +46,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
                     JSONObject jsonLastMessage = jsonObject.getJSONObject("lastMessage");
                     PokoMessage lastMessage = PokoParser.parseMessage(jsonLastMessage);
                     group = list.getItemByKey(group.getGroupId());
-                    MessageList messageList = group.getMessageList();
+                    MessagePokoList messageList = group.getMessageList();
 
                     // Update item and assign message the message updated in the list.
                     lastMessage = messageList.updateItem(lastMessage);
@@ -83,7 +83,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
     static class DatabaseJob extends PokoAsyncDatabaseJob {
         @Override
         protected void doJob(HashMap<String, Object> data) {
-            GroupList groupList = DataCollection.getInstance().getGroupList();
+            GroupPokoList groupList = DataCollection.getInstance().getGroupList();
             Log.v("POKO", "START TO WRITE group list DATA");
 
             /* Get database to write */

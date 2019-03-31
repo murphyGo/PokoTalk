@@ -1,10 +1,10 @@
 package com.murphy.pokotalk.data.group;
 
 import com.murphy.pokotalk.data.Item;
-import com.murphy.pokotalk.data.ListSorter;
+import com.murphy.pokotalk.data.list.ListSorter;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 
 import java.util.ArrayList;
 
@@ -13,13 +13,13 @@ public class Group extends Item {
     private String alias;
     private int groupId;
     private int nbNewMessages;
-    private UserList members;
-    private MessageList messageList;
+    private UserPokoList members;
+    private MessagePokoList messageList;
     private int ack;
 
     public Group() {
-        members = new UserList();
-        messageList = new MessageList();
+        members = new UserPokoList();
+        messageList = new MessagePokoList();
         nbNewMessages = 0;
         ack = -1;
     }
@@ -35,7 +35,7 @@ public class Group extends Item {
 
     public void refreshNbNewMessages() {
         Session session = Session.getInstance();
-        MessageList messageList = getMessageList();
+        MessagePokoList messageList = getMessageList();
         ArrayList<PokoMessage> messages = messageList.getList();
 
         ListSorter<Integer, PokoMessage> sorter =
@@ -84,11 +84,11 @@ public class Group extends Item {
         this.nbNewMessages = nbNewMessages;
     }
 
-    public UserList getMembers() {
+    public UserPokoList getMembers() {
         return members;
     }
 
-    public void setMembers(UserList members) {
+    public void setMembers(UserPokoList members) {
         this.members = members;
     }
 
@@ -100,11 +100,11 @@ public class Group extends Item {
         return this.members.removeItemByKey(this.members.getKey(member));
     }
 
-    public MessageList getMessageList() {
+    public MessagePokoList getMessageList() {
         return messageList;
     }
 
-    public void setMessageList(MessageList messages) {
+    public void setMessageList(MessagePokoList messages) {
         this.messageList = messages;
     }
 

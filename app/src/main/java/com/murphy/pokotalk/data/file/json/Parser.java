@@ -11,11 +11,11 @@ import com.murphy.pokotalk.data.file.schema.UsersSchema;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.Stranger;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -203,9 +203,9 @@ public class Parser {
         return user;
     }
 
-    public static ContactList.ContactGroupRelation parseContactGroupRelation(JSONObject jsonObject)
+    public static ContactPokoList.ContactGroupRelation parseContactGroupRelation(JSONObject jsonObject)
         throws JSONException {
-        ContactList.ContactGroupRelation relation = new ContactList.ContactGroupRelation();
+        ContactPokoList.ContactGroupRelation relation = new ContactPokoList.ContactGroupRelation();
         relation.setContactUserId(jsonObject.getInt("contactUserId"));
         relation.setGroupId(jsonObject.getInt("groupId"));
 
@@ -218,7 +218,7 @@ public class Parser {
         Contact user = Session.getInstance().getUser();
         Group group = new Group();
         int userId = Session.getInstance().getUser().getUserId();
-        UserList memberList = group.getMembers();
+        UserPokoList memberList = group.getMembers();
         JSONArray jsonMembers = jsonGroup.getJSONArray("members");
 
         group.setGroupId(jsonGroup.getInt("groupId"));

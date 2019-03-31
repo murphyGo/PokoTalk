@@ -9,13 +9,13 @@ import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.StrangerPokoList;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
@@ -38,7 +38,7 @@ public class PokoParser {
 
     public static Contact parseContact(JSONObject jsonObject) throws JSONException, ParseException {
         Contact result = new Contact();
-        ContactList contactList = collection.getContactList();
+        ContactPokoList contactList = collection.getContactList();
 
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
@@ -106,7 +106,7 @@ public class PokoParser {
         if (jsonObject.has("members") && !jsonObject.isNull("members")) {
             JSONArray jsonMembers = jsonObject.getJSONArray("members");
 
-            UserList members = result.getMembers();
+            UserPokoList members = result.getMembers();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);
 
@@ -130,10 +130,10 @@ public class PokoParser {
     public static PokoMessage parseMessage(JSONObject jsonObject) throws JSONException, ParseException {
         PokoMessage result = new PokoMessage();
         DataCollection collection = DataCollection.getInstance();
-        ContactList contactList = collection.getContactList();
-        PendingContactList invitedList = collection.getInvitedContactList();
-        PendingContactList invitingList = collection.getInvitingContactList();
-        StrangerList strangerList = collection.getStrangerList();
+        ContactPokoList contactList = collection.getContactList();
+        PendingContactPokoList invitedList = collection.getInvitedContactList();
+        PendingContactPokoList invitingList = collection.getInvitingContactList();
+        StrangerPokoList strangerList = collection.getStrangerList();
 
         result.setMessageId(jsonObject.getInt("messageId"));
         result.setImportanceLevel(
@@ -222,12 +222,12 @@ public class PokoParser {
         event.setEventDate(Parser.epochInMillsToCalendar(jsonObject.getLong("date")));
         event.setAck(parseEventAck(jsonObject));
         event.setLocation(parseLocation(jsonObject));
-        if (jsonObject.has("description")) {
+        if (jsonObject.has("description") && !jsonObject.isNull("description")) {
             event.setDescription(jsonObject.getString("description"));
         } else {
             event.setDescription(null);
         }
-        if (jsonObject.has("started")) {
+        if (jsonObject.has("started") && !jsonObject.isNull("started")) {
             boolean started = jsonObject.getInt("started") > 0;
             if (started) {
                 event.setState(PokoEvent.EVENT_STARTED);
@@ -237,17 +237,19 @@ public class PokoParser {
         } else {
             event.setState(PokoEvent.EVENT_UPCOMING);
         }
-        if (jsonObject.has("groupId")) {
+        if (jsonObject.has("groupId") && !jsonObject.isNull("groupId")) {
             int groupId = jsonObject.getInt("groupId");
             Group group = DataCollection.getInstance().getGroupList().getItemByKey(groupId);
             if (group != null) {
                 event.setGroup(group);
             }
+        } else {
+            event.setGroup(null);
         }
-        if (jsonObject.has("participants")) {
+        if (jsonObject.has("participants") && !jsonObject.isNull("participants")) {
             JSONArray jsonParticipants = jsonObject.getJSONArray("participants");
 
-            UserList participants = event.getParticipants();
+            UserPokoList participants = event.getParticipants();
             for (int i = 0; i < jsonParticipants.length(); i++) {
                 JSONObject jsonParticipant = (JSONObject) jsonParticipants.get(i);
 
@@ -268,7 +270,7 @@ public class PokoParser {
     }
 
     public static int parseEventAck(JSONObject jsonObject) throws JSONException {
-        if (!jsonObject.has("acked")) {
+        if (!jsonObject.has("acked") || jsonObject.isNull("acked")) {
             return PokoEvent.ACK_NOT_SEEN;
         }
 
@@ -291,28 +293,29 @@ public class PokoParser {
     }
 
     public static EventLocation parseLocation(JSONObject jsonObject) throws JSONException {
-        if (!jsonObject.has("localization")) {
+        if (!jsonObject.has("localization") || jsonObject.isNull("localization")) {
             return null;
         }
 
         JSONObject jsonLocal = jsonObject.getJSONObject("localization");
         EventLocation location = new EventLocation();
-        if (jsonLocal.has("title")) {
+        if (jsonLocal.has("title") && !jsonLocal.isNull("title")) {
             location.setTitle(jsonLocal.getString("title"));
         } else {
             location.setTitle(Constants.unknownEventName);
         }
-        if (jsonLocal.has("category")) {
+        if (jsonLocal.has("category") && !jsonLocal.isNull("category")) {
             location.setCategory(jsonLocal.getString("category"));
         } else {
             location.setCategory(null);
         }
-        if (jsonLocal.has("description")) {
+        if (jsonLocal.has("description") && !jsonLocal.isNull("description")) {
             location.setAddress(jsonLocal.getString("description"));
         } else {
             location.setAddress(null);
         }
-        if (jsonLocal.has("latitude") && jsonLocal.has("longitude")) {
+        if (jsonLocal.has("latitude") && jsonLocal.has("longitude")
+                && !jsonLocal.isNull("latitude") && !jsonLocal.isNull("longitude")) {
             LatLng latLng = new LatLng(jsonLocal.getDouble("latitude"),
                     jsonLocal.getDouble("longitude"));
             location.setLatLng(latLng);

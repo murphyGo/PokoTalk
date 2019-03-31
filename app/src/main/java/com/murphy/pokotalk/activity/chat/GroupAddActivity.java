@@ -10,12 +10,12 @@ import android.widget.EditText;
 import android.widget.ListView;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.MemberCandidateListAdapter;
+import com.murphy.pokotalk.adapter.group.MemberCandidateListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.view.MemberCandidateItem;
 
 import java.util.ArrayList;
@@ -50,7 +50,7 @@ public class GroupAddActivity extends AppCompatActivity {
                 DataCollection collection = DataCollection.getInstance();
                 adapter = new MemberCandidateListAdapter(this);
                 adapter.setViewCreationCallback(candidateCallback);
-                ContactList contactListUI = (ContactList) adapter.getPokoList();
+                ContactPokoList contactListUI = (ContactPokoList) adapter.getPokoList();
                 contactListUI.copyFromPokoList(collection.getContactList());
                 memberCandidateListView.setAdapter(adapter);
             } finally {

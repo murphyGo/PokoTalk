@@ -1,9 +1,9 @@
 package com.murphy.pokotalk.data.group;
 
-import com.murphy.pokotalk.data.ItemList;
+import com.murphy.pokotalk.data.list.ItemPokoList;
 
-public class GroupList extends ItemList<Integer, Group> {
-    public GroupList() {
+public class GroupPokoList extends ItemPokoList<Integer, Group> {
+    public GroupPokoList() {
         super();
     }
 

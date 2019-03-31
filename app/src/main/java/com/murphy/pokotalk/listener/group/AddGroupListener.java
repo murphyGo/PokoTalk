@@ -8,7 +8,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.server.parser.PokoParser;
@@ -27,7 +27,7 @@ public class AddGroupListener extends PokoServer.PokoListener {
     @Override
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
-        GroupList groupList = DataCollection.getInstance().getGroupList();
+        GroupPokoList groupList = DataCollection.getInstance().getGroupList();
         try {
             JSONObject jsonObject = data.getJSONObject("group");
             Group group = PokoParser.parseGroup(jsonObject);

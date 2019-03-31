@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.data;
+package com.murphy.pokotalk.data.list;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -31,6 +31,13 @@ public abstract class ListSorter<K, V> {
             K curKey = getItemKey(curItem);
             int cmp = compareKey(curKey, key);
             if (cmp == 0) {
+                for (; curIndex < list.size(); curIndex++) {
+                    curItem = list.get(curIndex);
+                    curKey = getItemKey(curItem);
+                    if (compareKey(curKey, key) != 0) {
+                        break;
+                    }
+                }
                 return curIndex;
             } else if (cmp < 0) {
                 start = curIndex + 1;

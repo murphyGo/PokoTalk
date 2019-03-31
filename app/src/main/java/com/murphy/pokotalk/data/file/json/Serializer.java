@@ -13,10 +13,10 @@ import com.murphy.pokotalk.data.file.schema.UsersSchema;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -65,8 +65,8 @@ public class Serializer {
         Integer groupChatId = null;
         if (user instanceof Contact) {
             Contact contact = (Contact) user;
-            ContactList contactList = DataCollection.getInstance().getContactList();
-            ContactList.ContactGroupRelation relation =
+            ContactPokoList contactList = DataCollection.getInstance().getContactList();
+            ContactPokoList.ContactGroupRelation relation =
                     contactList.getContactGroupRelationByUserId(contact.getUserId());
 
             if (relation != null) {
@@ -172,7 +172,7 @@ public class Serializer {
         return jsonUser;
     }
 
-    public static JSONObject makeContactGroupRelationJSON(ContactList.ContactGroupRelation relation)
+    public static JSONObject makeContactGroupRelationJSON(ContactPokoList.ContactGroupRelation relation)
         throws JSONException {
         JSONObject jsonRelation = new JSONObject();
         jsonRelation.put("contactUserId", relation.getContactUserId());
@@ -185,7 +185,7 @@ public class Serializer {
         JSONObject jsonGroup = new JSONObject();
         JSONArray jsonMembers = new JSONArray();
 
-        UserList userList = group.getMembers();
+        UserPokoList userList = group.getMembers();
         ArrayList<User> members = userList.getList();
 
         jsonGroup.put("groupId", group.getGroupId());

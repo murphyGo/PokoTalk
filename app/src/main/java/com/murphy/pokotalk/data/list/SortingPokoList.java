@@ -1,11 +1,13 @@
-package com.murphy.pokotalk.data;
+package com.murphy.pokotalk.data.list;
 
-/** SortingList adds functionality internal ArrayList is sorted.
+import com.murphy.pokotalk.data.Item;
+
+/** SortingPokoList adds functionality internal ArrayList is sorted.
  */
-public abstract class SortingList<K, V extends Item> extends ItemList<K, V>{
+public abstract class SortingPokoList<K, V extends Item> extends ItemPokoList<K, V> {
     protected ListSorter listSorter;
 
-    public SortingList() {
+    public SortingPokoList() {
         super();
         listSorter = getListSorter();
     }

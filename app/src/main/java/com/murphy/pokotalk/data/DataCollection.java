@@ -2,31 +2,30 @@ package com.murphy.pokotalk.data;
 
 import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.StrangerPokoList;
 import com.murphy.pokotalk.data.user.User;
 
 public class DataCollection {
-    private ContactList contactList;
-    private PendingContactList invitedContactList;
-    private PendingContactList invitingContactList;
-    private StrangerList strangerList;
-    private GroupList groupList;
+    private ContactPokoList contactList;
+    private PendingContactPokoList invitedContactList;
+    private PendingContactPokoList invitingContactList;
+    private StrangerPokoList strangerList;
+    private GroupPokoList groupList;
     private EventList eventList;
     private static DataCollection instance;
-    private Group chattingGroup;
 
     public DataCollection() {
-        contactList = new ContactList();
-        invitedContactList = new PendingContactList();
-        invitingContactList = new PendingContactList();
-        strangerList = new StrangerList();
-        groupList = new GroupList();
+        contactList = new ContactPokoList();
+        invitedContactList = new PendingContactPokoList();
+        invitingContactList = new PendingContactPokoList();
+        strangerList = new StrangerPokoList();
+        groupList = new GroupPokoList();
         eventList = new EventList();
     }
 
@@ -42,10 +41,10 @@ public class DataCollection {
      * @return true if user is successfully inserted or updated, false otherwise.
      */
     public boolean updateUserList(User user) {
-        ContactList contactList = getContactList();
-        PendingContactList invitedContactList = getInvitedContactList();
-        PendingContactList invitingContactList = getInvitingContactList();
-        StrangerList strangerList = getStrangerList();
+        ContactPokoList contactList = getContactList();
+        PendingContactPokoList invitedContactList = getInvitedContactList();
+        PendingContactPokoList invitingContactList = getInvitingContactList();
+        StrangerPokoList strangerList = getStrangerList();
 
         User u = Session.getInstance().getUser();
         if (u != null) {
@@ -101,17 +100,17 @@ public class DataCollection {
         return null;
     }
 
-    /** Removes user with id from list and move to StrangerList
+    /** Removes user with id from list and move to StrangerPokoList
      * If the user is Stranger or session user, do nothing.
      * @param userId
-     * @return Stranger user moved to StrangerList
+     * @return Stranger user moved to StrangerPokoList
      */
     public Stranger moveUserToStrangerList(int userId) {
         String email, nickname, picture;
-        ContactList contactList = getContactList();
-        PendingContactList invitedContactList = getInvitedContactList();
-        PendingContactList invitingContactList = getInvitingContactList();
-        StrangerList strangerList = getStrangerList();
+        ContactPokoList contactList = getContactList();
+        PendingContactPokoList invitedContactList = getInvitedContactList();
+        PendingContactPokoList invitingContactList = getInvitingContactList();
+        StrangerPokoList strangerList = getStrangerList();
 
         User user = Session.getInstance().getUser();
         if (user != null) {
@@ -159,7 +158,7 @@ public class DataCollection {
 
     public int getTotalNewMessgaeNumber() {
         int result = 0;
-        GroupList groupList = getGroupList();
+        GroupPokoList groupList = getGroupList();
 
         for (Group group : groupList.getList()) {
             result += group.getNbNewMessages();
@@ -168,50 +167,22 @@ public class DataCollection {
         return result;
     }
 
-    /* Chat methods */
-    // Starts a chat, returns true if started chat.
-    // if other chat is going already, it fails and returns false.
-    public synchronized boolean startChat(Group group) {
-        if (getChattingGroup() != null) {
-            return false;
-        }
-        this.chattingGroup = group;
-        return true;
-    }
-
-
-    // End a chat so that user can start another chat.
-    // It ends chat only when given group is the group holding chat.
-    public synchronized void endChat(Group group) {
-        if (this.chattingGroup == group) {
-            this.chattingGroup = null;
-        }
-    }
-
-    public synchronized boolean isChatting() {
-        return getChattingGroup() != null;
-    }
-
-    public synchronized Group getChattingGroup() {
-        return chattingGroup;
-    }
-
     /* Getter methods */
-    public ContactList getContactList() {
+    public ContactPokoList getContactList() {
         return contactList;
     }
 
-    public PendingContactList getInvitedContactList() {
+    public PendingContactPokoList getInvitedContactList() {
         return invitedContactList;
     }
 
-    public PendingContactList getInvitingContactList() {
+    public PendingContactPokoList getInvitingContactList() {
         return invitingContactList;
     }
 
-    public StrangerList getStrangerList() { return strangerList; }
+    public StrangerPokoList getStrangerList() { return strangerList; }
 
-    public GroupList getGroupList() {
+    public GroupPokoList getGroupList() {
         return groupList;
     }
 

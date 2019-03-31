@@ -1,9 +1,9 @@
 package com.murphy.pokotalk.data.group;
 
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.ListSorter;
-import com.murphy.pokotalk.data.SortingList;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.list.ListSorter;
+import com.murphy.pokotalk.data.list.SortingPokoList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 
 import java.util.HashMap;
 
@@ -11,11 +11,11 @@ import java.util.HashMap;
  * It sorts group in latest message order.
  * Also it does not show contact chat with no message.
  */
-public class GroupListUI extends SortingList<Integer, Group> {
-    protected ContactList contactList;
+public class GroupPokoListUI extends SortingPokoList<Integer, Group> {
+    protected ContactPokoList contactList;
     protected HashMap<Integer, Group> contactChatGroupWithNoMessage;
 
-    public GroupListUI() {
+    public GroupPokoListUI() {
         super();
         contactList = DataCollection.getInstance().getContactList();
         contactChatGroupWithNoMessage = new HashMap<>();
@@ -31,7 +31,7 @@ public class GroupListUI extends SortingList<Integer, Group> {
         return new ListSorter<Long, Group>(getList()) {
             @Override
             public Long getItemKey(Group item) {
-                MessageList messageList = item.getMessageList();
+                MessagePokoList messageList = item.getMessageList();
                 PokoMessage lastMessage = messageList.getLastMessage();
                 if (lastMessage == null)
                     return null;
@@ -54,7 +54,7 @@ public class GroupListUI extends SortingList<Integer, Group> {
 
     @Override
     protected int addHashMapAndArrayList(Group group) {
-        ContactList.ContactGroupRelation relation =
+        ContactPokoList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByGroupId(group.getGroupId());
 
         if (relation != null && group.getMessageList().getLastMessage() == null) {

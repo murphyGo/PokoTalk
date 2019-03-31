@@ -10,13 +10,13 @@ import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.PendingContactListAdapter;
+import com.murphy.pokotalk.adapter.contact.PendingContactListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -28,8 +28,8 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
     private Button addButton;
     private ListView invitedListView;
     private ListView invitingListView;
-    private PendingContactList invitedList;
-    private PendingContactList invitingList;
+    private PendingContactPokoList invitedList;
+    private PendingContactPokoList invitingList;
     private PendingContactListAdapter invitedListAdapter;
     private PendingContactListAdapter invitingListAdapter;
     private AlertDialog.Builder contactBuilder;
@@ -58,8 +58,8 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
                 invitingListAdapter = new PendingContactListAdapter(this);
                 invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
                 invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
-                PendingContactList invitedListUI = (PendingContactList) invitedListAdapter.getPokoList();
-                PendingContactList invitingListUI = (PendingContactList) invitingListAdapter.getPokoList();
+                PendingContactPokoList invitedListUI = (PendingContactPokoList) invitedListAdapter.getPokoList();
+                PendingContactPokoList invitingListUI = (PendingContactPokoList) invitingListAdapter.getPokoList();
                 invitedListUI.copyFromPokoList(invitedList);
                 invitingListUI.copyFromPokoList(invitingList);
                 invitedListView.setAdapter(invitedListAdapter);
@@ -181,7 +181,7 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
         }
     };
 
-    /* List item creation callback */
+    /* PokoList item creation callback */
     private ViewCreationCallback invitedContactCreationCallback = new ViewCreationCallback<PendingContact>() {
         @Override
         public void run(View view, PendingContact p) {

@@ -6,8 +6,8 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 
 import org.json.JSONException;
@@ -108,7 +108,7 @@ public class FileManager {
     }
 
     public boolean loadLastMessages() {
-        GroupList groupList = DataCollection.getInstance().getGroupList();
+        GroupPokoList groupList = DataCollection.getInstance().getGroupList();
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {
@@ -156,7 +156,7 @@ public class FileManager {
 
 
     public boolean saveMessages() {
-        GroupList groupList = DataCollection.getInstance().getGroupList();
+        GroupPokoList groupList = DataCollection.getInstance().getGroupList();
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {
@@ -172,7 +172,7 @@ public class FileManager {
         }
 
         MessageFile messageFile = getMessageFile(group);
-        MessageList messageList = group.getMessageList();
+        MessagePokoList messageList = group.getMessageList();
         PokoMessage lastReadMessage = messageList.getItemByKey(messageFile.getLastMessageId());
         if (lastReadMessage == null) {
             return false;

@@ -1,17 +1,18 @@
-package com.murphy.pokotalk.adapter;
+package com.murphy.pokotalk.adapter.group;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.murphy.pokotalk.adapter.PokoListAdapter;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.view.MemberCandidateItem;
 
 public class MemberCandidateListAdapter extends PokoListAdapter<Contact> {
     public MemberCandidateListAdapter(Context context) {
         super(context);
-        setPokoList(new ContactList());
+        setPokoList(new ContactPokoList());
     }
 
     @Override

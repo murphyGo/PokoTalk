@@ -1,16 +1,16 @@
 package com.murphy.pokotalk.data.group;
 
-import com.murphy.pokotalk.data.ListSorter;
-import com.murphy.pokotalk.data.SortingList;
+import com.murphy.pokotalk.data.list.ListSorter;
+import com.murphy.pokotalk.data.list.SortingPokoList;
 import com.murphy.pokotalk.data.user.User;
 
 import java.util.Calendar;
 import java.util.HashMap;
 
-public class MessageList extends SortingList<Integer, PokoMessage> {
+public class MessagePokoList extends SortingPokoList<Integer, PokoMessage> {
     private HashMap<Integer, PokoMessage> sentMessages;
 
-    public MessageList() {
+    public MessagePokoList() {
         super();
         sentMessages = new HashMap<>();
     }

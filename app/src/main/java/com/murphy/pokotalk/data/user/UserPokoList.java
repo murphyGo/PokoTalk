@@ -1,9 +1,9 @@
 package com.murphy.pokotalk.data.user;
 
-import com.murphy.pokotalk.data.ItemList;
+import com.murphy.pokotalk.data.list.ItemPokoList;
 
-public class UserList extends ItemList<Integer, User> {
-    public UserList() {
+public class UserPokoList extends ItemPokoList<Integer, User> {
+    public UserPokoList() {
         super();
     }
 

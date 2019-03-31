@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.adapter;
+package com.murphy.pokotalk.adapter.event;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -9,6 +9,7 @@ import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.event.LocationSearchResult;
+import com.murphy.pokotalk.adapter.ViewCreationCallback;
 
 import java.util.ArrayList;
 

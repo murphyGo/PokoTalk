@@ -23,7 +23,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.LocationListAdapter;
+import com.murphy.pokotalk.adapter.event.LocationListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.naver.maps.geometry.LatLng;
 import com.naver.maps.map.CameraPosition;

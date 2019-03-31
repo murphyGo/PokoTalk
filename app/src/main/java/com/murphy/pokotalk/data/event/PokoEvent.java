@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.event;
 
 import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 
 import java.util.Calendar;
 
@@ -10,7 +10,7 @@ public class PokoEvent extends Item {
     protected int eventId;
     protected String eventName;
     protected String description;
-    protected UserList participants;
+    protected UserPokoList participants;
     protected Calendar eventDate;
     protected int state;
     protected int ack;
@@ -27,7 +27,7 @@ public class PokoEvent extends Item {
     public static final int ACK_SEEN_STARTED = 4;
 
     public PokoEvent() {
-        participants = new UserList();
+        participants = new UserPokoList();
         group = null;
         location = null;
     }
@@ -76,11 +76,11 @@ public class PokoEvent extends Item {
         this.description = description;
     }
 
-    public UserList getParticipants() {
+    public UserPokoList getParticipants() {
         return participants;
     }
 
-    public void setParticipants(UserList participants) {
+    public void setParticipants(UserPokoList participants) {
         this.participants = participants;
     }
 

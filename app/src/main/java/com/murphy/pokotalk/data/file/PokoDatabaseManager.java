@@ -12,17 +12,17 @@ import com.murphy.pokotalk.data.file.schema.ContactsSchema;
 import com.murphy.pokotalk.data.file.schema.GroupMembersSchema;
 import com.murphy.pokotalk.data.file.schema.SessionSchema;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.StrangerPokoList;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -140,10 +140,10 @@ public class PokoDatabaseManager {
 
         // Get user lists
         DataCollection collection = DataCollection.getInstance();
-        ContactList contactList = collection.getContactList();
-        PendingContactList invitedPendingContactList = collection.getInvitedContactList();
-        PendingContactList invitingPendingContactList = collection.getInvitingContactList();
-        StrangerList strangerList = collection.getStrangerList();
+        ContactPokoList contactList = collection.getContactList();
+        PendingContactPokoList invitedPendingContactList = collection.getInvitedContactList();
+        PendingContactPokoList invitingPendingContactList = collection.getInvitingContactList();
+        StrangerPokoList strangerList = collection.getStrangerList();
 
         PokoDatabase database = PokoDatabase.getInstance(context);
 
@@ -204,7 +204,7 @@ public class PokoDatabaseManager {
 
     public static void loadGroupData(Context context) throws Exception {
         DataCollection collection = DataCollection.getInstance();
-        GroupList groupList = collection.getGroupList();
+        GroupPokoList groupList = collection.getGroupList();
 
         PokoDatabase database = PokoDatabase.getInstance(context);
 
@@ -224,8 +224,8 @@ public class PokoDatabaseManager {
 
         // Loop for each group
         for (Group group : groupList.getList()) {
-            UserList memberList = group.getMembers();
-            MessageList messageList = group.getMessageList();
+            UserPokoList memberList = group.getMembers();
+            MessagePokoList messageList = group.getMessageList();
 
             // Query group members and last message
             Cursor memberCursor = PokoDatabaseHelper.readGroupMemberData(db, group.getGroupId());

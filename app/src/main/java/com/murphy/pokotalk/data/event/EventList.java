@@ -1,8 +1,8 @@
 package com.murphy.pokotalk.data.event;
 
-import com.murphy.pokotalk.data.ItemList;
+import com.murphy.pokotalk.data.list.ItemPokoList;
 
-public class EventList extends ItemList<Integer, PokoEvent> {
+public class EventList extends ItemPokoList<Integer, PokoEvent> {
     public EventList() {
         super();
     }

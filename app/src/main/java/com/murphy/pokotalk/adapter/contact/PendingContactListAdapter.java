@@ -1,11 +1,12 @@
-package com.murphy.pokotalk.adapter;
+package com.murphy.pokotalk.adapter.contact;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.murphy.pokotalk.adapter.PokoListAdapter;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
 import com.murphy.pokotalk.view.PendingContactItem;
 
 public class PendingContactListAdapter extends PokoListAdapter<PendingContact> {
@@ -13,7 +14,7 @@ public class PendingContactListAdapter extends PokoListAdapter<PendingContact> {
 
     public PendingContactListAdapter(Context context) {
         super(context);
-        setPokoList(new PendingContactList());
+        setPokoList(new PendingContactPokoList());
         invited = true;
     }
 

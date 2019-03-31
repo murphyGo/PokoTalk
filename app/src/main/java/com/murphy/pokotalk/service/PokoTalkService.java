@@ -15,7 +15,7 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.PokoTalkApp;
-import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.file.PokoDatabase;
@@ -246,7 +246,7 @@ public class PokoTalkService extends Service {
                  // Notify only when it is not my message
                 if (!message.isMyMessage(Session.getInstance())) {
                     if (appStarted) {
-                        Group chatGroup = DataCollection.getInstance().getChattingGroup();
+                        Group chatGroup = ChatManager.getChattingGroup();
                         // Notify with sound in app but when the user is not on chat of new message.
                         if (chatGroup == null || chatGroup.getGroupId() != group.getGroupId()) {
                             notificationManager.notifySoundInApp();

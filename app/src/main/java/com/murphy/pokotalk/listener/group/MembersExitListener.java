@@ -9,7 +9,7 @@ import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.server.parser.PokoParser;
@@ -42,7 +42,7 @@ public class MembersExitListener extends PokoServer.PokoListener {
                 return;
             }
 
-            UserList userList = group.getMembers();
+            UserPokoList userList = group.getMembers();
             ArrayList<User> members = new ArrayList<>();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);

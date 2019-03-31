@@ -2,11 +2,10 @@ package com.murphy.pokotalk.data.file.deprecated;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.deprecated.PokoSequencialAccessFile;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,7 +13,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class GroupListFile extends PokoSequencialAccessFile<Group> {
-    protected GroupList groupList;
+    protected GroupPokoList groupList;
 
     public GroupListFile() {
         super();

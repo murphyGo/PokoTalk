@@ -1,17 +1,18 @@
-package com.murphy.pokotalk.adapter;
+package com.murphy.pokotalk.adapter.group;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.murphy.pokotalk.adapter.PokoListAdapter;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.view.ChatMemberItem;
 
 public class GroupMemberListAdapter extends PokoListAdapter<User> {
     public GroupMemberListAdapter(Context context) {
         super(context);
-        setPokoList(new UserList());
+        setPokoList(new UserPokoList());
     }
 
     @Override

@@ -3,7 +3,7 @@ package com.murphy.pokotalk.data.file.deprecated;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -11,14 +11,14 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public abstract class PendingContactListFile extends PokoSequencialAccessFile<PendingContact> {
-    protected PendingContactList pendingContactList;
+    protected PendingContactPokoList pendingContactList;
 
     public PendingContactListFile() {
         super();
         pendingContactList = getPendingContactList();
     }
 
-    public abstract PendingContactList getPendingContactList();
+    public abstract PendingContactPokoList getPendingContactList();
 
     @Override
     public int getItemListSize() {

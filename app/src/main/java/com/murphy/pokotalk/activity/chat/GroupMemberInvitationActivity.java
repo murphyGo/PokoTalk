@@ -11,14 +11,14 @@ import android.widget.ListView;
 import android.widget.Toast;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.MemberCandidateListAdapter;
+import com.murphy.pokotalk.adapter.group.MemberCandidateListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.view.MemberCandidateItem;
 import com.murphy.pokotalk.view.MemberSelectedItem;
@@ -68,8 +68,8 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
 
         /* Filter contact that is already a member */
         ArrayList<Contact> contactList = DataCollection.getInstance().getContactList().getList();
-        ContactList nonMemberContactList = new ContactList();
-        UserList groupMemberList = group.getMembers();
+        ContactPokoList nonMemberContactList = new ContactPokoList();
+        UserPokoList groupMemberList = group.getMembers();
         for (Contact contact : contactList) {
             if (groupMemberList.getItemByKey(groupMemberList.getKey(contact)) == null) {
                 nonMemberContactList.add(contact);
@@ -83,7 +83,7 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
             try {
                 candidateListAdapter = new MemberCandidateListAdapter(this);
                 candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
-                ContactList contactListUI = (ContactList) candidateListAdapter.getPokoList();
+                ContactPokoList contactListUI = (ContactPokoList) candidateListAdapter.getPokoList();
                 contactListUI.copyFromPokoList(nonMemberContactList);
                 candidateListView.setAdapter(candidateListAdapter);
             } finally {

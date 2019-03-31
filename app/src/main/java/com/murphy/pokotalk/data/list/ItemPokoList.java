@@ -1,18 +1,20 @@
-package com.murphy.pokotalk.data;
+package com.murphy.pokotalk.data.list;
+
+import com.murphy.pokotalk.data.Item;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-/** ItemList adds functionality updating whole list so that
+/** ItemPokoList adds functionality updating whole list so that
  *  each updated items are marked and unmarked items are removed
  *  at the end of update.
  */
-public abstract class ItemList<K, V extends Item> extends List<K, V> {
+public abstract class ItemPokoList<K, V extends Item> extends PokoList<K, V> {
     protected HashMap<K, V> updatedItems;
     private boolean updateListStarted;
 
-    public ItemList() {
+    public ItemPokoList() {
         super();
         updatedItems = new HashMap<>();
     }
@@ -71,10 +73,10 @@ public abstract class ItemList<K, V extends Item> extends List<K, V> {
         updateListStarted = false;
     }
 
-    public void copyFromPokoList(ItemList<K, V> list) {
+    public void copyFromPokoList(ItemPokoList list) {
         startUpdateList();
-        for (V item : list.arrayList) {
-            updateItem(item);
+        for (Object item : list.arrayList) {
+            updateItem((V) item);
         }
         endUpdateList();
     }

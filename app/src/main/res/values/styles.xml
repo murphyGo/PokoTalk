@@ -38,8 +38,19 @@
         <item name="android:textColor">@color/gray</item>
     </style>
 
+    <style name="AppSmallText" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
     <style name="AppButton" parent="TextAppearance.AppCompat.Button">
         <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+
+    <style name="EventTime" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">32sp</item>
         <item name="android:textColor">@color/gray</item>
     </style>
 

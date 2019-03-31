@@ -5,13 +5,14 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -34,7 +35,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
         Log.v("POKO", "NEW MESSAGE CALLBACK");
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        GroupList groupList = collection.getGroupList();
+        GroupPokoList groupList = collection.getGroupList();
         try {
             JSONObject jsonMessage = data.getJSONObject("message");
             int groupId = jsonMessage.getInt("groupId");
@@ -47,7 +48,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
             }
 
             /* Parse message and add sorted by message id */
-            MessageList messageList = group.getMessageList();
+            MessagePokoList messageList = group.getMessageList();
             PokoMessage message = PokoParser.parseMessage(jsonMessage);
 
             // Update item and assign message the message updated in the list.
@@ -55,7 +56,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
 
             /* Add NbNewMessage number */
             /* Increment new message number only when the user is not chatting for this group */
-            if (collection.getChattingGroup() != group) {
+            if (ChatManager.getChattingGroup() != group) {
                 group.setNbNewMessages(group.getNbNewMessages() + 1);
             }
 

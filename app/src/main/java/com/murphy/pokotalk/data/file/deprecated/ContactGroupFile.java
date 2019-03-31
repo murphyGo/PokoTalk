@@ -4,7 +4,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
-import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -12,9 +12,9 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 
-public class ContactGroupFile extends PokoSequencialAccessFile<ContactList.ContactGroupRelation> {
-    protected ContactList contactList;
-    protected ArrayList<ContactList.ContactGroupRelation> contactGroupRelations;
+public class ContactGroupFile extends PokoSequencialAccessFile<ContactPokoList.ContactGroupRelation> {
+    protected ContactPokoList contactList;
+    protected ArrayList<ContactPokoList.ContactGroupRelation> contactGroupRelations;
 
     public ContactGroupFile() {
         super();
@@ -33,23 +33,23 @@ public class ContactGroupFile extends PokoSequencialAccessFile<ContactList.Conta
     }
 
     @Override
-    public void addItem(ContactList.ContactGroupRelation item) {
+    public void addItem(ContactPokoList.ContactGroupRelation item) {
         contactList.putContactGroupRelation(item.getContactUserId(), item.getGroupId());
     }
 
     @Override
-    public ContactList.ContactGroupRelation getItemAt(int position) {
+    public ContactPokoList.ContactGroupRelation getItemAt(int position) {
         return contactGroupRelations.get(position);
     }
 
     @Override
-    public void saveItem(ContactList.ContactGroupRelation item) throws IOException, JSONException {
+    public void saveItem(ContactPokoList.ContactGroupRelation item) throws IOException, JSONException {
         JSONObject jsonContact = Serializer.makeContactGroupRelationJSON(item);
         outputStreamWriter.write(jsonContact.toString());
     }
 
     @Override
-    public ContactList.ContactGroupRelation read() throws IOException, JSONException {
+    public ContactPokoList.ContactGroupRelation read() throws IOException, JSONException {
         JSONObject jsonContactGroupRelation = readJSON();
         if (jsonContactGroupRelation == null)
             return null;

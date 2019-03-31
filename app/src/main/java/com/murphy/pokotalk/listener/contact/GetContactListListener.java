@@ -10,9 +10,9 @@ import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactList;
-import com.murphy.pokotalk.data.user.PendingContactList;
-import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.PendingContactPokoList;
+import com.murphy.pokotalk.data.user.StrangerPokoList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.server.parser.PokoParser;
@@ -34,10 +34,10 @@ public class GetContactListListener extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        ContactList list = collection.getContactList();
-        PendingContactList invitedContactList = collection.getInvitedContactList();
-        PendingContactList invitingContactList = collection.getInvitingContactList();
-        StrangerList strangerList = collection.getStrangerList();
+        ContactPokoList list = collection.getContactList();
+        PendingContactPokoList invitedContactList = collection.getInvitedContactList();
+        PendingContactPokoList invitingContactList = collection.getInvitingContactList();
+        StrangerPokoList strangerList = collection.getStrangerList();
         try {
             list.startUpdateList();
             JSONArray contacts = data.getJSONArray("contacts");
@@ -74,7 +74,7 @@ public class GetContactListListener extends PokoServer.PokoListener {
     static class DatabaseJob extends PokoAsyncDatabaseJob {
         @Override
         protected void doJob(HashMap<String, Object> data) {
-            ContactList contactList = DataCollection.getInstance().getContactList();
+            ContactPokoList contactList = DataCollection.getInstance().getContactList();
             Log.v("POKO", "START TO WRITE contact list DATA");
 
             /* Get database to write */

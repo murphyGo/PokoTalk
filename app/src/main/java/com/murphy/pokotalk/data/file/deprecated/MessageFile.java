@@ -7,7 +7,7 @@ import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Reader;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 
 import org.json.JSONException;
@@ -23,7 +23,7 @@ import java.util.ArrayList;
 /** NOTE: PokoMessage file must contain message sorted by message id */
 public class MessageFile extends PokoSequencialAccessFile<PokoMessage> {
     protected Group group;
-    protected MessageList messageList;
+    protected MessagePokoList messageList;
     protected File messageFile;
 
     protected static int READ_AHEAD_LIMIT = 4096;

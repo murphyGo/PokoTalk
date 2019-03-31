@@ -1,15 +1,15 @@
 package com.murphy.pokotalk.data.user;
 
-import com.murphy.pokotalk.data.ItemList;
+import com.murphy.pokotalk.data.list.ItemPokoList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ContactList extends ItemList<Integer, Contact> {
+public class ContactPokoList extends ItemPokoList<Integer, Contact> {
     protected HashMap<Integer, ContactGroupRelation> contactChatMapUserId;
     protected HashMap<Integer, ContactGroupRelation> contactChatMapGroupId;
 
-    public ContactList() {
+    public ContactPokoList() {
         super();
         contactChatMapUserId = new HashMap<>();
         contactChatMapGroupId = new HashMap<>();

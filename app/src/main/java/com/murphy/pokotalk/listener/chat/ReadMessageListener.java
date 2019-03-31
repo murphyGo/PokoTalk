@@ -10,8 +10,8 @@ import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupList;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -35,7 +35,7 @@ public class ReadMessageListener extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        GroupList groupList = collection.getGroupList();
+        GroupPokoList groupList = collection.getGroupList();
         try {
             JSONArray messages = data.getJSONArray("messages");
             int groupId = data.getInt("groupId");
@@ -48,7 +48,7 @@ public class ReadMessageListener extends PokoServer.PokoListener {
             }
 
             /* Parse all message and sort in time */
-            MessageList messageList = group.getMessageList();
+            MessagePokoList messageList = group.getMessageList();
             ArrayList<PokoMessage> readMessages = new ArrayList<>();
 
             for (int i = 0; i < messages.length(); i++) {

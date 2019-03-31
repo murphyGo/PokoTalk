@@ -9,16 +9,16 @@ import com.murphy.pokotalk.data.file.schema.ContactsSchema;
 import com.murphy.pokotalk.data.file.schema.GroupsSchema;
 import com.murphy.pokotalk.data.file.schema.MessagesSchema;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 
 public class PokoDatabaseHelper {
     public static void insertOrUpdateGroupData(SQLiteDatabase db, Group group) {
         // Insert or update group data
-        UserList memberList = group.getMembers();
-        MessageList messageList = group.getMessageList();
+        UserPokoList memberList = group.getMembers();
+        MessagePokoList messageList = group.getMessageList();
 
         // Insert or update group data
         ContentValues groupValues = Serializer.obtainGroupValues(group);

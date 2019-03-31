@@ -7,11 +7,13 @@ import android.view.View;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.data.extra.DateChangeItem;
 import com.murphy.pokotalk.data.group.PokoMessage;
 
 public class DateChangeMessageItem extends MessageItem {
     private String content;
     private TextView messageView;
+    private DateChangeItem dateChangeItem;
 
     public DateChangeMessageItem(Context context) {
         super(context);
@@ -37,6 +39,11 @@ public class DateChangeMessageItem extends MessageItem {
                 break;
             }
         }
+    }
+
+    public void setDateChangeItem(DateChangeItem item) {
+        dateChangeItem = item;
+        setContent(dateChangeItem.getDateChangeMessage());
     }
 
     public String getContent() {

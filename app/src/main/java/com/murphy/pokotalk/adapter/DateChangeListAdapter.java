@@ -6,21 +6,21 @@ import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 
 import com.murphy.pokotalk.data.Item;
+import com.murphy.pokotalk.data.extra.DateChangeItem;
+import com.murphy.pokotalk.data.list.DateChangeBorderPokoList;
 import com.murphy.pokotalk.data.list.ItemPokoList;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-/* PokoTalk ListView adapter superclass for item type T
-*  Activity can attach ViewCreationCallback for clicking items */
-public abstract class PokoListAdapter<T extends Item> extends BaseAdapter {
-    protected ArrayList<T> items;
+public abstract class DateChangeListAdapter<V extends Item> extends BaseAdapter {
+    protected ArrayList<Item> items;
     protected Context context;
     protected HashMap<Long, View> views;
-    protected ViewCreationCallback<T> viewCreationCallback;
-    protected ItemPokoList pokoList;
+    protected ViewCreationCallback<V> viewCreationCallback;
+    protected DateChangeBorderPokoList pokoList;
 
-    public PokoListAdapter(Context context) {
+    public DateChangeListAdapter(Context context) {
         this.context = context;
         this.views = new HashMap<>();
     }
@@ -31,22 +31,35 @@ public abstract class PokoListAdapter<T extends Item> extends BaseAdapter {
     }
 
     @Override
-    public T getItem(int position) {
+    public Item getItem(int position) {
         return items.get(position);
     }
 
-    @Override
-    public abstract long getItemId(int position);
+    public long getItemId(int position) {
+        return position;
+    }
 
     public abstract View createView(int position, View convertView, ViewGroup parent);
+    public abstract View createDateChangeView(DateChangeItem item, View convertView, ViewGroup parent);
 
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
-        View view = createView(position, convertView, parent);
-        putView(getItemId(position), view);
+        View view = null;
 
-        if (viewCreationCallback != null)
-            viewCreationCallback.run(view, getItem(position));
+        Item item = getItem(position);
+
+        if (item instanceof DateChangeItem) {
+            view = createDateChangeView((DateChangeItem) item, convertView, parent);
+
+        } else if (pokoList.isInstanceof(item)) {
+            view = createView(position, convertView, parent);
+            putView(getItemId(position), view);
+
+            if (viewCreationCallback != null) {
+                viewCreationCallback.run(view, (V) item);
+            }
+        }
+
         return view;
     }
 
@@ -58,7 +71,7 @@ public abstract class PokoListAdapter<T extends Item> extends BaseAdapter {
         this.viewCreationCallback = viewCreationCallback;
     }
 
-    public abstract T getItemFromView(View view);
+    public abstract V getItemFromView(View view);
 
     /* Item view putter and getter implemented by HashMap */
     public void putView(long key, View value) {
@@ -73,8 +86,8 @@ public abstract class PokoListAdapter<T extends Item> extends BaseAdapter {
         return pokoList;
     }
 
-    protected void setPokoList(ItemPokoList pokoList) {
+    protected void setPokoList(DateChangeBorderPokoList pokoList) {
         this.pokoList = pokoList;
-        this.items = pokoList.getList();
+        this.items = pokoList.getListForAdapter();
     }
 }

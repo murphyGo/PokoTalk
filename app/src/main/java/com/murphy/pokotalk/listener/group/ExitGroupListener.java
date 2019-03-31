@@ -7,7 +7,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -27,7 +27,7 @@ public class ExitGroupListener extends PokoServer.PokoListener {
         try {
             JSONObject data = (JSONObject) args[0];
             DataCollection collection = DataCollection.getInstance();
-            GroupList groupList = collection.getGroupList();
+            GroupPokoList groupList = collection.getGroupList();
             int groupId = data.getInt("groupId");
 
             if (groupList.removeItemByKey(groupId) == null) {

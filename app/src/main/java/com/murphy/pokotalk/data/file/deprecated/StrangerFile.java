@@ -5,7 +5,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.file.json.Serializer;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerList;
+import com.murphy.pokotalk.data.user.StrangerPokoList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class StrangerFile extends PokoSequencialAccessFile<Stranger> {
-    protected StrangerList strangerList;
+    protected StrangerPokoList strangerList;
 
     public StrangerFile() {
         super();

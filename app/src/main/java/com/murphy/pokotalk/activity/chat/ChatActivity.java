@@ -29,8 +29,9 @@ import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.GroupMemberListAdapter;
-import com.murphy.pokotalk.adapter.MessageListAdapter;
+import com.murphy.pokotalk.adapter.group.GroupMemberListAdapter;
+import com.murphy.pokotalk.adapter.chat.MessageListAdapter;
+import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
@@ -38,11 +39,11 @@ import com.murphy.pokotalk.data.file.PokoDatabase;
 import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.file.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessageList;
-import com.murphy.pokotalk.data.group.MessageListUI;
+import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessagePokoListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserList;
+import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -263,7 +264,7 @@ public class ChatActivity extends AppCompatActivity
     }
 
     private void openChatting() {
-        if (!collection.startChat(group)) {
+        if (!ChatManager.startChat(group)) {
             // Another chat is going on, finish this chat
             finish();
         }
@@ -276,7 +277,7 @@ public class ChatActivity extends AppCompatActivity
         setResult(RESULT_OK, intent);
 
         // End chat
-        collection.endChat(group);
+        ChatManager.endChat(group);
     }
 
     private void creationError(String errMsg) {
@@ -365,7 +366,7 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        MessageListUI adapterList = (MessageListUI) messageListAdapter.getPokoList();
+                        MessagePokoListUI adapterList = (MessagePokoListUI) messageListAdapter.getPokoList();
                         for (PokoMessage message : readMessages) {
                             adapterList.updateItem(message);
                         }
@@ -477,7 +478,7 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        UserList memberList = (UserList) memberListAdapter.getPokoList();
+                        UserPokoList memberList = (UserPokoList) memberListAdapter.getPokoList();
                         for (User member : members) {
                             memberList.updateItem(member);
                         }
@@ -505,7 +506,7 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        UserList memberList = (UserList) memberListAdapter.getPokoList();
+                        UserPokoList memberList = (UserPokoList) memberListAdapter.getPokoList();
                         for (User member : members) {
                             memberList.removeItemByKey(member.getUserId());
                         }
@@ -607,7 +608,7 @@ public class ChatActivity extends AppCompatActivity
 
     protected void sendAckToLastMessage() {
         // Get last message
-        MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
+        MessagePokoListUI messageListUI = (MessagePokoListUI) messageListAdapter.getPokoList();
         PokoMessage lastMessage = messageListUI.getLastMessage();
         if (lastMessage != null) {
             int lastMessageId = lastMessage.getMessageId();
@@ -664,7 +665,7 @@ public class ChatActivity extends AppCompatActivity
 
                 try {
                     // Find first messageId to start reading message.
-                    MessageList messageList = group.getMessageList();
+                    MessagePokoList messageList = group.getMessageList();
                     int startId;
                     if (messageList.getList().size() == 0) {
                         startId = -1;
@@ -731,7 +732,7 @@ public class ChatActivity extends AppCompatActivity
                 try {
                     DataLock.getInstance().acquireWriteLock();
                     try {
-                        MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
+                        MessagePokoListUI messageListUI = (MessagePokoListUI) messageListAdapter.getPokoList();
                         // We now count delta of number of date change message.
                         messageListUI.startCountDateChangeMessage();
                         for (PokoMessage message : readMessages) {

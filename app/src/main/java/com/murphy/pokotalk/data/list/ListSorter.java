@@ -54,6 +54,11 @@ public abstract class ListSorter<K, V> {
     /** Finds appropriate item position in array with binary search */
     public int findItemIndexWithBS(V item) {
         K key = getItemKey(item);
+        return findItemIndexWithBSByKey(key);
+    }
+
+    /** Finds appropriate item position in array with binary search */
+    public int findItemIndexWithBSByKey(K key) {
         int size = list.size();
         int start = 0, end = size - 1;
         int curIndex;

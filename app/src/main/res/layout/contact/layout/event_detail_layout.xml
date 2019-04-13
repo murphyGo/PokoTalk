@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape"
+        style="@style/TopBar">
+
+        <Button
+            android:id="@+id/backspaceButton"
+            android:layout_centerVertical="true"
+            style="@style/BackButton"/>
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/backspaceButton"
+            android:text="@string/event_detail_top_title"
+            style="@style/Title"/>
+
+        <ImageView
+            android:id="@+id/eventDetailMenuButton"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/three_dot_menu"
+            style="@style/TopButton"/>
+
+    </RelativeLayout>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:focusableInTouchMode="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="15dp">
+
+            <TextView
+                android:id="@+id/eventDetailEventName"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:maxLines="1"
+                android:background="@drawable/bottom_line"
+                android:padding="7dp"
+                android:layout_margin="10dp"
+                android:text="이벤트 이름"
+                style="@style/AppBigText"/>
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:src="@drawable/clock"
+                    android:layout_margin="5dp"
+                    android:layout_toStartOf="@id/eventDetailDate"
+                    style="@style/TextIcon"/>
+
+                <TextView
+                    android:id="@+id/eventDetailDate"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:text="2019.04.01 오후 5:00"
+                    style="@style/eventCreationDateTimeText" />
+
+            </RelativeLayout>
+
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:src="@drawable/location_pin"
+                    android:layout_margin="5dp"
+                    android:layout_toStartOf="@id/eventDetailLocation"
+                    style="@style/TextIcon"/>
+
+                <TextView
+                    android:id="@+id/eventDetailLocation"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_alignParentEnd="true"
+                    android:text="샘터마을에서"
+                    style="@style/AppText" />
+
+            </RelativeLayout>
+
+            <TextView
+                android:id="@+id/eventDetailEventDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:layout_margin="10dp"
+                android:padding="10dp"
+                android:text="이벤트 이름"
+                style="@style/AppText"/>
+
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="0"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginBottom="5dp"
+                style="@style/AppText"
+                android:text="@string/event_detail_participants"/>
+
+
+            <ListView
+                android:id="@+id/eventDetailParticipantList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:minHeight="200dp"
+                android:orientation="vertical" />
+
+        </LinearLayout>
+
+    </ScrollView>
+
+</LinearLayout>

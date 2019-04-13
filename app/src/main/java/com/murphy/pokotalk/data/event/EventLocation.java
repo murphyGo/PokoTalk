@@ -3,20 +3,24 @@ package com.murphy.pokotalk.data.event;
 import com.murphy.pokotalk.data.Item;
 import com.naver.maps.geometry.LatLng;
 
+import java.util.Calendar;
+
 public class EventLocation extends Item {
     protected String title;
     protected String category;
     protected String address;
     protected LatLng latLng;
+    protected Calendar meetingDate;
 
     @Override
     public void update(Item item) {
         EventLocation location = (EventLocation) item;
 
-        this.title = location.getTitle();
-        this.category = location.getCategory();
-        this.address = location.getAddress();
-        this.latLng = location.getLatLng();
+        setTitle(location.getTitle());
+        setCategory(location.getCategory());
+        setAddress(location.getAddress());
+        setLatLng(location.getLatLng());
+        setMeetingDate(location.getMeetingDate());
     }
 
     public String getTitle() {
@@ -49,5 +53,13 @@ public class EventLocation extends Item {
 
     public void setLatLng(LatLng latLng) {
         this.latLng = latLng;
+    }
+
+    public Calendar getMeetingDate() {
+        return meetingDate;
+    }
+
+    public void setMeetingDate(Calendar meetingDate) {
+        this.meetingDate = meetingDate;
     }
 }

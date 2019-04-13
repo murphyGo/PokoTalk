@@ -5,7 +5,6 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-
     <!--위치정보활용시 추가--><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <!--위치정보활용시 추가--><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
@@ -46,8 +45,8 @@
             android:parentActivityName=".activity.chat.ChatActivity"/>
         <activity android:name=".activity.event.EventCreationActivity"
             android:parentActivityName=".activity.main.MainActivity"/>
-        <activity android:name=".activity.event.EventLocationSelectionActivity"
-            android:parentActivityName=".activity.event.EventCreationActivity"/>
+        <activity android:name=".activity.event.EventLocationSelectionActivity"/>
+        <activity android:name=".activity.event.EventDetailActivity"/>
 
         <service
             android:name=".service.PokoTalkService"

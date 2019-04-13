@@ -1,16 +1,9 @@
 package com.murphy.pokotalk.activity.main;
 
 import android.Manifest;
-import android.content.ComponentName;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.os.Messenger;
-import android.os.RemoteException;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -20,96 +13,94 @@ import android.view.animation.AnimationUtils;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.service.PokoTalkService;
 
 import java.util.ArrayList;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
-public class WelcomeActivity extends AppCompatActivity implements ServiceConnection {
+public class WelcomeActivity extends AppCompatActivity {
     private CircleImageView pokoImage;
     private TextView appNameText;
-    private final int splash_time = 200;
+    private final int splashTime = 200;
     private boolean writePermission;
     private Thread thread;
-    private Messenger serviceMessenger;
-    private Messenger myMessenger;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_welcome);
 
-        /* Find views */
-        pokoImage = (CircleImageView) findViewById(R.id.pokoImage);
-        appNameText = (TextView) findViewById(R.id.appNameText);
+        // Find views
+        pokoImage = findViewById(R.id.pokoImage);
+        appNameText = findViewById(R.id.appNameText);
 
-        /* Show animation */
+        // Show animation
         Animation anim = AnimationUtils.loadAnimation(this, R.anim.welcome_action);
         pokoImage.startAnimation(anim);
         appNameText.startAnimation(anim);
 
-        /* Check permissions for this app */
-        /* Now PokoTalk only works when read/write permissions are granted */
+        // Check permissions for this app
+        // Now PokoTalk only requires write permission as minimum
         writePermission = ContextCompat.checkSelfPermission(this,
                 Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 == PackageManager.PERMISSION_GRANTED;
 
+        // Permission string lists
         ArrayList<String> permissions = new ArrayList<>();
 
-        // TODO: Explain user for permission if the user denied the permission
         if (!writePermission) {
+            // Add to permission list
             permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
 
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                // TODO: Explain user for permission if the user denied the permission
             } else {
 
             }
         }
 
+        // Thread that sleeps for splash time and start MainActivity
         thread = new Thread() {
             @Override
             public void run() {
+                // Intent to start MainActivity
                 Intent intent = new Intent(getApplicationContext(), MainActivity.class);
 
-                /* Sleep sometimes and show MainActivity */
+                // Sleep sometimes and start MainActivity
                 try{
-                    sleep(splash_time);
+                    sleep(splashTime);
                 } catch(InterruptedException e) {
                     e.printStackTrace();
                 }
 
+                // Start MainActivity
                 startActivityForResult(intent, 0);
             }
         };
 
+        // Check permissions
         if (writePermission) {
-            PokoTalkService.startPokoTalkService(this);
-            PokoTalkService.bindPokoTalkService(this, this);
+            // Wait for application data to be loaded
+            waitForAppDataLoaded();
         } else {
-            /* Request for permissions */
+            // Request for permissions
             ActivityCompat.requestPermissions(this,
                     permissions.toArray(new String[permissions.size()]),
                     Constants.ALL_PERMISSION);
         }
-
-        ServiceMessageHandler handler = new ServiceMessageHandler();
-        handler.setThread(thread);
-        myMessenger = new Messenger(handler);
     }
 
     @Override
     protected void onDestroy() {
-        /* Unbind service */
-        PokoTalkService.unbindPokoTalkService(this, this);
-
         super.onDestroy();
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        // MainActivity closed, finish this activity
         setResult(RESULT_OK);
         finish();
     }
@@ -134,50 +125,34 @@ public class WelcomeActivity extends AppCompatActivity implements ServiceConnect
             }
         }
 
+        // Check if the user granted the permission
         if (writePermission) {
-            PokoTalkService.startPokoTalkService(this);
-            PokoTalkService.bindPokoTalkService(this, this);
+            // Granted permission, wait for app data loaded
+            waitForAppDataLoaded();
         } else {
+            // User must grant write permission to use PokoTalk
             finish();
         }
     }
 
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-        serviceMessenger = new Messenger(service);
-
-        try {
-            /* Send message to service */
-            Message message = Message.obtain(null, PokoTalkService.NOTIFY_WHEN_LOADED);
-            message.replyTo = myMessenger;
-            serviceMessenger.send(message);
-        } catch (RemoteException e) {
-            e.printStackTrace();
-            finish();
+    // Wait for application data to be loaded and start thread
+    private void waitForAppDataLoaded() {
+        PokoTalkApp app = PokoTalkApp.getInstance();
+        if (app.isAppDataLoaded()) {
+            thread.start();
+        } else {
+            app.notifyWhenAppDataLoaded(appDataLoadedCallback);
         }
     }
 
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        serviceMessenger = null;
-        PokoTalkService.startPokoTalkService(this);
-    }
-
-    static class ServiceMessageHandler extends Handler {
-        Thread thread;
-
-        public void setThread(Thread thread) {
-            this.thread = thread;
-        }
-
+    // Callback starts when application data is loaded
+    private Runnable appDataLoadedCallback = new Runnable() {
         @Override
-        public void handleMessage(Message msg) {
-            switch (msg.what) {
-                case PokoTalkService.NOTIFY_WHEN_LOADED: {
-                    thread.start();
-                    return;
-                }
+        public void run() {
+            // App data loaded, start thread
+            if (thread != null) {
+                thread.start();
             }
         }
-    }
+    };
 }

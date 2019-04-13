@@ -1,11 +1,13 @@
 package com.murphy.pokotalk.listener.event;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.event.EventList;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -51,7 +53,41 @@ public class EventExitListener extends PokoServer.PokoListener {
     static class DatabaseJob extends PokoAsyncDatabaseJob {
         @Override
         protected void doJob(HashMap<String, Object> data) {
+            Integer eventId = (Integer) data.get("eventId");
 
+            if (eventId == null) {
+                return;
+            }
+
+            Log.v("POKO", "START TO erase event DATA");
+
+            /* Get database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Set foreign key constraint enabled so that members and messages are also deleted.
+            db.setForeignKeyConstraintsEnabled(true);
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                String[] selectionArgs = {Integer.toString(eventId)};
+
+                // Insert or update event data
+                PokoDatabaseHelper.deleteEventData(db, selectionArgs);
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "erased event data successfully");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to erase event data");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+
+                // Set foreign key constraint disabled.
+                db.setForeignKeyConstraintsEnabled(false);
+
+                db.releaseReference();
+            }
         }
     }
 }

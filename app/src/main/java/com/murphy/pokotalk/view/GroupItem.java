@@ -66,10 +66,10 @@ public class GroupItem extends FrameLayout {
         diffSec /= 60;
         if (diffSec < 60)
             return diffSec + "분 전";
-        diffSec /= 24;
+        diffSec /= 60;
         if (diffSec < 24)
             return diffSec + "시간 전";
-        diffSec /= 365;
+        diffSec /= 24;
         if (diffSec < 2)
             return "어제";
 

@@ -9,8 +9,10 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.db.PokoDatabaseManager;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -35,7 +37,7 @@ public class LoginActivity extends AppCompatActivity {
         loginButton = (Button) findViewById(R.id.loginButton);
         registerButton = (Button) findViewById(R.id.registerButton);
 
-        server = PokoServer.getInstance(this);
+        server = PokoServer.getInstance();
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -55,7 +57,10 @@ public class LoginActivity extends AppCompatActivity {
                     return;
                 }
 
-                PokoServer server = PokoServer.getInstance(getApplicationContext());
+                PokoServer server = PokoServer.getInstance();
+                if (!server.isConnected()) {
+                    server.connect(getApplicationContext());
+                }
                 server.sendPasswordLogin(email, password);
             }
         });
@@ -87,10 +92,15 @@ public class LoginActivity extends AppCompatActivity {
             try {
                 final String sessionId = jsonObject.getString("sessionId");
 
-                /* Start session */
+                // Set session id
                 Session session = Session.getInstance();
                 session.setSessionId(sessionId);
-                session.login(getApplicationContext());
+
+                // Enable database job
+                PokoDatabaseManager.getInstance().enable();
+
+                // Try to login
+                server.sendSessionLogin(session.getSessionId());
             } catch (JSONException e) {
                 return;
             }
@@ -111,6 +121,13 @@ public class LoginActivity extends AppCompatActivity {
     private ActivityCallback sessionLoginListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, final Object... args) {
+            // Get application
+            PokoTalkApp app = PokoTalkApp.getInstance();
+
+            // Start loading application data for the user
+            app.startLoadingApplicationData();
+
+            // Make intent and put login results
             Intent intent = new Intent();
             intent.putExtra("login", "success");
             setResult(RESULT_OK, intent);
@@ -120,13 +137,7 @@ public class LoginActivity extends AppCompatActivity {
 
         @Override
         public void onError(Status status, Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), "로그인 실패...",
-                            Toast.LENGTH_LONG).show();
-                }
-            });
+
         }
     };
 }

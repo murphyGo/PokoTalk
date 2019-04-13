@@ -108,8 +108,9 @@ public class PokoMessage extends Item {
     }
 
     public void decrementNbNotReadUser() {
-        if (--nbNotReadUser < 0)
+        if (--nbNotReadUser < 0) {
             nbNotReadUser = 0;
+        }
     }
 
     public boolean isMyMessage(Session session) {

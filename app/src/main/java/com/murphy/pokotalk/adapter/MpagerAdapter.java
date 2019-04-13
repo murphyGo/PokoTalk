@@ -3,18 +3,18 @@ package com.murphy.pokotalk.adapter;
 import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.view.PagerAdapter;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import java.util.HashMap;
+import com.murphy.pokotalk.R;
 
 /* MainActivity's slider screen adapter */
 public class MpagerAdapter extends PagerAdapter {
     private int[] layouts;
     private View[] views;
-    private HashMap<Integer, ViewCreationCallback> callbacks;
     private LayoutInflater inflater;
     private Context context;
 
@@ -22,7 +22,6 @@ public class MpagerAdapter extends PagerAdapter {
         this.layouts = layouts;
         this.context = context;
         this.views = new View[layouts.length];
-        this.callbacks = new HashMap<>();
         inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
     }
 
@@ -43,15 +42,7 @@ public class MpagerAdapter extends PagerAdapter {
         container.addView(view);
         views[position] = view;
 
-        ViewCreationCallback callback = callbacks.get(layouts[position]);
-        if (callback != null)
-            callback.run(view, null);
-
         return view;
-    }
-
-    public void enrollItemCallback(int layoutId, ViewCreationCallback callback) {
-        callbacks.put(layoutId, callback);
     }
 
     @Override
@@ -63,4 +54,28 @@ public class MpagerAdapter extends PagerAdapter {
     public <T extends View> T findViewByPosition(int position) {
         return (T) views[position];
     }
+
+    @Nullable
+    @Override
+    public CharSequence getPageTitle(int position) {
+        switch (position) {
+            case 0: {
+                return context.getString(R.string.tab_contact_list);
+            }
+            case 1: {
+                return context.getString(R.string.tab_group_list);
+            }
+            case 2: {
+                return context.getString(R.string.tab_event_list);
+            }
+            case 3: {
+                return context.getString(R.string.tab_settings);
+            }
+            default: {
+                return null;
+            }
+        }
+    }
+
+
 }

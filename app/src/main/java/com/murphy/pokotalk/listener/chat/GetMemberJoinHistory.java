@@ -5,8 +5,8 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
@@ -110,6 +110,8 @@ public class GetMemberJoinHistory extends PokoServer.PokoListener {
             } finally {
                 // End a transaction
                 db.endTransaction();
+
+                db.releaseReference();
             }
         }
     }

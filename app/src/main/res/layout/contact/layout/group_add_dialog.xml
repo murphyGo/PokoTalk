@@ -7,27 +7,18 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/shape">
+        android:background="@drawable/shape"
+        style="@style/TopBar">
 
-        <RelativeLayout
-            android:id="@+id/FrameLayout"
-            android:layout_width="40dp"
-            android:layout_height="60dp"
-            android:gravity="center">
-
-            <Button
-                android:id="@+id/backspaceButton"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                style="@style/BackButton" />
-
-        </RelativeLayout>
+        <Button
+            android:id="@+id/backspaceButton"
+            style="@style/BackButton" />
 
         <TextView
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_toEndOf="@id/FrameLayout"
+            android:layout_toEndOf="@id/backspaceButton"
             style="@style/Title"
             android:text="채팅방 만들기" />
 

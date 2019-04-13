@@ -70,7 +70,7 @@ public class PokoNotificationManager {
 
         // Find total message number that will be displayed at notification badge.
         DataLock.getInstance().releaseReadLock();
-        int newMessageNum = DataCollection.getInstance().getTotalNewMessgaeNumber();
+        int newMessageNum = DataCollection.getInstance().getTotalNewMessageNumber();
         DataLock.getInstance().releaseReadLock();
 
         int notificationId, prioirty;

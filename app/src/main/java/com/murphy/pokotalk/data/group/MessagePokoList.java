@@ -122,4 +122,15 @@ public class MessagePokoList extends SortingPokoList<Integer, PokoMessage> {
     private boolean inRange(int fromId, int toId, int targetId) {
         return fromId <= targetId && toId >= targetId;
     }
+
+    public void cutMessage(int numberToLeft) {
+        if (arrayList.size() <= numberToLeft) {
+            return;
+        }
+
+        int iteration = arrayList.size() - numberToLeft;
+        for (int i = 0; i < iteration; i++) {
+            removeItemByKey(arrayList.get(0).getMessageId());
+        }
+    }
 }

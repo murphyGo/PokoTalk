@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape"
+        android:layout_weight="0"
+        style="@style/TopBar">
+
+        <Button
+            android:id="@+id/eventLocationBackspaceButton"
+            style="@style/BackButton" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/eventLocationBackspaceButton"
+            style="@style/Title"
+            android:text="@string/event_location_title" />
+
+    </RelativeLayout>
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:padding="20dp"
+        android:focusableInTouchMode="true">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/event_location_selection_description"/>
+
+        <EditText
+            android:id="@+id/eventLocationSearchKeyword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="장소명 검색"
+            android:layout_marginTop="10dp"
+            android:maxLines="1"/>
+
+        <FrameLayout
+            android:id="@+id/eventLocationMapLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/eventLocationSearchKeyword"
+            android:layout_alignParentBottom="true"/>
+
+        <ListView
+            android:id="@+id/eventLocationSearchList"
+            android:visibility="gone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/search_result_box"
+            android:layout_below="@id/eventLocationSearchKeyword" />
+
+        <LinearLayout
+            android:id="@+id/eventLocationSearchBottomLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_alignParentBottom="true"
+            android:background="@drawable/search_result_box">
+
+            <FrameLayout
+                android:id="@+id/eventLocationSearchInformation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+
+            <Button
+                android:id="@+id/eventLocationSelectionButton"
+                android:visibility="visible"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/event_location_selection_button"/>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+</LinearLayout>

@@ -33,7 +33,7 @@ public class RegisterActivity extends AppCompatActivity {
         passwordText = (EditText) findViewById(R.id.password);
         passwordText2 = (EditText) findViewById(R.id.passwordCheck);
 
-        server = PokoServer.getInstance(getApplicationContext());
+        server = PokoServer.getInstance();
 
         registerButton.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -2,7 +2,6 @@ package com.murphy.pokotalk.server;
 
 import android.content.Context;
 
-import com.github.nkzawa.emitter.Emitter;
 import com.github.nkzawa.socketio.client.IO;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.R;
@@ -22,12 +21,10 @@ import javax.net.ssl.TrustManagerFactory;
 
 public abstract class ServerSocket {
     protected String serverURL;
-    protected Socket mSocket;
-    protected HashMap<String, Emitter.Listener> handlers;
+    protected Socket socket;
     protected HashMap<String, ArrayList<ActivityCallback>> activityHandlers;
 
     public ServerSocket(String url) {
-        handlers = new HashMap<>();
         activityHandlers = new HashMap<>();
         serverURL = url;
     }
@@ -67,7 +64,7 @@ public abstract class ServerSocket {
             opts.reconnectionDelayMax = 500;
             opts.randomizationFactor = 0.0;
             opts.forceNew = true;
-            mSocket = IO.socket(serverURL, opts);
+            socket = IO.socket(serverURL, opts);
         } catch(URISyntaxException e) {
             e.printStackTrace();
             throw e;
@@ -75,7 +72,11 @@ public abstract class ServerSocket {
     }
 
     protected void connect() {
-        mSocket.connect();
+        socket.connect();
+    }
+
+    public void disconnect() {
+        socket.disconnect();
     }
 
     /* Add activity callback method */

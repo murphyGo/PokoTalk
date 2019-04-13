@@ -1,12 +1,14 @@
 package com.murphy.pokotalk.listener.event;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.event.PokoEvent;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.server.parser.PokoParser;
@@ -51,13 +53,40 @@ public class GetEventListListener extends PokoServer.PokoListener {
 
     @Override
     public PokoAsyncDatabaseJob getDatabaseJob() {
-        return null;
+        return new DatabaseJob();
     }
 
     static class DatabaseJob extends PokoAsyncDatabaseJob {
         @Override
         protected void doJob(HashMap<String, Object> data) {
+            EventList eventList = DataCollection.getInstance().getEventList();
+            Log.v("POKO", "START TO WRITE event list DATA");
 
+            /* Get database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                // Delete all event data
+                PokoDatabaseHelper.deleteAllEventData(db);
+
+                // Insert or update all event data
+                for (PokoEvent event : eventList.getList()) {
+                    PokoDatabaseHelper.insertOrUpdateEventData(db, event);
+                }
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "WRITE event list DATA successfully");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to save event list data");
+                e.printStackTrace();
+            } finally {
+                // End a transaction
+                db.endTransaction();
+
+                db.releaseReference();
+            }
         }
     }
 }

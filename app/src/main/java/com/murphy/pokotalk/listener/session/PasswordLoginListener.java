@@ -1,7 +1,7 @@
 package com.murphy.pokotalk.listener.session;
 
 import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 

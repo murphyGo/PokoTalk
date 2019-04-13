@@ -5,7 +5,7 @@ import com.murphy.pokotalk.data.Item;
 /** SortingPokoList adds functionality internal ArrayList is sorted.
  */
 public abstract class SortingPokoList<K, V extends Item> extends ItemPokoList<K, V> {
-    protected ListSorter listSorter;
+    protected ListSorter<K, V> listSorter;
 
     public SortingPokoList() {
         super();

@@ -4,6 +4,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -12,25 +13,39 @@ import android.os.Messenger;
 import android.os.Process;
 import android.support.annotation.NonNull;
 import android.support.design.widget.BottomNavigationView;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.view.ViewPager;
 import android.util.Log;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.RelativeLayout;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.Constants.RequestCode;
+import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.chat.ChatActivity;
 import com.murphy.pokotalk.activity.chat.GroupExitWarningDialog;
+import com.murphy.pokotalk.activity.chat.GroupListFragment;
 import com.murphy.pokotalk.activity.chat.GroupOptionDialog;
 import com.murphy.pokotalk.activity.contact.ContactDetailDialog;
+import com.murphy.pokotalk.activity.contact.ContactListFragment;
 import com.murphy.pokotalk.activity.contact.ContactOptionDialog;
+import com.murphy.pokotalk.activity.event.EventDetailActivity;
+import com.murphy.pokotalk.activity.event.EventListFragment;
+import com.murphy.pokotalk.activity.event.EventOptionDialog;
+import com.murphy.pokotalk.activity.settings.SettingFragment;
 import com.murphy.pokotalk.adapter.MainFragmentViewPagerAdapter;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.server.ActivityCallback;
@@ -38,32 +53,41 @@ import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.service.PokoTalkService;
 
+import java.util.List;
+
 public class MainActivity extends FragmentActivity
         implements BottomNavigationView.OnNavigationItemSelectedListener,
         ContactListFragment.Listener,
         GroupListFragment.Listener,
         EventListFragment.Listener,
+        SettingFragment.Listener,
         ContactDetailDialog.ContactDetailDialogListener,
         ContactOptionDialog.ContactOptionDialogListener,
         GroupOptionDialog.GroupOptionDialogListener,
         GroupExitWarningDialog.Listener,
+        EventOptionDialog.Listener,
         ServiceConnection {
+    private PokoTalkApp app;
     private PokoServer server;
-    private Session session;
     private DataCollection collection;
+    private RelativeLayout rootView;
     private ViewPager viewPager;
     private MainFragmentViewPagerAdapter viewPagerAdapter;
-    private BottomNavigationView navigationMenu;
+    private TabLayout tabLayout;
     private Fragment[] fragments =
-            {new ContactListFragment(), new GroupListFragment(), new EventListFragment()};
+            {new ContactListFragment(), new GroupListFragment(),
+                    new EventListFragment(), new SettingFragment()};
     private ContactListFragment contactListFragment = (ContactListFragment) fragments[0];
     private GroupListFragment groupListFragment = (GroupListFragment) fragments[1];
     private EventListFragment eventListFragment = (EventListFragment) fragments[2];
+    private SettingFragment settingFragment = (SettingFragment) fragments[3];
     private Messenger serviceMessenger = null;
     private Messenger myMessenger = new Messenger(new ServiceCallback());
 
     /* Intent commands */
     public static final int START_GROUP_CHAT = 1;
+
+    public static final int MESSAGE_CUT_THRESHOLD = 20;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,24 +101,54 @@ public class MainActivity extends FragmentActivity
             getWindow().clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         } */
 
-        /* Start view pager(contact, group, event, configuration menu) */
+        // Get server
+        server = PokoServer.getInstance();
+
+        // Start view pager(contact, group, event, configuration menu)
         collection = DataCollection.getInstance();
 
-        viewPager = (ViewPager) findViewById(R.id.viewPager);
-        viewPagerAdapter = new MainFragmentViewPagerAdapter(getSupportFragmentManager(),fragments);
-        viewPager.setAdapter(viewPagerAdapter);
+        // Find views
+        rootView = findViewById(R.id.mainActivityRoot);
+        viewPager = findViewById(R.id.viewPager);
+        tabLayout = findViewById(R.id.mainTab);
 
-        navigationMenu = (BottomNavigationView) findViewById(R.id.mainNavigation);
-        navigationMenu.setOnNavigationItemSelectedListener(this);
+        /* Bind to service */
+        Context context = getApplicationContext();
+        PokoTalkService.startPokoTalkService(context);
+        PokoTalkService.bindPokoTalkService(context, this);
 
-        /* Get server */
-        server = PokoServer.getInstance(this);
+        // Get application
+        app = PokoTalkApp.getInstance();
 
-        /* If application has no session id to login, show login activity */
-        session = Session.getInstance();
-        if (!session.sessionIdExists()) {
-            Intent intent = new Intent(this, LoginActivity.class);
-            startActivityForResult(intent, RequestCode.LOGIN.value);
+        // Check if application data is loaded
+        if (!app.isAppDataLoaded()) {
+            // Wait until app data is loaded
+            // Activity will be shown when data loading is done
+            /** This scenario may happen when the application is killed by
+             *  operating system and user start application again.
+             *  Then main activity will be shown but app data is not loaded yet.
+             */
+
+            // Do not show main activity
+            rootView.setVisibility(View.INVISIBLE);
+
+            // Attach callback
+            app.notifyWhenAppDataLoaded(new Runnable() {
+                @Override
+                public void run() {
+                    showMainActivity();
+                }
+            });
+
+        } else {
+            showMainActivity();
+
+            /* Get intent and start operation if given */
+            Intent intent = getIntent();
+            int opcode = intent.getIntExtra("opcode", -1);
+            if (opcode >= 0) {
+                startOperation(opcode, intent);
+            }
         }
 
         /* Attach event callbacks */
@@ -103,18 +157,33 @@ public class MainActivity extends FragmentActivity
 
         Log.v("POKO", "MainActivity starts, process id " + Process.myPid());
         Log.v("POKO", "POKO ON CREATE");
+    }
 
-        /* Bind to service */
-        Context context = getApplicationContext();
-        PokoTalkService.startPokoTalkService(context);
-        PokoTalkService.bindPokoTalkService(context, this);
-
-        /* Get intent and start operation if given */
-        Intent intent = getIntent();
-        int opcode = intent.getIntExtra("opcode", -1);
-        if (opcode >= 0) {
-            startOperation(opcode, intent);
+    // Called when application data loaded, show activity and popup loin activity if necessary
+    private void showMainActivity() {
+        // We should show login activity if session id does not exists
+        if (!Session.getInstance().sessionIdExists()) {
+            Intent intent = new Intent(this, LoginActivity.class);
+            startActivityForResult(intent, RequestCode.LOGIN.value);
         }
+
+        // Set root view visible
+        rootView.setVisibility(View.VISIBLE);
+
+        // Set view pager adapter
+        viewPagerAdapter = new MainFragmentViewPagerAdapter(this,
+                getSupportFragmentManager(), fragments);
+        viewPager.setAdapter(viewPagerAdapter);
+
+        // Set navigation view selected listener
+        tabLayout.setupWithViewPager(viewPager);
+
+        // Set icons of tab
+        tabLayout.getTabAt(0).setIcon(R.drawable.user_list);
+        tabLayout.getTabAt(1).setIcon(R.drawable.chat_icon);
+        tabLayout.getTabAt(2).setIcon(R.drawable.event_icon);
+        tabLayout.getTabAt(3).setIcon(R.drawable.settings);
+        //navigationMenu.setOnNavigationItemSelectedListener(this);
     }
 
     @Override
@@ -188,6 +257,9 @@ public class MainActivity extends FragmentActivity
             case R.id.navigation_event:
                 viewPager.setCurrentItem(2, true);
                 break;
+            case R.id.navigation_settings:
+                viewPager.setCurrentItem(3, true);
+                break;
         }
         return false;
     }
@@ -206,7 +278,28 @@ public class MainActivity extends FragmentActivity
     // Activity result handlers
     private void handleLoginResult(int resultCode, Intent data) {
         if (resultCode == RESULT_OK) {
+            // Get application
+            PokoTalkApp app = PokoTalkApp.getInstance();
 
+            // Check if data is loaded
+            if (!app.isAppDataLoaded()) {
+                // Hide activity view
+                rootView.setVisibility(View.INVISIBLE);
+
+                // Wait data to be loaded
+                app.notifyWhenAppDataLoaded(new Runnable() {
+                    @Override
+                    public void run() {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // Show activity view
+                                rootView.setVisibility(View.VISIBLE);
+                            }
+                        });
+                    }
+                });
+            }
         } else if (resultCode == RESULT_CANCELED) {
             finish();
         } else {
@@ -215,6 +308,7 @@ public class MainActivity extends FragmentActivity
     }
 
     private void handleGroupChatResult(int resultCode, Intent data) {
+        Log.v("POKO", "RESULT CODE " + (resultCode == RESULT_OK ? "OK" : "NOT"));
         if (resultCode == RESULT_OK) {
             /* Refresh group item the user chatted */
             if (data == null)
@@ -226,8 +320,51 @@ public class MainActivity extends FragmentActivity
             if (group == null)
                 return;
 
+            // Get message list of group
+            MessagePokoList messageList = group.getMessageList();
+            List<PokoMessage> messages = messageList.getList();
+
+            // Cut messages if there are too many many messages
+            // to save memory and improve performance
+            if (messages.size() > MESSAGE_CUT_THRESHOLD) {
+                new messageCutTask().execute(group);
+            }
+
             // Notify group list data set changed
             groupListFragment.notifyDataSetChanged();
+        }
+    }
+
+    // This job cuts messages if there are too many many messages
+    // to save memory and improve performance
+    static class messageCutTask extends AsyncTask<Group, Void, Void> {
+        @Override
+        protected Void doInBackground(Group... groups) {
+            // Get group
+            Group group = groups[0];
+            if (group == null) {
+                return null;
+            }
+
+            try {
+                DataLock.getInstance().acquireWriteLock();
+
+                // Get message list of group
+                MessagePokoList messageList = group.getMessageList();
+                List<PokoMessage> messages = messageList.getList();
+
+                // We allow at most MESSAGE_CUT_THRESHOLD messages persist in memory
+                if (messages.size() > MESSAGE_CUT_THRESHOLD) {
+                    messageList.cutMessage(MESSAGE_CUT_THRESHOLD);
+                }
+
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                DataLock.getInstance().releaseWriteLock();
+            }
+
+            return null;
         }
     }
 
@@ -290,6 +427,13 @@ public class MainActivity extends FragmentActivity
         dialog.show(getSupportFragmentManager(), "그룹 옵션");
     }
 
+    @Override
+    public void openEventOptionDialog(PokoEvent event) {
+        EventOptionDialog dialog = new EventOptionDialog();
+        dialog.setEvent(event);
+        dialog.show(getSupportFragmentManager(), "이벤트 옵션");
+    }
+
     /* Dialog result listeners */
     @Override
     public void contactDetailOptionClick(Contact contact, int option) {
@@ -333,6 +477,46 @@ public class MainActivity extends FragmentActivity
         switch (option) {
             case GroupExitWarningDialog.EXIT_GROUP: {
                 server.sendExitGroup(group.getGroupId());
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void eventOptionClick(PokoEvent event, int option) {
+        switch(option) {
+            case EventOptionDialog.OPTION_DETAIL: {
+                // Start event detail activity
+                Intent intent = new Intent(this, EventDetailActivity.class);
+                intent.putExtra("eventId", event.getEventId());
+                startActivity(intent);
+                break;
+            }
+            case EventOptionDialog.OPTION_EXIT: {
+                // Send event exit message
+                server.sendEventExit(event.getEventId());
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void onSettingAction(int action) {
+        switch (action) {
+            case SettingFragment.ACTION_LOGOUT: {
+                // Get application
+                PokoTalkApp app = PokoTalkApp.getInstance();
+
+                // Logout user
+                app.logoutUser();
+
+                // Restart main activity
+                Intent mainIntent = new Intent(this, MainActivity.class);
+                startActivity(mainIntent);
+
+                // End this main activity
+                finish();
+
                 break;
             }
         }

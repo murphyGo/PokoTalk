@@ -5,25 +5,24 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
-import com.murphy.pokotalk.data.file.PokoDatabase;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.file.PokoDatabaseQuery;
-import com.murphy.pokotalk.data.file.json.Parser;
+import com.murphy.pokotalk.data.db.PokoUserDatabase;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.PokoDatabaseQuery;
+import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.server.PokoServer;
 
 import java.util.Calendar;
 
 public class Session {
-    private static Session instance;
-    private String sessionId;
-    private Calendar sessionExpire;
-    private Contact user;
-    private boolean logined;
+    private static Session instance = null;
+    private String sessionId = null;
+    private Calendar sessionExpire = null;
+    private Contact user = null;
+    private boolean logined = false;
 
     public Session() {
-        sessionId = null;
-        logined = false;
+
     }
 
     public synchronized static Session getInstance() {
@@ -34,7 +33,7 @@ public class Session {
     }
 
     /* Returns true if the user has logined */
-    public synchronized boolean hasLogined() {
+    public boolean hasLogined() {
         return logined;
     }
 
@@ -55,7 +54,7 @@ public class Session {
         if (hasLogined() || sessionId == null)
             return false;
 
-        PokoServer server = PokoServer.getInstance(context);
+        PokoServer server = PokoServer.getInstance();
         server.sendSessionLogin(sessionId);
         return true;
     }
@@ -64,7 +63,6 @@ public class Session {
         if(!hasLogined())
             return false;
 
-        PokoServer.getInstance(context);
         sessionId = null;
         return true;
     }
@@ -98,9 +96,9 @@ public class Session {
     }
 
     public static void checkSessionData() {
-        PokoDatabase pokoDatabase = PokoDatabase.getInstance(null);
-        SQLiteDatabase db = pokoDatabase.getReadableDatabase();
         int userId = getInstance().getUser().getUserId();
+        PokoUserDatabase pokoDatabase = PokoUserDatabase.getInstance(null, userId);
+        SQLiteDatabase db = pokoDatabase.getReadableDatabase();
 
         String[] selectionArgs = {Integer.toString(userId)};
         Cursor userCursor = PokoDatabaseHelper.query(db, PokoDatabaseQuery.readUserData, selectionArgs);

@@ -6,9 +6,9 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.file.json.Serializer;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.group.MessagePokoList;
@@ -61,7 +61,7 @@ public class ReadMessageListener extends PokoServer.PokoListener {
                 /* If the message is history, send get history */
                 if (message.getSpecialContent() == null
                         && message.getMessageType() == PokoMessage.MEMBER_JOIN) {
-                    PokoServer server = PokoServer.getInstance(null);
+                    PokoServer server = PokoServer.getInstance();
                     if (server != null) {
                         server.sendGetMemberJoinHistory(groupId, message.getMessageId());
                     }
@@ -125,6 +125,8 @@ public class ReadMessageListener extends PokoServer.PokoListener {
             } finally {
                 // End a transaction
                 db.endTransaction();
+
+                db.releaseReference();
             }
         }
     }

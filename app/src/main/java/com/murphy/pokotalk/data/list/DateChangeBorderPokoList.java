@@ -127,7 +127,7 @@ public abstract class DateChangeBorderPokoList<K, L, V extends Item> extends Sor
             return null;
         }
 
-        int index = dateChangeList.indexOf(curItem);
+        int index = listSorter.findItemIndexWithBS(curItem);
         int extraNum = extraListSorter.findAddPositionWithBsByKey(getTimeKey(curItem));
 
         // Calculate index in date change
@@ -140,12 +140,15 @@ public abstract class DateChangeBorderPokoList<K, L, V extends Item> extends Sor
                 nextItem = dateChangeList.get(index + 1);
             }
 
+            // Remove item
+            dateChangeList.remove(index);
+
             /* Remove date change message if needed */
             if (isDateChangeItem(prevItem)
                     && (nextItem == null
                     || isDateChangeItem(nextItem))) {
                 DateChangeItem<L> dateChangeItem =
-                        (DateChangeItem) dateChangeList.remove(index - 1);
+                        (DateChangeItem<L>) dateChangeList.remove(index - 1);
                 extraListSorter.removeItem(dateChangeItem);
             }
         }

@@ -6,9 +6,9 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.file.json.Serializer;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContactPokoList;
@@ -21,7 +21,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.text.ParseException;
 import java.util.HashMap;
 
 public class GetContactListListener extends PokoServer.PokoListener {
@@ -54,8 +53,6 @@ public class GetContactListListener extends PokoServer.PokoListener {
         } catch (JSONException e) {
             e.printStackTrace();
             Log.e("POKO ERROR", "Bad contact json data");
-        } catch (ParseException e) {
-            Log.e("POKO ERROR", "Failed to parse date string");
         } finally {
             list.endUpdateList();
         }
@@ -108,6 +105,8 @@ public class GetContactListListener extends PokoServer.PokoListener {
             } finally {
                 // End a transaction
                 db.endTransaction();
+
+                db.releaseReference();
             }
         }
     }

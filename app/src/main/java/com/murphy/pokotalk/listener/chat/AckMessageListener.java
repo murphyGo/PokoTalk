@@ -5,8 +5,8 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -28,7 +28,8 @@ public class AckMessageListener extends PokoServer.PokoListener {
         try {
             JSONObject jsonObject = (JSONObject) args[0];
             int groupId = jsonObject.getInt("groupId");
-            int toId = jsonObject.getInt("ackEnd");
+            int ackStart = jsonObject.getInt("ackStart");
+            int ackEnd = jsonObject.getInt("ackEnd");
 
             Group group = collection.getGroupList().getItemByKey(groupId);
             if (group == null) {
@@ -37,12 +38,14 @@ public class AckMessageListener extends PokoServer.PokoListener {
             }
 
             // Update group ack
-            group.setAck(Math.max(group.getAck(), toId));
+            group.setAck(Math.max(group.getAck(), ackEnd));
 
             // Refresh nbNewMessages of group
             group.refreshNbNewMessages();
 
             putData("group", group);
+            putData("ackStart", ackStart);
+            putData("ackEnd", ackEnd);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "bad ack message json data");
         }
@@ -88,6 +91,8 @@ public class AckMessageListener extends PokoServer.PokoListener {
             } finally {
                 // End a transaction
                 db.endTransaction();
+
+                db.releaseReference();
             }
         }
     }

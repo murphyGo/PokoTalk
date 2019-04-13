@@ -35,13 +35,14 @@ import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.DataLock;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.file.PokoDatabase;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.file.json.Parser;
+import com.murphy.pokotalk.data.db.PokoUserDatabase;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.MessagePokoListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.server.ActivityCallback;
@@ -75,6 +76,7 @@ public class ChatActivity extends AppCompatActivity
     private int sendId;
     private Session session;
     private boolean firstRead = true;
+    private Integer lastMessageIdAtFirst = null;
     public static final int slideMenuWidthDP = 250;
     public static final int MESSAGE_LOAD_NUM = 20;
 
@@ -116,7 +118,7 @@ public class ChatActivity extends AppCompatActivity
         /* Set group name */
         groupNameView.setText(group.getGroupName());
 
-        server = PokoServer.getInstance(this);
+        server = PokoServer.getInstance();
         session = Session.getInstance();
 
         /* Create slide menu */
@@ -189,8 +191,9 @@ public class ChatActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.readMessageName, readMessageListener);
         server.attachActivityCallback(Constants.newMessageName, addMessageListener);
         server.attachActivityCallback(Constants.getMemberJoinHistory, refreshMessageListener);
-        server.attachActivityCallback(Constants.readNbreadOfMessages, messageAckListener);
+        server.attachActivityCallback(Constants.readNbreadOfMessages, refreshMessageListener);
         server.attachActivityCallback(Constants.messageAckName, messageAckListener);
+        server.attachActivityCallback(Constants.ackMessageName, ackMessageListener);
         server.attachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.attachActivityCallback(Constants.membersExitName, memberExitListener);
         server.attachActivityCallback(Constants.exitGroupName, exitGroupListener);
@@ -202,6 +205,14 @@ public class ChatActivity extends AppCompatActivity
         /* Request nbNotRead of messages read */
         requestNbreadOfMessages(group.getMessageList().getList());
 
+        // Get last message
+        PokoMessage lastMessage = group.getMessageList().getLastMessage();
+
+        // Set last message id at first
+        if (lastMessage != null) {
+            lastMessageIdAtFirst = lastMessage.getMessageId();
+        }
+
         firstRead = true;
     }
 
@@ -212,13 +223,12 @@ public class ChatActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
         server.detachActivityCallback(Constants.newMessageName, addMessageListener);
         server.detachActivityCallback(Constants.getMemberJoinHistory, refreshMessageListener);
-        server.detachActivityCallback(Constants.readNbreadOfMessages, messageAckListener);
+        server.detachActivityCallback(Constants.readNbreadOfMessages, refreshMessageListener);
         server.detachActivityCallback(Constants.messageAckName, messageAckListener);
+        server.detachActivityCallback(Constants.ackMessageName, ackMessageListener);
         server.detachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
         server.detachActivityCallback(Constants.exitGroupName, exitGroupListener);
-
-        closeChatting();
 
         super.onDestroy();
     }
@@ -230,7 +240,7 @@ public class ChatActivity extends AppCompatActivity
         if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
             drawerLayout.closeDrawer(Gravity.RIGHT);
         } else {
-            super.onBackPressed();
+            closeChatting();
         }
     }
 
@@ -278,6 +288,9 @@ public class ChatActivity extends AppCompatActivity
 
         // End chat
         ChatManager.endChat(group);
+
+        // Finish
+        finish();
     }
 
     private void creationError(String errMsg) {
@@ -301,7 +314,7 @@ public class ChatActivity extends AppCompatActivity
     private View.OnClickListener backspaceButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            finish();
+            closeChatting();
         }
     };
 
@@ -378,9 +391,17 @@ public class ChatActivity extends AppCompatActivity
                             sendAckToLastMessage();
                         }
 
-                        // If server gave maximum number of message request next messages
+                        // If server gave maximum number of message request next messages,
+                        // we request new messages after last message from server
                         if (readMessages.size() >= Constants.nbMessageRead) {
-                            requestUnackedMessages();
+                            PokoMessage lastMessage = group.getMessageList().getLastMessage();
+
+                            if (lastMessage != null) {
+                                // Request new messages after last message from server
+                                server.sendReadMessage(group.getGroupId(),
+                                        lastMessage.getMessageId() + 1,
+                                        Constants.nbMessageRead);
+                            }
                         }
                     }
                 }
@@ -428,7 +449,7 @@ public class ChatActivity extends AppCompatActivity
                         /* Ack if it is a new message */
                         int messageId = newMessage.getMessageId();
                         if (newMessage.getNbNotReadUser() > 0 && !myMessage) {
-                            server.sendAckMessage(group.getGroupId(), 0, messageId);
+                            server.sendAckMessage(group.getGroupId(), messageId, messageId);
                         }
 
                         /* If it's my message or fully at bottom, scroll down */
@@ -451,11 +472,54 @@ public class ChatActivity extends AppCompatActivity
     private ActivityCallback messageAckListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            final Group ackedGroup = (Group) getData("group");
+            final Integer ackStart = (Integer) getData("ackStart");
+            final Integer ackEnd = (Integer) getData("ackEnd");
+            final User user = (User) getData("user");
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
                     /* Refresh NbNotReadUser number */
                     messageListAdapter.notifyDataSetChanged();
+                }
+            });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
+    private ActivityCallback ackMessageListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            final Group ackedGroup = (Group) getData("group");
+            final Integer ackStart = (Integer) getData("ackStart");
+            final Integer ackEnd = (Integer) getData("ackEnd");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (ackedGroup == null || ackStart == null || ackEnd == null) {
+                        return;
+                    }
+
+                    if (ackedGroup == group) {
+                        // Send NbRead of messages if acked message ids are in
+                        // range of first last message
+                        if (lastMessageIdAtFirst != null &&
+                                ackStart <= lastMessageIdAtFirst) {
+                            int endId = Math.min(ackEnd, lastMessageIdAtFirst);
+                            endId = Math.min(endId, group.getAck());
+
+                            server.sendReadNbreadOfMessages(group.getGroupId(), ackStart, endId);
+                            Log.v("POKO", "ackstrt " + ackStart + " ack end " + ackEnd);
+                            Log.v("POKO", "ACKED, next nbread is " + ackStart + " to " + endId);
+                        }
+
+                        /* Refresh NbNotReadUser number */
+                        messageListAdapter.notifyDataSetChanged();
+                    }
                 }
             });
         }
@@ -616,7 +680,7 @@ public class ChatActivity extends AppCompatActivity
 
             if (lastMessageId > ack) {
                 // Ack till last message.
-                server.sendAckMessage(group.getGroupId(), 0, lastMessageId);
+                server.sendAckMessage(group.getGroupId(), ack + 1, lastMessageId);
             }
         }
     }
@@ -650,6 +714,17 @@ public class ChatActivity extends AppCompatActivity
             }
         }
 
+        // We do not request nbRead of unacked messages
+        // because it may cause ack number error
+        if (maxId > group.getAck()) {
+            maxId = group.getAck();
+        }
+
+        // Max id should be greater than min id
+        if (maxId < minId) {
+            return;
+        }
+
         Log.v("POKO", "request nbread min "+ minId + ", max " + maxId);
         server.sendReadNbreadOfMessages(group.getGroupId(), minId, maxId);
     }
@@ -681,8 +756,16 @@ public class ChatActivity extends AppCompatActivity
 
                     Log.v("POKO", "Mark position");
 
+                    // Get user
+                    Contact user = Session.getInstance().getUser();
+
+                    if (user == null) {
+                        return null;
+                    }
+
                     // Get a database for reading
-                    PokoDatabase pokoDatabase = PokoDatabase.getInstance(getApplicationContext());
+                    PokoUserDatabase pokoDatabase = PokoUserDatabase.getInstance(
+                            getApplicationContext(), user.getUserId());
                     SQLiteDatabase db = pokoDatabase.getReadableDatabase();
 
                     // Query to read a next at most MESSAGE_LOAD_NUM messages
@@ -710,6 +793,8 @@ public class ChatActivity extends AppCompatActivity
                         }
                     } finally {
                         cursor.close();
+
+                        db.releaseReference();
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

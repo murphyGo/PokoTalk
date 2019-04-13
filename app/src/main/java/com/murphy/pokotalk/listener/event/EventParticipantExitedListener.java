@@ -1,11 +1,13 @@
 package com.murphy.pokotalk.listener.event;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.event.PokoEvent;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.server.PokoServer;
@@ -57,13 +59,45 @@ public class EventParticipantExitedListener extends PokoServer.PokoListener {
 
     @Override
     public PokoAsyncDatabaseJob getDatabaseJob() {
-        return null;
+        return new DatabaseJob();
     }
 
     static class DatabaseJob extends PokoAsyncDatabaseJob {
         @Override
         protected void doJob(HashMap<String, Object> data) {
+            PokoEvent event = (PokoEvent) data.get("event");
+            User participant = (User) data.get("participant");
 
+            if (event == null || participant == null) {
+                return;
+            }
+
+            Log.v("POKO", "START TO erase event participant DATA");
+
+            /* Get database to write */
+            SQLiteDatabase db = getWritableDatabase();
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                String[] selectionArgs = {Integer.toString(event.getEventId()),
+                        Integer.toString(participant.getUserId())};
+
+                // Update event ack data
+                if (PokoDatabaseHelper.deleteEventParticipantData(db, selectionArgs) == 0) {
+                    Log.e("POKO", "Failed to erase event participant, no such event participant");
+                }
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "Erase event participant data successfully");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to erase event participant data");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+
+                db.releaseReference();
+            }
         }
     }
 }

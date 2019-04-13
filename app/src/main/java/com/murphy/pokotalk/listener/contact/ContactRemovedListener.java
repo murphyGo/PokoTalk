@@ -5,8 +5,8 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -70,6 +70,8 @@ public class ContactRemovedListener extends PokoServer.PokoListener {
                 Log.v("POKO", "write contact removed successfully");
             } catch (Exception e) {
                 Log.v("POKO", "Failed to write contact removed data");
+            } finally {
+                db.releaseReference();
             }
         }
     }

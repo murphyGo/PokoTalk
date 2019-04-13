@@ -7,11 +7,10 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.file.json.Parser;
-import com.murphy.pokotalk.data.file.json.Serializer;
-import com.murphy.pokotalk.data.file.schema.SessionSchema;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.json.Parser;
+import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.server.PokoServer;
@@ -71,7 +70,7 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             }
 
             /* Get up-to-date contact and group and event list */
-            PokoServer server = PokoServer.getInstance(null);
+            PokoServer server = PokoServer.getInstance();
             server.sendGetContactList();
             server.sendGetGroupList();
             server.sendGetEventList();
@@ -110,27 +109,18 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             Log.v("POKO", "START TO WRITE SESSION DATA " + user.getNickname() + ", " + user.getUserId());
 
             /* Save session data */
-            SQLiteDatabase db = getWritableDatabase();
+            SQLiteDatabase db = getWritableSessionDatabase();
 
             ContentValues sessionValues = Serializer.obtainSessionValues(session);
-            ContentValues userValues = Serializer.obtainUserValues(user);
 
             // Start a transaction
             db.beginTransaction();
             try {
-                // Remove contact data of the user
-                String[] selectionArgs = {Integer.toString(user.getUserId())};
-                PokoDatabaseHelper.deleteContactData(db, selectionArgs);
-
                 // Delete any other session data
-                db.delete(SessionSchema.Entry.TABLE_NAME, null, null);
-
-                // Insert or update user data
-                PokoDatabaseHelper.insertOrUpdateUserData(db, user, userValues);
+                PokoDatabaseHelper.deleteAllSessionData(db);
 
                 // Insert session data
-                db.insertWithOnConflict(SessionSchema.Entry.TABLE_NAME,
-                        null, sessionValues, SQLiteDatabase.CONFLICT_REPLACE);
+                PokoDatabaseHelper.insertOrUpdateSessionData(db, sessionValues);
 
                 db.setTransactionSuccessful();
                 Log.v("POKO", "WRITE SESSION DATA successfully");
@@ -139,6 +129,8 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             } finally {
                 // End a transaction
                 db.endTransaction();
+
+                db.releaseReference();
             }
         }
     }

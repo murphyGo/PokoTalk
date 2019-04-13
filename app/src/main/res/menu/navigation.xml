@@ -14,4 +14,9 @@
         android:id="@+id/navigation_event"
         android:icon="@android:drawable/ic_menu_recent_history"
         android:title="이벤트" />
+
+    <item
+        android:id="@+id/navigation_settings"
+        android:icon="@drawable/settings"
+        android:title="설정" />
 </menu>

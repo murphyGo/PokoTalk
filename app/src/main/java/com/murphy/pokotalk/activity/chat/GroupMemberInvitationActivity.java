@@ -123,7 +123,7 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
             /* Send invite message and return to chat */
             ArrayList<Contact> selectedContacts = new ArrayList<>();
             selectedContacts.addAll(memberSet);
-            PokoServer server = PokoServer.getInstance(getApplicationContext());
+            PokoServer server = PokoServer.getInstance();
             ArrayList<String> emails = new ArrayList<>();
             for (Contact contact : selectedContacts) {
                 emails.add(contact.getEmail());

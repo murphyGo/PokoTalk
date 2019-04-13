@@ -12,6 +12,6 @@ public class OnConnectionErrorListener extends PokoServer.SocketEventListener {
 
     @Override
     public void call(Status status, Object... args) {
-        PokoServer.getInstance(null).setConnected(false);
+        PokoServer.getInstance().setConnected(false);
     }
 }

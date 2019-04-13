@@ -60,14 +60,15 @@ public class EventLocationSelectionActivity extends FragmentActivity
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.event_location_selection_layout);
+        setContentView(R.layout.event_location_layout);
 
         // Initialize selected location
         selectedLocation = null;
 
         // Get intent data
         Intent intent = getIntent();
-        if (intent.hasExtra("selected")) {
+        if (intent.hasExtra("selected") &&
+                intent.getBooleanExtra("selected", false)) {
             LatLng latLng = intent.getParcelableExtra("latLng");
             selectedLocation = new LocationSearchResult();
             selectedLocation.setTitle(intent.getStringExtra("title"));
@@ -84,6 +85,13 @@ public class EventLocationSelectionActivity extends FragmentActivity
         searchResultList = findViewById(R.id.eventLocationSearchList);
         information = findViewById(R.id.eventLocationSearchInformation);
         bottomLayout = findViewById(R.id.eventLocationSearchBottomLayout);
+
+        // Hide search edit text if it is not selectable
+        if (intent.hasExtra("unSelectable") &&
+                intent.getBooleanExtra("unSelectable", false)) {
+            searchEditText.setVisibility(View.GONE);
+            selectButton.setVisibility(View.GONE);
+        }
 
         // Create map fragment and add.
         fragment = MapFragment.newInstance(createMapOption());

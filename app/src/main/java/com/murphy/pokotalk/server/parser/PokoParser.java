@@ -5,7 +5,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.event.PokoEvent;
-import com.murphy.pokotalk.data.file.json.Parser;
+import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -31,12 +31,12 @@ import java.util.TimeZone;
 
 /* Parse JSONObject and String data from PokoTalk server */
 public class PokoParser {
-    public static DataCollection collection = DataCollection.getInstance();
     public static final int SERVER_EVENT_ACK_NOT_SEEN = 0;
     public static final int SERVER_EVENT_ACK_SEEN = 1;
     public static final int SERVER_EVENT_ACK_SEEN_STARTED = 2;
 
-    public static Contact parseContact(JSONObject jsonObject) throws JSONException, ParseException {
+    public static Contact parseContact(JSONObject jsonObject) throws JSONException {
+        DataCollection collection = DataCollection.getInstance();
         Contact result = new Contact();
         ContactPokoList contactList = collection.getContactList();
 
@@ -83,7 +83,7 @@ public class PokoParser {
     }
 
     public static Boolean parseContactInvitedField(JSONObject jsonObject) throws JSONException {
-        return jsonObject.getInt("invited") != 0 ? true : false;
+        return jsonObject.getInt("invited") != 0;
     }
 
     /** Parse group
@@ -128,6 +128,7 @@ public class PokoParser {
     }
 
     public static PokoMessage parseMessage(JSONObject jsonObject) throws JSONException, ParseException {
+        // Get lists
         PokoMessage result = new PokoMessage();
         DataCollection collection = DataCollection.getInstance();
         ContactPokoList contactList = collection.getContactList();
@@ -170,7 +171,10 @@ public class PokoParser {
             writer = stranger;
         }
 
+        // Set writer
         result.setWriter(writer);
+
+        // Parse message content
         parseMessageContent(result, jsonObject);
 
         return result;
@@ -216,6 +220,7 @@ public class PokoParser {
     }
 
     public static PokoEvent parseEvent(JSONObject jsonObject) throws JSONException {
+        DataCollection collection = DataCollection.getInstance();
         PokoEvent event = new PokoEvent();
         event.setEventId(jsonObject.getInt("eventId"));
         event.setEventName(jsonObject.getString("name"));
@@ -265,6 +270,22 @@ public class PokoParser {
                 /* Add to participant */
                 participants.updateItem(participant);
             }
+        }
+        if (jsonObject.has("creater") && !jsonObject.isNull("creater")) {
+            JSONObject jsonCreator = jsonObject.getJSONObject("creater");
+
+            /* Get existing user or create new user */
+            User creator = parseStranger(jsonCreator);
+            User exist = collection.getUserById(creator.getUserId());
+            if (exist == null) {
+                collection.updateUserList(creator);
+            } else {
+                creator = exist;
+            }
+
+            event.setCreator(creator);
+        } else {
+            throw new JSONException("Event creator must exist");
         }
         return event;
     }
@@ -320,7 +341,14 @@ public class PokoParser {
                     jsonLocal.getDouble("longitude"));
             location.setLatLng(latLng);
         } else {
-            location.setLatLng(null);
+            throw new JSONException("Event location does not have coordinates data");
+        }
+        if (jsonLocal.has("date") && !jsonLocal.isNull("date")) {
+            Calendar date = Parser.epochInMillsToCalendar(jsonLocal.getLong("date"));
+
+            location.setMeetingDate(date);
+        } else {
+            throw new JSONException("Event location does not have date data");
         }
 
         return location;

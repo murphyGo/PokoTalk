@@ -185,7 +185,7 @@ public class EventCreationActivity extends AppCompatActivity
                 }
 
                 // Get server
-                PokoServer server = PokoServer.getInstance(getApplicationContext());
+                PokoServer server = PokoServer.getInstance();
 
                 // Send event add request
                 server.sendCreateEvent(name, description, emails, date, location);
@@ -218,6 +218,13 @@ public class EventCreationActivity extends AppCompatActivity
 
         if (hourEditText.getText().toString().trim().length() == 0) {
             Toast.makeText(getApplicationContext(), R.string.event_creation_no_time,
+                    Toast.LENGTH_SHORT).show();
+
+            return false;
+        }
+
+        if (location == null) {
+            Toast.makeText(getApplicationContext(), R.string.event_creation_no_location,
                     Toast.LENGTH_SHORT).show();
 
             return false;

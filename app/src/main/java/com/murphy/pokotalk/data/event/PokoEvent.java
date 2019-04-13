@@ -2,12 +2,14 @@ package com.murphy.pokotalk.data.event;
 
 import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.group.Group;
+import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserPokoList;
 
 import java.util.Calendar;
 
 public class PokoEvent extends Item {
     protected int eventId;
+    protected User creator;
     protected String eventName;
     protected String description;
     protected UserPokoList participants;
@@ -58,6 +60,14 @@ public class PokoEvent extends Item {
 
     public void setEventId(int eventId) {
         this.eventId = eventId;
+    }
+
+    public User getCreator() {
+        return creator;
+    }
+
+    public void setCreator(User creator) {
+        this.creator = creator;
     }
 
     public String getEventName() {

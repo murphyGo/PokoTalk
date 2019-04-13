@@ -1,226 +1,76 @@
 package com.murphy.pokotalk.activity.contact;
 
 import android.os.Bundle;
-import android.support.v7.app.AlertDialog;
+import android.support.design.widget.TabLayout;
+import android.support.v4.app.Fragment;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ListView;
 import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.contact.PendingContactListAdapter;
-import com.murphy.pokotalk.adapter.ViewCreationCallback;
-import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
-import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.adapter.PendingContactListViewPagerAdapter;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
-import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
-import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.view.PendingContactItem;
 
-public class PendingContactActivity extends AppCompatActivity implements ContactAddDialog.ContactAddDialogListener,
-PendingContactOptionDialog.PendingContactOptionDialogListener {
+public class PendingContactActivity extends AppCompatActivity
+        implements ContactAddDialog.ContactAddDialogListener,
+                    PendingContactOptionDialog.PendingContactOptionDialogListener,
+                    InvitedPendingContactFragment.Listener {
     private PokoServer server;
     private Button addButton;
-    private ListView invitedListView;
-    private ListView invitingListView;
-    private PendingContactPokoList invitedList;
-    private PendingContactPokoList invitingList;
-    private PendingContactListAdapter invitedListAdapter;
-    private PendingContactListAdapter invitingListAdapter;
-    private AlertDialog.Builder contactBuilder;
+    private ViewPager viewPager;
+    private TabLayout tabLayout;
+    private Fragment[] fragments = {new InvitedPendingContactFragment(),
+            new InvitingPendingContactFragment()};
+    private PendingContactListViewPagerAdapter pagerAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.pending_contact_list_layout);
 
-        invitedListView = (ListView) findViewById(R.id.invitedList);
-        invitingListView = (ListView) findViewById(R.id.invitingList);
-        addButton = (Button) findViewById(R.id.contactAddButton);
+        addButton = findViewById(R.id.contactAddButton);
+        viewPager = findViewById(R.id.pendingContactViewPager);
+        tabLayout = findViewById(R.id.pendingContactTabLayout);
 
-        /* Get collection and contact lists */
-        DataCollection data = DataCollection.getInstance();
-        invitedList = data.getInvitedContactList();
-        invitingList = data.getInvitingContactList();
+        // Create pager adapter
+        pagerAdapter = new PendingContactListViewPagerAdapter(
+                this, getSupportFragmentManager(), fragments);
 
-        /* Create and set adapters */
-        /* Create adapter and set to ListView */
-        try {
-            DataLock.getInstance().acquireWriteLock();
+        // Set to view pager
+        viewPager.setAdapter(pagerAdapter);
 
-            try {
-                invitedListAdapter = new PendingContactListAdapter(this);
-                invitingListAdapter = new PendingContactListAdapter(this);
-                invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
-                invitingListAdapter.setViewCreationCallback(invitingContactCreationCallback);
-                PendingContactPokoList invitedListUI = (PendingContactPokoList) invitedListAdapter.getPokoList();
-                PendingContactPokoList invitingListUI = (PendingContactPokoList) invitingListAdapter.getPokoList();
-                invitedListUI.copyFromPokoList(invitedList);
-                invitingListUI.copyFromPokoList(invitingList);
-                invitedListView.setAdapter(invitedListAdapter);
-                invitingListView.setAdapter(invitingListAdapter);
-                invitedListAdapter.setInvited(true);
-                invitingListAdapter.setInvited(false);
-            } finally {
-                DataLock.getInstance().releaseWriteLock();
-            }
+        // Set view pager to tab layout
+        tabLayout.setupWithViewPager(viewPager);
 
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
-        /* Get server and attach event callback */
-        server = PokoServer.getInstance(this);
-        server.attachActivityCallback(Constants.getContactListName, getPendingContactListCallback);
-        server.attachActivityCallback(Constants.getPendingContactListName, getPendingContactListCallback);
-        server.attachActivityCallback(Constants.newPendingContactName, addPendingContactCallback);
-        server.attachActivityCallback(Constants.newContactName, removePendingContactCallback);
-        server.attachActivityCallback(Constants.contactRemovedName, removePendingContactCallback);
-        server.attachActivityCallback(Constants.contactDeniedName, removePendingContactCallback);
-        server.sendGetPendingContactList();
-
+        // Add button listener
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 openContactAddDialog();
             }
         });
+
+        // Request for pending contact list
+        server = PokoServer.getInstance();
+        if (server != null) {
+            server.sendGetPendingContactList();
+        }
     }
-
-    @Override
-    protected void onDestroy() {
-        server.detachActivityCallback(Constants.getContactListName, getPendingContactListCallback);
-        server.detachActivityCallback(Constants.getPendingContactListName, getPendingContactListCallback);
-        server.detachActivityCallback(Constants.newPendingContactName, addPendingContactCallback);
-        server.detachActivityCallback(Constants.newContactName, removePendingContactCallback);
-        server.detachActivityCallback(Constants.contactRemovedName, removePendingContactCallback);
-        server.detachActivityCallback(Constants.contactDeniedName, removePendingContactCallback);
-
-        super.onDestroy();
-    }
-
-    /* Server event callback */
-    private ActivityCallback getPendingContactListCallback = new ActivityCallback() {
-        @Override
-        public void onSuccess(Status status, Object... args) {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    invitedListAdapter.getPokoList().copyFromPokoList(invitedList);
-                    invitingListAdapter.getPokoList().copyFromPokoList(invitingList);
-                    invitedListAdapter.notifyDataSetChanged();
-                    invitingListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-
-        @Override
-        public void onError(Status status, Object... args) {
-
-        }
-    };
-
-    private ActivityCallback addPendingContactCallback = new ActivityCallback() {
-        @Override
-        public void onSuccess(Status status, Object... args) {
-            final Boolean invited = (Boolean) getData("invited");
-            final PendingContact pendingContact = (PendingContact) getData("pendingContact");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (invited == null || pendingContact == null) {
-                        return;
-                    }
-                    if (invited) {
-                        invitedListAdapter.getPokoList().updateItem(pendingContact);
-                        invitedListAdapter.notifyDataSetChanged();
-                    } else {
-                        invitingListAdapter.getPokoList().updateItem(pendingContact);
-                        invitingListAdapter.notifyDataSetChanged();
-                    }
-                }
-            });
-        }
-
-        @Override
-        public void onError(Status status, Object... args) {
-
-        }
-    };
-
-    private ActivityCallback removePendingContactCallback = new ActivityCallback() {
-        @Override
-        public void onSuccess(Status status, Object... args) {
-            final Integer userId = (Integer) getData("userId");
-            final Contact contact = (Contact) getData("contact");
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if (userId != null) {
-                        invitedListAdapter.getPokoList().removeItemByKey(userId);
-                        invitingListAdapter.getPokoList().removeItemByKey(userId);
-                    }
-                    if (contact != null) {
-                        invitedListAdapter.getPokoList().removeItemByKey(contact.getUserId());
-                        invitingListAdapter.getPokoList().removeItemByKey(contact.getUserId());
-                    }
-                    invitedListAdapter.notifyDataSetChanged();
-                    invitingListAdapter.notifyDataSetChanged();
-                }
-            });
-        }
-
-        @Override
-        public void onError(Status status, Object... args) {
-
-        }
-    };
-
-    /* PokoList item creation callback */
-    private ViewCreationCallback invitedContactCreationCallback = new ViewCreationCallback<PendingContact>() {
-        @Override
-        public void run(View view, PendingContact p) {
-            PendingContactItem item = (PendingContactItem) view;
-            final PendingContact contact = item.getPendingContact();
-
-            Button acceptButton = item.getAcceptButton();
-            acceptButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    server.sendAcceptContact(contact.getEmail());
-                }
-            });
-
-            view.setOnLongClickListener(new View.OnLongClickListener() {
-                @Override
-                public boolean onLongClick(View v) {
-                    openContactOptionDialog(contact);
-                    return true;
-                }
-            });
-        }
-    };
-
-    private ViewCreationCallback invitingContactCreationCallback = new ViewCreationCallback<PendingContact>() {
-        @Override
-        public void run(View view, PendingContact p) {
-            PendingContactItem item = (PendingContactItem) view;
-            PendingContact contact = item.getPendingContact();
-        }
-    };
 
     /* Dialog opening functions */
     public void openContactAddDialog() {
+        // Show contact email input dialog
         ContactAddDialog dialog = new ContactAddDialog();
         dialog.show(getSupportFragmentManager(), "친구 추가");
     }
 
+    @Override
     public void openContactOptionDialog(PendingContact contact) {
+        // Show invited contact option dialog
         PendingContactOptionDialog dialog = new PendingContactOptionDialog();
         dialog.setContact(contact);
         dialog.show(getSupportFragmentManager(), "친구 요청 응답 옵션");
@@ -229,18 +79,31 @@ PendingContactOptionDialog.PendingContactOptionDialogListener {
     /* Dialog listeners */
     @Override
     public void contactAdd(String email) {
-        server.sendAddContact(email);
-        Toast.makeText(this, "친구 추가 요청 보냄", Toast.LENGTH_SHORT);
+        if (server != null) {
+            // Send contact add request
+            server.sendAddContact(email);
+
+            // Show toast message
+            Toast.makeText(this,
+                    String.format(Constants.locale,
+                            getString(R.string.pending_contact_add_toast),
+                            email), Toast.LENGTH_SHORT).show();
+        }
     }
 
+    // Pending contact user action listener
     @Override
     public void pendingContactOptionClick(int option, PendingContact contact) {
         switch (option) {
             case PendingContactOptionDialog.ACCEPT_CONTACT:
-                server.sendAcceptContact(contact.getEmail());
+                if (server != null) {
+                    server.sendAcceptContact(contact.getEmail());
+                }
                 break;
             case PendingContactOptionDialog.DENY_CONTACT:
-                server.sendDenyContact(contact.getEmail());
+                if (server != null) {
+                    server.sendDenyContact(contact.getEmail());
+                }
                 break;
         }
     }

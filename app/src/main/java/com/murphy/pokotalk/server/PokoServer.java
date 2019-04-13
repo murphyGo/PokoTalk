@@ -11,9 +11,9 @@ import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseManager;
 import com.murphy.pokotalk.data.event.EventLocation;
-import com.murphy.pokotalk.data.file.PokoAsyncDatabaseJob;
-import com.murphy.pokotalk.data.file.PokoDatabaseManager;
 import com.murphy.pokotalk.listener.chat.AckMessageListener;
 import com.murphy.pokotalk.listener.chat.GetMemberJoinHistory;
 import com.murphy.pokotalk.listener.chat.MessageAckListener;
@@ -59,34 +59,50 @@ import java.util.Map;
 
 public class PokoServer extends ServerSocket {
     protected static PokoServer pokoServer = null;
-    protected boolean connecting;
-    protected boolean connected;
+    protected int state = IDLE;
 
+    public static final int IDLE = 0;
+    public static final int CONNECTING = 1;
+    public static final int CONNECTED = 2;
+    public static final int DISCONNECTED = 3;
+    
     public PokoServer() {
         super(Constants.serverURL);
-        connecting = false;
     }
 
     /* There is only one connection so we use singleton design
     * Socket try to connect only when getInstance method is called with context not null */
-    public static PokoServer getInstance(@Nullable Context context) {
-        try {
-            if (pokoServer == null) {
-                pokoServer = new PokoServer();
+    public static PokoServer getInstance() {
+        if (pokoServer == null) {
+            synchronized (PokoServer.class) {
+                pokoServer = pokoServer == null ? new PokoServer(): pokoServer;
             }
-            if (!pokoServer.connecting && context != null) {
-                pokoServer.createSocket(context);
-                pokoServer.enrollOnMessageHandlers();
-                pokoServer.connect();
-                pokoServer.connecting = true;
+        }
+        
+        return pokoServer;
+    }
+    
+    // Connect to server
+    public void connect(Context context) {
+        try {
+            if (state == IDLE && context != null) {
+                createSocket(context);
+                enrollOnMessageHandlers();
+                connect();
+                state = CONNECTING;
             }
         } catch (Exception e) {
             e.printStackTrace();
             Log.e("Socket error", e.toString());
-            return null;
         }
+    }
 
-        return pokoServer;
+    // Disconnect from server
+    @Override
+    public void disconnect() {
+        super.disconnect();
+        
+        state = IDLE;
     }
 
     private static abstract class EventListener implements Emitter.Listener {
@@ -123,7 +139,7 @@ public class PokoServer extends ServerSocket {
             Status status = new Status(Status.SUCCESS);
 
             call(status, args);
-            PokoServer.getInstance(null).startActivityCallbacks(getEventName(), status, data, args);
+            PokoServer.getInstance().startActivityCallbacks(getEventName(), status, data, args);
         }
 
         public abstract void call(Status status, Object... args);
@@ -169,7 +185,7 @@ public class PokoServer extends ServerSocket {
                     }
 
                     /* Start callbacks given by activities */
-                    PokoServer.getInstance(null).
+                    PokoServer.getInstance().
                             startActivityCallbacks(getEventName(), status, this.data, args);
 
                 } finally {
@@ -195,7 +211,7 @@ public class PokoServer extends ServerSocket {
         data.put("email", email);
         data.put("password", password);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.accountRegisteredName, jsonData);
+        socket.emit(Constants.accountRegisteredName, jsonData);
     }
 
     public void sendPasswordLogin(String email, String password) {
@@ -203,61 +219,61 @@ public class PokoServer extends ServerSocket {
         data.put("email", email);
         data.put("password", password);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.passwordLoginName, jsonData);
+        socket.emit(Constants.passwordLoginName, jsonData);
     }
 
     public void sendSessionLogin(String sessionId) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("sessionId", sessionId);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.sessionLoginName, jsonData);
+        socket.emit(Constants.sessionLoginName, jsonData);
     }
 
     public void sendGetContactList() {
-        mSocket.emit(Constants.getContactListName);
+        socket.emit(Constants.getContactListName);
     }
 
     public void sendGetPendingContactList() {
-        mSocket.emit(Constants.getPendingContactListName);
+        socket.emit(Constants.getPendingContactListName);
     }
 
     public void sendAddContact(String email) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("email", email);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.addContactName, jsonData);
+        socket.emit(Constants.addContactName, jsonData);
     }
 
     public void sendRemoveContact(String email) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("email", email);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.removeContactName, jsonData);
+        socket.emit(Constants.removeContactName, jsonData);
     }
 
     public void sendAcceptContact(String email) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("email", email);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.acceptContactName, jsonData);
+        socket.emit(Constants.acceptContactName, jsonData);
     }
 
     public void sendDenyContact(String email) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("email", email);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.denyContactName, jsonData);
+        socket.emit(Constants.denyContactName, jsonData);
     }
 
     public void sendJoinContactChat(String email) {
         Map<String, String> data = new HashMap<String, String>();
         data.put("email", email);
         JSONObject jsonData = new JSONObject(data);
-        mSocket.emit(Constants.joinContactChatName, jsonData);
+        socket.emit(Constants.joinContactChatName, jsonData);
     }
 
     public void sendGetGroupList() {
-        mSocket.emit(Constants.getGroupListName);
+        socket.emit(Constants.getGroupListName);
     }
 
     public void sendAddGroup(String name, List<String> emails) {
@@ -266,7 +282,7 @@ public class PokoServer extends ServerSocket {
             jsonData.put("name", name);
             JSONArray jsonEmailArray = new JSONArray(emails);
             jsonData.put("members", jsonEmailArray);
-            mSocket.emit(Constants.addGroupName, jsonData);
+            socket.emit(Constants.addGroupName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -276,7 +292,7 @@ public class PokoServer extends ServerSocket {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("groupId", groupId);
-            mSocket.emit(Constants.exitGroupName, jsonData);
+            socket.emit(Constants.exitGroupName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -290,7 +306,7 @@ public class PokoServer extends ServerSocket {
             jsonData.put("sendId", sendId);
             jsonData.put("content", content);
             jsonData.put("importance", importanceLevel);
-            mSocket.emit(Constants.sendMessageName, jsonData);
+            socket.emit(Constants.sendMessageName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -302,7 +318,7 @@ public class PokoServer extends ServerSocket {
             jsonData.put("groupId", groupId);
             jsonData.put("startMessageId", startMessageId);
             jsonData.put("nbMessageMax", nbMessageMax);
-            mSocket.emit(Constants.readMessageName, jsonData);
+            socket.emit(Constants.readMessageName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -314,7 +330,7 @@ public class PokoServer extends ServerSocket {
             jsonData.put("groupId", groupId);
             jsonData.put("startMessageId", startMessageId);
             jsonData.put("endMessageId", endMessageId);
-            mSocket.emit(Constants.readNbreadOfMessages, jsonData);
+            socket.emit(Constants.readNbreadOfMessages, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -326,7 +342,7 @@ public class PokoServer extends ServerSocket {
             jsonData.put("groupId", groupId);
             JSONArray jsonEmailArray = new JSONArray(emails);
             jsonData.put("members", jsonEmailArray);
-            mSocket.emit(Constants.inviteGroupMembersName, jsonData);
+            socket.emit(Constants.inviteGroupMembersName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -338,7 +354,7 @@ public class PokoServer extends ServerSocket {
             jsonData.put("groupId", groupId);
             jsonData.put("ackStart", fromId);
             jsonData.put("ackEnd", toId);
-            mSocket.emit(Constants.ackMessageName, jsonData);
+            socket.emit(Constants.ackMessageName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -349,14 +365,14 @@ public class PokoServer extends ServerSocket {
             JSONObject jsonData = new JSONObject();
             jsonData.put("groupId", groupId);
             jsonData.put("messageId", messageId);
-            mSocket.emit(Constants.getMemberJoinHistory, jsonData);
+            socket.emit(Constants.getMemberJoinHistory, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
     public void sendGetEventList() {
-        mSocket.emit(Constants.getEventListName);
+        socket.emit(Constants.getEventListName);
     }
 
     public void sendCreateEvent(String name, String description, List<String> emails,
@@ -381,16 +397,41 @@ public class PokoServer extends ServerSocket {
                 jsonData.put("localization", jsonLocalization);
             }
 
-            mSocket.emit(Constants.createEventName, jsonData);
+            socket.emit(Constants.createEventName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
     }
 
+    public void sendEventExit(int eventId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("eventId", eventId);
+            socket.emit(Constants.eventExitName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendEventAck(int eventId, int ack) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("eventId", eventId);
+            jsonData.put("ack", ack);
+            socket.emit(Constants.eventAckName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendLogout() {
+        socket.emit(Constants.logoutName);
+    }
+
     /* Methods for handling on message */
     protected void enrollOnMessageHandlers() {
         /* Add basic authentication header for connection */
-         mSocket.io().on(Manager.EVENT_TRANSPORT, new Emitter.Listener() {
+         socket.io().on(Manager.EVENT_TRANSPORT, new Emitter.Listener() {
             @Override
             public void call(Object... args) {
                 Transport transport = (Transport) args[0];
@@ -407,46 +448,50 @@ public class PokoServer extends ServerSocket {
          });
 
          /* Enroll event listeners */
-        mSocket.on(Socket.EVENT_CONNECT, new OnConnectionListener());
-        mSocket.on(Socket.EVENT_CONNECT_ERROR, new OnConnectionListener());
-        mSocket.on(Socket.EVENT_DISCONNECT, new OnDisconnectionListener());
-        mSocket.on(Constants.accountRegisteredName, new AccountRegisteredListener());
-        mSocket.on(Constants.passwordLoginName, new PasswordLoginListener());
-        mSocket.on(Constants.sessionLoginName, new SessionLoginListener());
-        mSocket.on(Constants.getContactListName, new GetContactListListener());
-        mSocket.on(Constants.getPendingContactListName, new GetPendingContactListListener());
-        mSocket.on(Constants.newPendingContactName, new NewPendingContactListener());
-        mSocket.on(Constants.newContactName, new NewContactListener());
-        mSocket.on(Constants.contactDeniedName, new ContactDeniedListener());
-        mSocket.on(Constants.contactRemovedName, new ContactRemovedListener());
-        mSocket.on(Constants.joinContactChatName, new JoinContactChatListener());
-        mSocket.on(Constants.contactChatRemovedName, new ContactChatRemovedListener());
-        mSocket.on(Constants.getGroupListName, new GetGroupListListener());
-        mSocket.on(Constants.addGroupName, new AddGroupListener());
-        mSocket.on(Constants.exitGroupName, new ExitGroupListener());
-        mSocket.on(Constants.membersInvitedName, new MembersInvitedListener());
-        mSocket.on(Constants.membersExitName, new MembersExitListener());
-        mSocket.on(Constants.readMessageName, new ReadMessageListener());
-        mSocket.on(Constants.readNbreadOfMessages, new ReadNbreadOfMessages());
-        mSocket.on(Constants.sendMessageName, new SendMessageListener());
-        mSocket.on(Constants.newMessageName, new NewMessageListener());
-        mSocket.on(Constants.messageAckName, new MessageAckListener());
-        mSocket.on(Constants.ackMessageName, new AckMessageListener());
-        mSocket.on(Constants.getMemberJoinHistory, new GetMemberJoinHistory());
-        mSocket.on(Constants.getEventListName, new GetEventListListener());
-        mSocket.on(Constants.eventCreatedName, new EventCreatedListener());
-        mSocket.on(Constants.eventExitName, new EventExitListener());
-        mSocket.on(Constants.eventParticipantExitedName, new EventParticipantExitedListener());
-        mSocket.on(Constants.eventAckName, new EventAckListener());
-        mSocket.on(Constants.eventStartedName, new EventStartedListener());
+        socket.on(Socket.EVENT_CONNECT, new OnConnectionListener());
+        socket.on(Socket.EVENT_CONNECT_ERROR, new OnConnectionListener());
+        socket.on(Socket.EVENT_DISCONNECT, new OnDisconnectionListener());
+        socket.on(Constants.accountRegisteredName, new AccountRegisteredListener());
+        socket.on(Constants.passwordLoginName, new PasswordLoginListener());
+        socket.on(Constants.sessionLoginName, new SessionLoginListener());
+        socket.on(Constants.getContactListName, new GetContactListListener());
+        socket.on(Constants.getPendingContactListName, new GetPendingContactListListener());
+        socket.on(Constants.newPendingContactName, new NewPendingContactListener());
+        socket.on(Constants.newContactName, new NewContactListener());
+        socket.on(Constants.contactDeniedName, new ContactDeniedListener());
+        socket.on(Constants.contactRemovedName, new ContactRemovedListener());
+        socket.on(Constants.joinContactChatName, new JoinContactChatListener());
+        socket.on(Constants.contactChatRemovedName, new ContactChatRemovedListener());
+        socket.on(Constants.getGroupListName, new GetGroupListListener());
+        socket.on(Constants.addGroupName, new AddGroupListener());
+        socket.on(Constants.exitGroupName, new ExitGroupListener());
+        socket.on(Constants.membersInvitedName, new MembersInvitedListener());
+        socket.on(Constants.membersExitName, new MembersExitListener());
+        socket.on(Constants.readMessageName, new ReadMessageListener());
+        socket.on(Constants.readNbreadOfMessages, new ReadNbreadOfMessages());
+        socket.on(Constants.sendMessageName, new SendMessageListener());
+        socket.on(Constants.newMessageName, new NewMessageListener());
+        socket.on(Constants.messageAckName, new MessageAckListener());
+        socket.on(Constants.ackMessageName, new AckMessageListener());
+        socket.on(Constants.getMemberJoinHistory, new GetMemberJoinHistory());
+        socket.on(Constants.getEventListName, new GetEventListListener());
+        socket.on(Constants.eventCreatedName, new EventCreatedListener());
+        socket.on(Constants.eventExitName, new EventExitListener());
+        socket.on(Constants.eventParticipantExitedName, new EventParticipantExitedListener());
+        socket.on(Constants.eventAckName, new EventAckListener());
+        socket.on(Constants.eventStartedName, new EventStartedListener());
     }
 
     /* Getter and Setters */
     public synchronized boolean isConnected() {
-        return connected;
+        return state == CONNECTED;
     }
 
     public synchronized void setConnected(boolean connected) {
-        this.connected = connected;
+        if (connected) {
+            this.state = CONNECTED;
+        } else {
+            this.state = DISCONNECTED;
+        }
     }
 }

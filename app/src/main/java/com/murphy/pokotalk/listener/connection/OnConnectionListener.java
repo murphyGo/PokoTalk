@@ -13,13 +13,13 @@ public class OnConnectionListener extends PokoServer.SocketEventListener {
 
     @Override
     public void call(Status status, Object... args) {
-        PokoServer.getInstance(null).setConnected(true);
+        PokoServer.getInstance().setConnected(true);
 
-        /* If session id exists and the user has not logined, try session login */
+        /* If session id exists and the user has not signed in, try session login */
         Session session = Session.getInstance();
         String sessionId = session.getSessionId();
         if (sessionId != null && !session.hasLogined()) {
-            PokoServer.getInstance(null).sendSessionLogin(sessionId);
+            PokoServer.getInstance().sendSessionLogin(sessionId);
         }
     }
 }

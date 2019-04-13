@@ -30,10 +30,18 @@ public class DataCollection {
     }
 
     public static DataCollection getInstance() {
-        if (instance == null)
-            instance = new DataCollection();
+        if (instance == null) {
+            synchronized (DataCollection.class) {
+                instance = instance == null ? new DataCollection() : instance;
+            }
+        }
 
         return instance;
+    }
+
+    // Reset application data. It simply discard the instance.
+    public static void reset() {
+        instance = null;
     }
 
     /** Insert or update user on proper user list depending on user type
@@ -156,7 +164,7 @@ public class DataCollection {
         return stranger;
     }
 
-    public int getTotalNewMessgaeNumber() {
+    public int getTotalNewMessageNumber() {
         int result = 0;
         GroupPokoList groupList = getGroupList();
 

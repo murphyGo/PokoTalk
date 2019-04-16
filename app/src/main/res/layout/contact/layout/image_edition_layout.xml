@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:id="@+id/profile_top_bar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape"
+        android:layout_weight="0"
+        style="@style/TopBar">
+
+        <Button
+            android:id="@+id/backspaceButton"
+            style="@style/BackButton" />
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/backspaceButton"
+            android:text="@string/image_edition_title"
+            android:textSize="36sp"
+            style="@style/Title"/>
+
+    </RelativeLayout>
+
+    <TextView
+        android:id="@+id/profile_info"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:layout_margin="20dp"
+        style="@style/AppText"
+        android:text="@string/image_edition_notice"/>
+
+    <ImageView
+        android:id="@+id/image_edition_image"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"/>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+       android:gravity="center">
+
+        <Button
+            android:id="@+id/image_edition_rotate_button"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/rotate_icon"/>
+
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/image_edition_select_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0"
+        android:text="@string/image_edition_button"
+        style="@style/AppButton"/>
+
+</LinearLayout>

@@ -31,6 +31,10 @@ import com.murphy.pokotalk.listener.contact.GetPendingContactListListener;
 import com.murphy.pokotalk.listener.contact.JoinContactChatListener;
 import com.murphy.pokotalk.listener.contact.NewContactListener;
 import com.murphy.pokotalk.listener.contact.NewPendingContactListener;
+import com.murphy.pokotalk.listener.content.DownloadListener;
+import com.murphy.pokotalk.listener.content.StartDownloadListener;
+import com.murphy.pokotalk.listener.content.StartUploadListener;
+import com.murphy.pokotalk.listener.content.UploadListener;
 import com.murphy.pokotalk.listener.event.EventAckListener;
 import com.murphy.pokotalk.listener.event.EventCreatedListener;
 import com.murphy.pokotalk.listener.event.EventExitListener;
@@ -45,6 +49,7 @@ import com.murphy.pokotalk.listener.group.MembersInvitedListener;
 import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
 import com.murphy.pokotalk.listener.session.PasswordLoginListener;
 import com.murphy.pokotalk.listener.session.SessionLoginListener;
+import com.murphy.pokotalk.listener.setting.UpdateProfileImageListener;
 import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
@@ -424,6 +429,50 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendUpdateProfileImage(int sendId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("sendId", sendId);
+            socket.emit(Constants.updateProfileImageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendStartUpload(int id, long size, String extension) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("id", id);
+            jsonData.put("size", size);
+            jsonData.put("extension", extension);
+            socket.emit(Constants.startUploadName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendUpload(int id, byte[] binary) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("id", id);
+            jsonData.put("buf", binary);
+            socket.emit(Constants.uploadName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendStartDownload(String contentName, String type) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("contentName", contentName);
+            jsonData.put("type", type);
+            socket.emit(Constants.startUploadName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void sendLogout() {
         socket.emit(Constants.logoutName);
     }
@@ -480,6 +529,11 @@ public class PokoServer extends ServerSocket {
         socket.on(Constants.eventParticipantExitedName, new EventParticipantExitedListener());
         socket.on(Constants.eventAckName, new EventAckListener());
         socket.on(Constants.eventStartedName, new EventStartedListener());
+        socket.on(Constants.startUploadName, new StartUploadListener());
+        socket.on(Constants.uploadName, new UploadListener());
+        socket.on(Constants.startDownloadName, new StartDownloadListener());
+        socket.on(Constants.downloadName, new DownloadListener());
+        socket.on(Constants.updateProfileImageName, new UpdateProfileImageListener());
     }
 
     /* Getter and Setters */

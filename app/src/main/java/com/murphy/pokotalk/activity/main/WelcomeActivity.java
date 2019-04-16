@@ -123,6 +123,10 @@ public class WelcomeActivity extends AppCompatActivity {
                 }
                 break;
             }
+            default: {
+                super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+                break;
+            }
         }
 
         // Check if the user granted the permission

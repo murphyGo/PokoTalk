@@ -1,11 +1,13 @@
 package com.murphy.pokotalk.activity.settings;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,7 +52,7 @@ public class SettingFragment extends Fragment
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull final LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.setting_layout, null, false);
 
         // Get user
@@ -79,6 +81,15 @@ public class SettingFragment extends Fragment
         final LogoutBewareDialog.Listener listener = this;
 
         // Add button listeners
+        profileImageButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Show profile image activity
+                Intent intent = new Intent(getContext(), ProfileSettingActivity.class);
+                startActivityForResult(intent, Constants.RequestCode.PROFILE_UPDATE.value);
+            }
+        });
+
         logoutButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -102,6 +113,15 @@ public class SettingFragment extends Fragment
                 listener.onSettingAction(ACTION_LOGOUT);
                 break;
             }
+        }
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == Constants.RequestCode.PROFILE_UPDATE.value) {
+            Log.v("POKO", "Profile setting activity returned");
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 }

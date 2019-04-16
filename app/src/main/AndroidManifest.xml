@@ -9,6 +9,9 @@
     <!--위치정보활용시 추가--><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
     <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
         android:name=".PokoTalkApp"
@@ -47,12 +50,19 @@
             android:parentActivityName=".activity.main.MainActivity"/>
         <activity android:name=".activity.event.EventLocationSelectionActivity"/>
         <activity android:name=".activity.event.EventDetailActivity"/>
+        <activity android:name=".activity.settings.ProfileSettingActivity"/>
+        <activity android:name=".activity.settings.ImageEditionActivity"/>
 
         <service
             android:name=".service.PokoTalkService"
             android:enabled="true"
             android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE"/>
+
+        <service
+            android:name=".server.content.ContentLoadService"
+            android:enabled="true"
+            android:exported="false" />
 
         <receiver android:name=".service.BootBroadCastReceiver"
             android:enabled="true">

@@ -34,6 +34,57 @@
         취소
     </string>
 
+    <string name="profile_title">
+        프로필 수정
+    </string>
+
+    <string name="profile_message">
+        프로필 사진을 변경해 나의 모습을 표현해주세요.
+        다음 방식 중 한가지를 선택해 프로필 사진을 만들 수 있습니다.
+    </string>
+
+    <string name="profile_gallery_option">
+        갤러리에서 가져오기
+    </string>
+
+    <string name="profile_camera_option">
+        프로필 사진 촬영하기
+    </string>
+
+    <string name="permission_title">
+        접근 권한
+    </string>
+
+    <string name="camera_permission_rationale">
+        카메라로 사진을 찍어오기 위해서는 접근 권한이 필요합니다.
+        권한을 허용하시면 카메라 사용이 가능합니다!
+    </string>
+
+    <string name="permission_got_it">
+        확인
+    </string>
+
+    <string name="permission_deny_it">
+        거부
+    </string>
+
+    <string name="image_edition_title">
+        이미지 편집
+    </string>
+
+    <string name="image_edition_notice">
+        이 이미지로 최종 선택하시려면 확인 버튼을 눌려주세요.
+        이미지 크기가 너무 큰 경우 자동으로 조절됩니다.
+    </string>
+
+    <string name="image_edition_button">
+        이미지 선택
+    </string>
+
+    <string name="no_camera_app_message">
+        실행 가능한 카메라 앱이 없습니다.
+    </string>
+
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
     <string name="group_exit_warning_message">채팅방에서 나가시면 채팅 목록에서 방이 사라지며,

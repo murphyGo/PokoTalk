@@ -15,6 +15,11 @@ public class Constants {
     /* Chat constants */
     public static final String chatDateChangeFormat = "yyyy년 M월 d일";
 
+    /* Content location */
+    public static final String contentRootDirectory = "contents";
+    public static final String imageContentDirectory = "image";
+    public static final String binaryContentDirectory = "binary";
+
     /* Location for saved session and application data */
     public static final String fileEncoding = "UTF8";
     public static final String rootDirectory = "PokoTalk";   // Root directory
@@ -35,6 +40,7 @@ public class Constants {
     public static final int ALL_PERMISSION = 2;
     public static final int READ_EXTERNAL_STORAGE = 0;
     public static final int WRITE_EXTERNAL_STORAGE = 1;
+    public static final int CAMERA_PERMISSION = 2;
 
     /* PokoEvent names
     * event names must not conflict to Socket's predefined event names
@@ -92,6 +98,17 @@ public class Constants {
     public static final String membersJoinName = "membersJoin";
     public static final String membersLeaveName = "membersLeave";
 
+    /* Upload and download contents */
+    public static final String startUploadName = "startUpload";
+    public static final String uploadName = "upload";
+    public static final String uploadAckName = "uploadAck";
+    public static final String startDownloadName = "startDownload";
+    public static final String downloadName = "download";
+    public static final String downloadAckName = "downloadAck";
+
+    /* Settings events */
+    public static final String updateProfileImageName = "updateProfileImage";
+
     /* Chat constants */
     public static final int nbMessageRead = 100;   // Maximum number of messages for chat
     public static final String unknownUserNickname = "알 수 없는 유저";
@@ -103,7 +120,11 @@ public class Constants {
         LOGIN(0),
         GROUP_ADD(1),
         GROUP_CHAT(2),
-        EVENT_CREATE(3);
+        EVENT_CREATE(3),
+        PROFILE_UPDATE(4),
+        PROFILE_GALLERY(5),
+        PROFILE_CAMERA(6),
+        IMAGE_EDITION(7);
 
         public final int value;
         RequestCode(int v) {

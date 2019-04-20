@@ -18,7 +18,7 @@ import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.main.MainActivity;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
@@ -69,9 +69,9 @@ public class PokoNotificationManager {
         }
 
         // Find total message number that will be displayed at notification badge.
-        DataLock.getInstance().releaseReadLock();
+        PokoLock.getDataLockInstance().releaseReadLock();
         int newMessageNum = DataCollection.getInstance().getTotalNewMessageNumber();
-        DataLock.getInstance().releaseReadLock();
+        PokoLock.getDataLockInstance().releaseReadLock();
 
         int notificationId, prioirty;
         // Find priority and channel

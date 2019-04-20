@@ -85,6 +85,10 @@
         실행 가능한 카메라 앱이 없습니다.
     </string>
 
+    <string name="profile_upload_error">
+        죄송합니다. 오류로 인해 프로필 사진 변경에 실패하였습니다.
+    </string>
+
     <string name="drawer_open">open</string>
     <string name="drawer_close">close</string>
     <string name="group_exit_warning_message">채팅방에서 나가시면 채팅 목록에서 방이 사라지며,

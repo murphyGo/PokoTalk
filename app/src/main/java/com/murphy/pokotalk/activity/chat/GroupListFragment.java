@@ -19,7 +19,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.adapter.group.GroupListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.group.GroupPokoListUI;
@@ -68,7 +68,7 @@ public class GroupListFragment extends Fragment {
         groupAddButton.setOnClickListener(groupAddButtonClickListener);
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
 
             try {
                 // Get group list
@@ -85,7 +85,7 @@ public class GroupListFragment extends Fragment {
                 // Set adapter
                 groupListView.setAdapter(groupListAdapter);
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
 
         } catch (InterruptedException e) {

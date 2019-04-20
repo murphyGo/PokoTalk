@@ -10,7 +10,7 @@ import com.github.nkzawa.engineio.client.Transport;
 import com.github.nkzawa.socketio.client.Manager;
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseManager;
 import com.murphy.pokotalk.data.event.EventLocation;
@@ -65,6 +65,7 @@ import java.util.Map;
 public class PokoServer extends ServerSocket {
     protected static PokoServer pokoServer = null;
     protected int state = IDLE;
+    protected Context context;
 
     public static final int IDLE = 0;
     public static final int CONNECTING = 1;
@@ -76,7 +77,7 @@ public class PokoServer extends ServerSocket {
     }
 
     /* There is only one connection so we use singleton design
-    * Socket try to connect only when getInstance method is called with context not null */
+    * Socket try to connect only when getDataLockInstance method is called with context not null */
     public static PokoServer getInstance() {
         if (pokoServer == null) {
             synchronized (PokoServer.class) {
@@ -91,6 +92,7 @@ public class PokoServer extends ServerSocket {
     public void connect(Context context) {
         try {
             if (state == IDLE && context != null) {
+                this.context = context;
                 createSocket(context);
                 enrollOnMessageHandlers();
                 connect();
@@ -112,10 +114,12 @@ public class PokoServer extends ServerSocket {
 
     private static abstract class EventListener implements Emitter.Listener {
         protected HashMap<String, Object> data;
-        private String eventName;
+        protected String eventName;
+        protected Context context;
 
-        public EventListener() {
+        public EventListener(Context context) {
             data = new HashMap<>();
+            this.context = context;
         }
 
         public void putData(String key, Object value) {
@@ -136,6 +140,10 @@ public class PokoServer extends ServerSocket {
 
     /* Socket event listener */
     public static abstract class SocketEventListener extends EventListener {
+        public SocketEventListener(Context context) {
+            super(context);
+        }
+        
         @Override
         public void call(Object... args) {
             super.call(args);
@@ -152,6 +160,10 @@ public class PokoServer extends ServerSocket {
 
     /* Application event listener */
     public static abstract class PokoListener extends EventListener {
+        public PokoListener(Context context) {
+            super(context);
+        }
+        
         @Override
         public void call(Object... args) {
             super.call(args);
@@ -171,10 +183,16 @@ public class PokoServer extends ServerSocket {
                     return;
                 }
 
-                DataLock.getInstance().acquireWriteLock();
+                // Clear data
+                this.data.clear();
+
+                // Put context data
+                this.data.put("context", context);
+
+                PokoLock.getDataLockInstance().acquireWriteLock();
                 try {
                     Log.v("SERVER DATA " + getEventName(), data.toString());
-                    Log.v("HANDLING THREAD " + getEventName(), ""+ Thread.currentThread().getId());
+                    Log.v("HANDLING THREAD " + getEventName(), "" + Thread.currentThread().getId());
                     /* Start application callback */
                     if (status.isSuccess()) {
                         callSuccess(status, args);
@@ -194,7 +212,7 @@ public class PokoServer extends ServerSocket {
                             startActivityCallbacks(getEventName(), status, this.data, args);
 
                 } finally {
-                    DataLock.getInstance().releaseWriteLock();
+                    PokoLock.getDataLockInstance().releaseWriteLock();
                 }
             } catch(JSONException e) {
                 Log.e("Poko", "Bad json status data");
@@ -442,7 +460,7 @@ public class PokoServer extends ServerSocket {
     public void sendStartUpload(int id, long size, String extension) {
         try {
             JSONObject jsonData = new JSONObject();
-            jsonData.put("id", id);
+            jsonData.put("uploadId", id);
             jsonData.put("size", size);
             jsonData.put("extension", extension);
             socket.emit(Constants.startUploadName, jsonData);
@@ -454,7 +472,7 @@ public class PokoServer extends ServerSocket {
     public void sendUpload(int id, byte[] binary) {
         try {
             JSONObject jsonData = new JSONObject();
-            jsonData.put("id", id);
+            jsonData.put("uploadId", id);
             jsonData.put("buf", binary);
             socket.emit(Constants.uploadName, jsonData);
         } catch (JSONException e) {
@@ -462,12 +480,13 @@ public class PokoServer extends ServerSocket {
         }
     }
 
-    public void sendStartDownload(String contentName, String type) {
+    public void sendStartDownload(String contentName, String type, int sendId) {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("contentName", contentName);
             jsonData.put("type", type);
-            socket.emit(Constants.startUploadName, jsonData);
+            jsonData.put("sendId", sendId);
+            socket.emit(Constants.startDownloadName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -497,43 +516,43 @@ public class PokoServer extends ServerSocket {
          });
 
          /* Enroll event listeners */
-        socket.on(Socket.EVENT_CONNECT, new OnConnectionListener());
-        socket.on(Socket.EVENT_CONNECT_ERROR, new OnConnectionListener());
-        socket.on(Socket.EVENT_DISCONNECT, new OnDisconnectionListener());
-        socket.on(Constants.accountRegisteredName, new AccountRegisteredListener());
-        socket.on(Constants.passwordLoginName, new PasswordLoginListener());
-        socket.on(Constants.sessionLoginName, new SessionLoginListener());
-        socket.on(Constants.getContactListName, new GetContactListListener());
-        socket.on(Constants.getPendingContactListName, new GetPendingContactListListener());
-        socket.on(Constants.newPendingContactName, new NewPendingContactListener());
-        socket.on(Constants.newContactName, new NewContactListener());
-        socket.on(Constants.contactDeniedName, new ContactDeniedListener());
-        socket.on(Constants.contactRemovedName, new ContactRemovedListener());
-        socket.on(Constants.joinContactChatName, new JoinContactChatListener());
-        socket.on(Constants.contactChatRemovedName, new ContactChatRemovedListener());
-        socket.on(Constants.getGroupListName, new GetGroupListListener());
-        socket.on(Constants.addGroupName, new AddGroupListener());
-        socket.on(Constants.exitGroupName, new ExitGroupListener());
-        socket.on(Constants.membersInvitedName, new MembersInvitedListener());
-        socket.on(Constants.membersExitName, new MembersExitListener());
-        socket.on(Constants.readMessageName, new ReadMessageListener());
-        socket.on(Constants.readNbreadOfMessages, new ReadNbreadOfMessages());
-        socket.on(Constants.sendMessageName, new SendMessageListener());
-        socket.on(Constants.newMessageName, new NewMessageListener());
-        socket.on(Constants.messageAckName, new MessageAckListener());
-        socket.on(Constants.ackMessageName, new AckMessageListener());
-        socket.on(Constants.getMemberJoinHistory, new GetMemberJoinHistory());
-        socket.on(Constants.getEventListName, new GetEventListListener());
-        socket.on(Constants.eventCreatedName, new EventCreatedListener());
-        socket.on(Constants.eventExitName, new EventExitListener());
-        socket.on(Constants.eventParticipantExitedName, new EventParticipantExitedListener());
-        socket.on(Constants.eventAckName, new EventAckListener());
-        socket.on(Constants.eventStartedName, new EventStartedListener());
-        socket.on(Constants.startUploadName, new StartUploadListener());
-        socket.on(Constants.uploadName, new UploadListener());
-        socket.on(Constants.startDownloadName, new StartDownloadListener());
-        socket.on(Constants.downloadName, new DownloadListener());
-        socket.on(Constants.updateProfileImageName, new UpdateProfileImageListener());
+        socket.on(Socket.EVENT_CONNECT, new OnConnectionListener(context));
+        socket.on(Socket.EVENT_CONNECT_ERROR, new OnConnectionListener(context));
+        socket.on(Socket.EVENT_DISCONNECT, new OnDisconnectionListener(context));
+        socket.on(Constants.accountRegisteredName, new AccountRegisteredListener(context));
+        socket.on(Constants.passwordLoginName, new PasswordLoginListener(context));
+        socket.on(Constants.sessionLoginName, new SessionLoginListener(context));
+        socket.on(Constants.getContactListName, new GetContactListListener(context));
+        socket.on(Constants.getPendingContactListName, new GetPendingContactListListener(context));
+        socket.on(Constants.newPendingContactName, new NewPendingContactListener(context));
+        socket.on(Constants.newContactName, new NewContactListener(context));
+        socket.on(Constants.contactDeniedName, new ContactDeniedListener(context));
+        socket.on(Constants.contactRemovedName, new ContactRemovedListener(context));
+        socket.on(Constants.joinContactChatName, new JoinContactChatListener(context));
+        socket.on(Constants.contactChatRemovedName, new ContactChatRemovedListener(context));
+        socket.on(Constants.getGroupListName, new GetGroupListListener(context));
+        socket.on(Constants.addGroupName, new AddGroupListener(context));
+        socket.on(Constants.exitGroupName, new ExitGroupListener(context));
+        socket.on(Constants.membersInvitedName, new MembersInvitedListener(context));
+        socket.on(Constants.membersExitName, new MembersExitListener(context));
+        socket.on(Constants.readMessageName, new ReadMessageListener(context));
+        socket.on(Constants.readNbreadOfMessages, new ReadNbreadOfMessages(context));
+        socket.on(Constants.sendMessageName, new SendMessageListener(context));
+        socket.on(Constants.newMessageName, new NewMessageListener(context));
+        socket.on(Constants.messageAckName, new MessageAckListener(context));
+        socket.on(Constants.ackMessageName, new AckMessageListener(context));
+        socket.on(Constants.getMemberJoinHistory, new GetMemberJoinHistory(context));
+        socket.on(Constants.getEventListName, new GetEventListListener(context));
+        socket.on(Constants.eventCreatedName, new EventCreatedListener(context));
+        socket.on(Constants.eventExitName, new EventExitListener(context));
+        socket.on(Constants.eventParticipantExitedName, new EventParticipantExitedListener(context));
+        socket.on(Constants.eventAckName, new EventAckListener(context));
+        socket.on(Constants.eventStartedName, new EventStartedListener(context));
+        socket.on(Constants.startUploadName, new StartUploadListener(context));
+        socket.on(Constants.uploadName, new UploadListener(context));
+        socket.on(Constants.startDownloadName, new StartDownloadListener(context));
+        socket.on(Constants.downloadName, new DownloadListener(context));
+        socket.on(Constants.updateProfileImageName, new UpdateProfileImageListener(context));
     }
 
     /* Getter and Setters */

@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.listener.setting;
 
+import android.content.Context;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
@@ -14,6 +15,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class UpdateProfileImageListener extends PokoServer.PokoListener {
+    public UpdateProfileImageListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.updateProfileImageName;

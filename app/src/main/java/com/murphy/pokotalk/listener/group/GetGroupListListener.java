@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.listener.group;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -23,6 +24,10 @@ import java.text.ParseException;
 import java.util.HashMap;
 
 public class GetGroupListListener extends PokoServer.PokoListener {
+    public GetGroupListListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.getGroupListName;

@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.listener.event;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -17,6 +18,10 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 public class EventExitListener extends PokoServer.PokoListener {
+    public EventExitListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.eventExitName;

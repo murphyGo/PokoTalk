@@ -1,6 +1,7 @@
 package com.murphy.pokotalk.listener.chat;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -26,6 +27,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class ReadMessageListener extends PokoServer.PokoListener {
+    public ReadMessageListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.readMessageName;

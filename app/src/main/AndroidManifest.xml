@@ -52,6 +52,7 @@
         <activity android:name=".activity.event.EventDetailActivity"/>
         <activity android:name=".activity.settings.ProfileSettingActivity"/>
         <activity android:name=".activity.settings.ImageEditionActivity"/>
+        <activity android:name=".activity.settings.DownloadTestActivity"/>
 
         <service
             android:name=".service.PokoTalkService"

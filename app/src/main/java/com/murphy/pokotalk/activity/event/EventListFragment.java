@@ -19,7 +19,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.adapter.event.EventListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.event.EventListUI;
 import com.murphy.pokotalk.data.event.PokoEvent;
@@ -63,7 +63,7 @@ public class EventListFragment extends Fragment {
         eventCreateButton.setOnClickListener(eventAddButtonClickListener);
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
 
             try {
                 // Get event list
@@ -80,7 +80,7 @@ public class EventListFragment extends Fragment {
                 // Set adapter
                 eventListView.setAdapter(eventListAdapter);
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
 
         } catch (InterruptedException e) {

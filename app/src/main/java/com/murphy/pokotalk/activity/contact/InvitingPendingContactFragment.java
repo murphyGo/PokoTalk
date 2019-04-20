@@ -14,7 +14,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.adapter.contact.PendingContactListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.PendingContactPokoList;
@@ -44,7 +44,7 @@ public class InvitingPendingContactFragment extends Fragment {
 
         // Create adapter and set to ListView */
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
 
             try {
                 invitingListAdapter = new PendingContactListAdapter(getContext());
@@ -55,7 +55,7 @@ public class InvitingPendingContactFragment extends Fragment {
                 invitingListAdapter.setInvited(false);
                 pendingContactList = (PendingContactPokoList) invitingListAdapter.getPokoList();
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
 
         } catch (InterruptedException e) {

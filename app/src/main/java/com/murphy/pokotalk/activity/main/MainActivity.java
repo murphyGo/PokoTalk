@@ -39,7 +39,7 @@ import com.murphy.pokotalk.activity.event.EventOptionDialog;
 import com.murphy.pokotalk.activity.settings.SettingFragment;
 import com.murphy.pokotalk.adapter.MainFragmentViewPagerAdapter;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
@@ -347,7 +347,7 @@ public class MainActivity extends FragmentActivity
             }
 
             try {
-                DataLock.getInstance().acquireWriteLock();
+                PokoLock.getDataLockInstance().acquireWriteLock();
 
                 // Get message list of group
                 MessagePokoList messageList = group.getMessageList();
@@ -361,7 +361,7 @@ public class MainActivity extends FragmentActivity
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
 
             return null;

@@ -1,6 +1,7 @@
 package com.murphy.pokotalk.listener.session;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.text.TextUtils;
 import android.util.Log;
@@ -23,6 +24,10 @@ import java.util.Calendar;
 import java.util.HashMap;
 
 public class SessionLoginListener extends PokoServer.PokoListener {
+    public SessionLoginListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.sessionLoginName;

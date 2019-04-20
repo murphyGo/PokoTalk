@@ -23,7 +23,7 @@ import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.PokoDatabaseManager;
@@ -174,7 +174,7 @@ public class PokoTalkApp extends Application
 
             /* Loads application data */
             try {
-                DataLock.getInstance().acquireWriteLock();
+                PokoLock.getDataLockInstance().acquireWriteLock();
 
                 try {
                     // Load session data
@@ -210,7 +210,7 @@ public class PokoTalkApp extends Application
                     // Error loading app data
                     app.appDataLoadState = app.LOAD_FAIL;
                 } finally {
-                    DataLock.getInstance().releaseWriteLock();
+                    PokoLock.getDataLockInstance().releaseWriteLock();
 
                     // Set application data loaded true
                     app.appDataLoaded = true;
@@ -268,14 +268,14 @@ public class PokoTalkApp extends Application
         appDataLoadState = LOAD_NO_DATA;
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
 
             // Reset application data
             DataCollection.reset();
         } catch (InterruptedException e) {
             e.printStackTrace();
         } finally {
-            DataLock.getInstance().releaseWriteLock();
+            PokoLock.getDataLockInstance().releaseWriteLock();
         }
 
         // Reconnect to server with new socket

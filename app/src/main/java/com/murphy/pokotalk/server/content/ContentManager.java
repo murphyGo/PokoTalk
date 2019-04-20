@@ -3,7 +3,12 @@ package com.murphy.pokotalk.server.content;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.util.Log;
 
+import com.murphy.pokotalk.data.content.PokoBinaryFile;
+import com.murphy.pokotalk.data.content.PokoImageFile;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -58,6 +63,7 @@ public class ContentManager {
         final ContentManager manager = this;
         Bitmap bitmap;
 
+        Log.v("POKO", "LOCATE IMAGE " + contentName);
         // First, check cache.
         synchronized (manager) {
             bitmap = imageCache.get(contentName);
@@ -65,7 +71,9 @@ public class ContentManager {
 
         // Check cache hit
         if (bitmap != null) {
+            Log.v("POKO", "CACHE HIT " + contentName);
             callback.onLoadImage(bitmap);
+            return;
         }
 
         // Second, check device storage
@@ -75,9 +83,10 @@ public class ContentManager {
 
             if (job != null && job.addCallback(callback)) {
                 // Job exists and added callback, done
+
+                Log.v("POKO", "JOB EXISTS, DONE");
                 return;
             }
-
             // Create image locate job
             ImageContentLocateJob newJob = new ImageContentLocateJob();
             newJob.setContentName(contentName);
@@ -91,6 +100,7 @@ public class ContentManager {
         Intent intent = new Intent(context, ContentLoadService.class);
 
         // Put information
+        intent.putExtra("command", ContentLoadService.CMD_LOCATE_CONTENT);
         intent.putExtra("contentName", contentName);
         intent.putExtra("contentType", TYPE_IMAGE);
 
@@ -111,6 +121,7 @@ public class ContentManager {
         // Check cache hit
         if (binary != null) {
             callback.onLoadBinary(binary);
+            return;
         }
 
         // Second, check device storage
@@ -136,6 +147,7 @@ public class ContentManager {
         Intent intent = new Intent(context, ContentLoadService.class);
 
         // Put information
+        intent.putExtra("command", ContentLoadService.CMD_LOCATE_CONTENT);
         intent.putExtra("contentName", contentName);
         intent.putExtra("contentType", TYPE_BINARY);
 
@@ -198,8 +210,33 @@ public class ContentManager {
         }
     }
 
-    public interface ContentLoadCallback {
+    public void failImageLocateJob(String contentName) {
+        ImageContentLocateJob job;
 
+        synchronized (this) {
+            job = imageLocateJobs.get(contentName);
+        }
+
+        if (job != null) {
+            job.failJobAndStartCallbacks();
+        }
+    }
+
+    public void failBinaryLocateJob(String contentName) {
+        BinaryContentLocateJob job;
+
+        synchronized (this) {
+            job = binaryLocateJobs.get(contentName);
+        }
+
+        if (job != null) {
+            job.failJobAndStartCallbacks();
+        }
+    }
+
+
+    public interface ContentLoadCallback {
+        void onError();
     }
 
     public static abstract class ImageContentLoadCallback
@@ -213,9 +250,11 @@ public class ContentManager {
     }
 
     public abstract class ContentLocateJob {
-        private String contentName;
-        private List<ContentLoadCallback> callbacks = new ArrayList<>();
-        private boolean finished = false;
+        protected String contentName;
+        protected byte[] binary;
+        protected List<ContentLoadCallback> callbacks = new ArrayList<>();
+        protected boolean finished = false;
+        protected boolean isError = false;
 
         public String getContentName() {
             return contentName;
@@ -244,6 +283,9 @@ public class ContentManager {
             // Get content manager
             ContentManager contentManager = ContentManager.getInstance();
 
+            // Store content as file
+            saveContent();
+
             // Add content to cache of content manager
             addToCache(contentManager);
 
@@ -265,9 +307,51 @@ public class ContentManager {
             }
         }
 
+        public void failJobAndStartCallbacks() {
+            // Get content manager
+            ContentManager contentManager = ContentManager.getInstance();
+
+            // Set error
+            setError(true);
+
+            // Remove job from job list
+            removeJob(contentManager);
+
+            synchronized (this) {
+                // Finish job
+                finished = true;
+
+                try {
+                    // Start all callback function
+                    for (int i = 0; i < callbacks.size(); i++) {
+                        startCallback(callbacks.get(i));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        public byte[] getBinary() {
+            return binary;
+        }
+
+        public void setBinary(byte[] binary) {
+            this.binary = binary;
+        }
+
+        public boolean isError() {
+            return isError;
+        }
+
+        public void setError(boolean error) {
+            isError = error;
+        }
+
         protected abstract void startCallback(ContentLoadCallback callback);
         protected abstract void removeJob(ContentManager contentManager);
         protected abstract void addToCache(ContentManager contentManager);
+        protected abstract void saveContent();
     }
 
     public class ImageContentLocateJob extends ContentLocateJob {
@@ -276,7 +360,13 @@ public class ContentManager {
         @Override
         protected void startCallback(ContentLoadCallback callback) {
             if (callback instanceof ImageContentLoadCallback) {
-                ((ImageContentLoadCallback) callback).onLoadImage(image);
+                ImageContentLoadCallback imageCallback =
+                        (ImageContentLoadCallback) callback;
+                if (isError()) {
+                    imageCallback.onError();
+                } else {
+                    imageCallback.onLoadImage(image);
+                }
             }
         }
 
@@ -290,6 +380,26 @@ public class ContentManager {
             contentManager.putImageContentInCache(getContentName(), getImage());
         }
 
+        @Override
+        protected void saveContent() {
+            if (binary == null) {
+                return;
+            }
+
+            // Create image file
+            PokoImageFile file = new PokoImageFile();
+
+            try {
+                // Write to file
+                file.setFileName(getContentName());
+                file.openWriter(false);
+                file.save(binary);
+                file.closeWriter();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         public Bitmap getImage() {
             return image;
         }
@@ -300,12 +410,16 @@ public class ContentManager {
     }
 
     public class BinaryContentLocateJob extends ContentLocateJob {
-        private byte[] binary;
-
         @Override
         protected void startCallback(ContentLoadCallback callback) {
             if (callback instanceof BinaryContentLoadCallback) {
-                ((BinaryContentLoadCallback) callback).onLoadBinary(binary);
+                BinaryContentLoadCallback binaryCallback =
+                        (BinaryContentLoadCallback) callback;
+                if (isError()) {
+                    binaryCallback.onError();
+                } else {
+                    binaryCallback.onLoadBinary(binary);
+                }
             }
         }
 
@@ -319,12 +433,24 @@ public class ContentManager {
             contentManager.putBinaryContentInCache(getContentName(), getBinary());
         }
 
-        public byte[] getBinary() {
-            return binary;
-        }
+        @Override
+        protected void saveContent() {
+            if (binary == null) {
+                return;
+            }
 
-        public void setBinary(byte[] binary) {
-            this.binary = binary;
+            // Create image file
+            PokoBinaryFile file = new PokoBinaryFile();
+
+            try {
+                // Write to file
+                file.setFileName(getContentName());
+                file.openWriter(false);
+                file.save(binary);
+                file.closeWriter();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

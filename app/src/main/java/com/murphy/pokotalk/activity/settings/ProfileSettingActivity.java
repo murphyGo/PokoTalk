@@ -163,8 +163,29 @@ public class ProfileSettingActivity extends AppCompatActivity
                             ContentManager.EXT_JPG,
                             new ContentTransferManager.UploadJobCallback() {
                                 @Override
-                                public void run(String contentName) {
+                                public void onSuccess(final String contentName) {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // Uploaded profile image
+                                            Toast.makeText(getApplicationContext(),
+                                                    contentName,
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    });
+                                }
 
+                                @Override
+                                public void onError() {
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            // Show error message
+                                            Toast.makeText(getApplicationContext(),
+                                                    R.string.profile_upload_error,
+                                                    Toast.LENGTH_LONG).show();
+                                        }
+                                    });
                                 }
                             });
 

@@ -1,5 +1,7 @@
 package com.murphy.pokotalk.listener.connection;
 
+import android.content.Context;
+
 import com.github.nkzawa.socketio.client.Socket;
 import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.data.Session;
@@ -7,6 +9,10 @@ import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
 public class OnDisconnectionListener extends PokoServer.SocketEventListener {
+    public OnDisconnectionListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Socket.EVENT_DISCONNECT;

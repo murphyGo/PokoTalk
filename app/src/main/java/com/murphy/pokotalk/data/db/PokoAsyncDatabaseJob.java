@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.os.AsyncTask;
 
 import com.murphy.pokotalk.PokoTalkApp;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.Contact;
 
@@ -24,12 +24,12 @@ public abstract class PokoAsyncDatabaseJob
         Context context = app.getApplicationContext();
 
         /* Acquire DB job lock here.
-         * Lock acquire order is DataLock -> Database lock.
+         * Lock acquire order is PokoLock -> Database lock.
          * So Database jobs are always executed in order of
-         * DataLock acquisition, so that we can avoid execution order
+         * PokoLock acquisition, so that we can avoid execution order
          * change. */
         try {
-            DataLock.getDatabaseJobInstance().acquireWriteLock();
+            PokoLock.getDatabaseJobInstance().acquireWriteLock();
 
             try {
                 // Get user
@@ -51,7 +51,7 @@ public abstract class PokoAsyncDatabaseJob
             } finally {
                 /* We finally release database lock */
                 //Session.checkSessionData();
-                DataLock.getDatabaseJobInstance().releaseWriteLock();
+                PokoLock.getDatabaseJobInstance().releaseWriteLock();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();

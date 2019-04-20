@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.listener.group;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -22,6 +23,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 public class MembersExitListener extends PokoServer.PokoListener {
+    public MembersExitListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.membersExitName;

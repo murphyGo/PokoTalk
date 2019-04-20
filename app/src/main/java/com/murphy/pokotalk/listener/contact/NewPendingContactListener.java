@@ -1,6 +1,7 @@
 package com.murphy.pokotalk.listener.contact;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -23,6 +24,10 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 public class NewPendingContactListener extends PokoServer.PokoListener {
+    public NewPendingContactListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.newPendingContactName;

@@ -103,6 +103,15 @@ public class SettingFragment extends Fragment
             }
         });
 
+        appInfoButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Now start image load test activity
+                Intent intent = new Intent(getContext(), DownloadTestActivity.class);
+                startActivity(intent);
+            }
+        });
+
         return view;
     }
 

@@ -1,5 +1,6 @@
 package com.murphy.pokotalk.listener.contact;
 
+import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
@@ -16,6 +17,10 @@ import org.json.JSONObject;
 import java.util.HashMap;
 
 public class ContactRemovedListener extends PokoServer.PokoListener {
+    public ContactRemovedListener(Context context) {
+        super(context);
+    }
+
     @Override
     public String getEventName() {
         return Constants.contactRemovedName;

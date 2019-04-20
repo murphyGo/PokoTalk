@@ -6,7 +6,6 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.db.deprecated.FileManager;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -20,7 +19,6 @@ public abstract class ContentFile {
 
     protected File file;
     protected FileInputStream fileInputStream;
-    protected BufferedReader bufferedReader;
     protected FileOutputStream fileOutputStream;
 
     public ContentFile() {
@@ -81,9 +79,7 @@ public abstract class ContentFile {
 
     public void closeReader() throws IOException {
         Log.v("POKO", "close reader");
-        bufferedReader.close();
         fileInputStream.close();
-        bufferedReader = null;
         fileOutputStream = null;
     }
 

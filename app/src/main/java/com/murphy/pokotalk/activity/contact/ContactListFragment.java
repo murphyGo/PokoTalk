@@ -17,7 +17,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.adapter.contact.ContactListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.data.user.PendingContact;
@@ -63,7 +63,7 @@ public class ContactListFragment extends Fragment {
         contactAddButton.setOnClickListener(contactAddButtonClickListener);
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
 
             try {
                 // Get contact list
@@ -80,7 +80,7 @@ public class ContactListFragment extends Fragment {
                 // Set adapter
                 contactListView.setAdapter(contactListAdapter);
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
 
             }
 

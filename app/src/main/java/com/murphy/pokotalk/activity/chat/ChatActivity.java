@@ -33,7 +33,7 @@ import com.murphy.pokotalk.adapter.group.GroupMemberListAdapter;
 import com.murphy.pokotalk.adapter.chat.MessageListAdapter;
 import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
@@ -145,7 +145,7 @@ public class ChatActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
             try {
                 /* Member list */
                 memberListAdapter = new GroupMemberListAdapter(this);
@@ -153,14 +153,14 @@ public class ChatActivity extends AppCompatActivity
                 memberListView = drawerLayout.findViewById(R.id.memberList);
                 memberListView.setAdapter(memberListAdapter);
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
             try {
                 messageListAdapter = new MessageListAdapter(this);
                 messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
@@ -175,7 +175,7 @@ public class ChatActivity extends AppCompatActivity
                     }
                 });
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -322,7 +322,7 @@ public class ChatActivity extends AppCompatActivity
         @Override
         public void onClick(View v) {
             try {
-                DataLock.getInstance().acquireWriteLock();
+                PokoLock.getDataLockInstance().acquireWriteLock();
                 try {
                     String content = messageInputView.getText().toString();
                     if (content.length() == 0) {
@@ -336,7 +336,7 @@ public class ChatActivity extends AppCompatActivity
                     group.getMessageList().addSentMessage(message);
                     messageInputView.setText("");
                 } finally {
-                    DataLock.getInstance().releaseWriteLock();
+                    PokoLock.getDataLockInstance().releaseWriteLock();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
@@ -736,7 +736,7 @@ public class ChatActivity extends AppCompatActivity
             ArrayList<PokoMessage> readMessages = new ArrayList<>();
 
             try {
-                DataLock.getInstance().acquireWriteLock();
+                PokoLock.getDataLockInstance().acquireWriteLock();
 
                 try {
                     // Find first messageId to start reading message.
@@ -801,7 +801,7 @@ public class ChatActivity extends AppCompatActivity
                     // We must scroll to mark after mark
                     messageListView.scrollToMark(0);
                 } finally {
-                    DataLock.getInstance().releaseWriteLock();
+                    PokoLock.getDataLockInstance().releaseWriteLock();
                 }
 
             } catch (InterruptedException e) {
@@ -815,7 +815,7 @@ public class ChatActivity extends AppCompatActivity
         protected void onPostExecute(ArrayList<PokoMessage> readMessages) {
             if (readMessages != null) {
                 try {
-                    DataLock.getInstance().acquireWriteLock();
+                    PokoLock.getDataLockInstance().acquireWriteLock();
                     try {
                         MessagePokoListUI messageListUI = (MessagePokoListUI) messageListAdapter.getPokoList();
                         // We now count delta of number of date change message.
@@ -832,7 +832,7 @@ public class ChatActivity extends AppCompatActivity
                         messageListView.scrollToMark(size);
 
                     } finally {
-                        DataLock.getInstance().releaseWriteLock();
+                        PokoLock.getDataLockInstance().releaseWriteLock();
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();

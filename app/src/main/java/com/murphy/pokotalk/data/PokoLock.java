@@ -1,29 +1,31 @@
 package com.murphy.pokotalk.data;
 
 /** Lock for concurrency control of accessing PokoTalk data */
-public class DataLock {
-    private static DataLock instance = null;
-    private static DataLock databaseJobInstance = null;
+public class PokoLock {
+    private static PokoLock instance = null;
+    private static PokoLock databaseJobInstance = null;
     protected int readNum;
     protected boolean writing;
     public static final int INTERRUPT_RETRY = 8;
 
-    public DataLock() {
+    public PokoLock() {
         readNum = 0;
         writing = false;
     }
 
-    public static DataLock getInstance() {
+    public static PokoLock getDataLockInstance() {
         if (instance == null) {
-            instance = new DataLock();
+            synchronized (PokoLock.class) {
+                instance = instance == null ? new PokoLock() : instance;
+            }
         }
 
         return instance;
     }
 
-    public static DataLock getDatabaseJobInstance() {
+    public static PokoLock getDatabaseJobInstance() {
         if (databaseJobInstance == null) {
-            databaseJobInstance = new DataLock();
+            databaseJobInstance = new PokoLock();
         }
 
         return databaseJobInstance;

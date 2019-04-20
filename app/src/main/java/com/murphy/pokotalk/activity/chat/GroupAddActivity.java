@@ -13,7 +13,7 @@ import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.group.MemberCandidateListAdapter;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.DataLock;
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
 import com.murphy.pokotalk.view.MemberCandidateItem;
@@ -44,7 +44,7 @@ public class GroupAddActivity extends AppCompatActivity {
         backspaceButton.setOnClickListener(backspaceButtonListener);
 
         try {
-            DataLock.getInstance().acquireWriteLock();
+            PokoLock.getDataLockInstance().acquireWriteLock();
 
             try {
                 DataCollection collection = DataCollection.getInstance();
@@ -54,7 +54,7 @@ public class GroupAddActivity extends AppCompatActivity {
                 contactListUI.copyFromPokoList(collection.getContactList());
                 memberCandidateListView.setAdapter(adapter);
             } finally {
-                DataLock.getInstance().releaseWriteLock();
+                PokoLock.getDataLockInstance().releaseWriteLock();
             }
 
         } catch (InterruptedException e) {

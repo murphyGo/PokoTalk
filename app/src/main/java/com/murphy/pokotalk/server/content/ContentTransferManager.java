@@ -1,8 +1,13 @@
 package com.murphy.pokotalk.server.content;
 
+import android.util.Log;
 import android.util.SparseArray;
 
+import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.server.PokoServer;
+
+import java.util.ArrayDeque;
+import java.util.Queue;
 
 public class ContentTransferManager {
     private static ContentTransferManager instance = null;
@@ -13,6 +18,8 @@ public class ContentTransferManager {
 
     public static final String TYPE_IMAGE = "image";
     public static final String TYPE_BINARY = "binary";
+
+    public static final int DOWNLOAD_START_WAIT = 10000;
 
     private int pendingUploadJobId = 1;
     private int pendingDownloadJobId = 1;
@@ -34,8 +41,8 @@ public class ContentTransferManager {
         return instance;
     }
 
-    public synchronized int addUploadJob(byte[] binary,
-                                         String extension, UploadJobCallback callback) {
+    public synchronized int addUploadJob(byte[] binary, String extension,
+                                         UploadJobCallback callback) {
         // Make temporary id
         int pendingId = pendingUploadJobId++;
 
@@ -43,6 +50,7 @@ public class ContentTransferManager {
         UploadJob job = new UploadJob();
         job.setId(pendingId);
         job.setBinary(binary);
+        job.setSize((long) binary.length);
         job.setCallback(callback);
         job.setExtension(extension);
 
@@ -74,15 +82,46 @@ public class ContentTransferManager {
         }
     }
 
-    public synchronized void uploadJob(int id) {
-        // Get job
-        UploadJob job = uploadJobs.get(id);
+    public void uploadJob(int uploadId, String contentName) {
+        UploadJob job;
+
+        synchronized (this) {
+            // Get job
+            job = uploadJobs.get(uploadId);
+
+            // Set content name
+            job.setContentName(contentName);
+        }
 
         // Get server
         PokoServer server = PokoServer.getInstance();
 
         // Send data
         server.sendUpload(job.getId(), job.getBinary());
+    }
+
+    public void uploadAck(int jobId, long ack) {
+        UploadJob job;
+
+        synchronized (this) {
+            // Get job
+            job = uploadJobs.get(jobId);
+        }
+
+        // Update ack
+        if (job.getAck() < ack) {
+            job.setAck(ack);
+        }
+
+        // Check if upload is done
+        if (job.getSize() <= job.getAck()) {
+            UploadJobCallback callback = job.getCallback();
+
+            // Call callback
+            if (callback != null) {
+                callback.onSuccess(job.getContentName());
+            }
+        }
     }
 
     public synchronized void addDownloadJob(String contentName,
@@ -104,25 +143,36 @@ public class ContentTransferManager {
         PokoServer server = PokoServer.getInstance();
 
         // Start download
-        server.sendStartDownload(contentName, type);
+        server.sendStartDownload(contentName, type, pendingId);
     }
 
     public synchronized void startDownloadJob(int sendId, int downloadId, int size) {
         // Get pending download job
         DownloadJob job = pendingDownloadJobs.get(sendId);
-
+        Log.v("POKO", "START DOWNLOAD JOB");
         if (job != null) {
-            // Update id to download id
-            job.setId(downloadId);
+            synchronized (job) {
+                // Update id to download id
+                job.setId(downloadId);
+                Log.v("POKO", "CHANGE ID FROM  "+ sendId + " TO " + downloadId);
+                // Set size
+                job.setSize(size);
 
-            // Set size
-            job.setSize(size);
+                // Set bytes left
+                job.setLeft(size);
 
-            // Set bytes left
-            job.setLeft(size);
+                // Allocate buffer
+                job.setBytes(new byte[size]);
 
-            // Allocate buffer
-            job.setBytes(new byte[size]);
+                // Set started
+                job.setStarted(true);
+
+                // Awake waiting threads to write in buffer
+                job.notifyAll();
+            }
+
+            // Add to download jobs
+            downloadJobs.put(downloadId, job);
         }
     }
 
@@ -134,11 +184,14 @@ public class ContentTransferManager {
         }
 
         if (job != null) {
+            Log.v("POKO", "DOWNLOAD JOB");
             int left = job.getLeft();
             int start = job.getSize() - left;
             int validSize = left < part.length ? left : part.length;
 
             left -= validSize;
+
+            Log.v("POKO", "LEFT " + left + "BYTES");
 
             // Set left
             job.setLeft(left);
@@ -153,6 +206,7 @@ public class ContentTransferManager {
 
             // Check if download is done
             if (left == 0) {
+                Log.v("POKO", "DOWNLOAD DONE");
                 synchronized (this) {
                     // Remove job
                     downloadJobs.remove(job.getId());
@@ -163,18 +217,208 @@ public class ContentTransferManager {
 
                 // Call callback
                 if (callback != null) {
-                    callback.run(job.getContentName(), buffer);
+                    callback.onSuccess(job.getContentName(), buffer);
+                    Log.v("POKO", "DOWNLOAD CALLBACK");
                 }
+            }
+        }
+    }
+
+    public void putBytesToJobQueue(int downloadId, byte[] part) {
+        DownloadJob downloadJob;
+
+        synchronized (this) {
+            downloadJob = downloadJobs.get(downloadId);
+        }
+
+        if (downloadJob != null) {
+            downloadJob.putBytesToQueue(part);
+        }
+    }
+
+    public void writeBytesFromJobQueue(int downloadId) {
+        DownloadJob downloadJob;
+
+        synchronized (this) {
+            downloadJob = downloadJobs.get(downloadId);
+        }
+
+        if (downloadJob != null) {
+            synchronized (downloadJob) {
+                // Check if the job is started
+                if (!downloadJob.isStarted()) {
+                    try {
+                        // Wait until the job is started
+                        downloadJob.wait(DOWNLOAD_START_WAIT);
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    }
+
+                    if (!downloadJob.isStarted()) {
+                        // Timeout, the job failed...
+                        //TODO: clear job and call error callback
+                        return;
+                    }
+                }
+            }
+
+            while(true) {
+                try {
+                    // Only one thread can copy for this job at a time
+                    downloadJob.getCopyLock().acquireWriteLock();
+
+                    break;
+                } catch (InterruptedException e) {
+                    // Interrupted, go back and wait again
+                    continue;
+                }
+            }
+
+            try {
+                // Get byte package queue
+                Queue<byte[]> queue = downloadJob.getBytesQueue();
+
+                byte[] part;
+
+                while (true) {
+                    // Get a byte package from queue
+                    synchronized (queue) {
+                        part = queue.poll();
+                    }
+
+                    // No more byte package, done
+                    if (part == null) {
+                        break;
+                    }
+
+                    // Copy bytes to job buffer
+                    copyByteToJobBuffer(downloadJob, part);
+                }
+            } finally {
+                downloadJob.getCopyLock().releaseWriteLock();
+            }
+        }
+    }
+
+    protected void copyByteToJobBuffer(DownloadJob job, byte[] part) {
+        int left = job.getLeft();
+        int start = job.getSize() - left;
+        int validSize = left < part.length ? left : part.length;
+
+        left -= validSize;
+
+        Log.v("POKO", "LEFT " + left + "BYTES");
+
+        // Set left
+        job.setLeft(left);
+
+        // Get buffer
+        byte[] buffer = job.getBytes();
+
+        // Copy data to buffer
+        for (int i = 0; i < validSize; i++) {
+            buffer[start + i] = part[i];
+        }
+
+        // Check if download is done
+        if (left == 0) {
+            Log.v("POKO", "DOWNLOAD DONE");
+            synchronized (this) {
+                // Remove job
+                downloadJobs.remove(job.getId());
+            }
+
+            // Get callback
+            DownloadJobCallback callback = job.getCallback();
+
+            // Call callback
+            if (callback != null) {
+                callback.onSuccess(job.getContentName(), buffer);
+                Log.v("POKO", "DOWNLOAD CALLBACK");
+            }
+        }
+    }
+
+    public void failUploadJob(int jobId, boolean pending) {
+        UploadJob job;
+
+        Log.v("POKO", "FAILED UPLOAD");
+        synchronized (this) {
+            // Get job
+            if (pending) {
+                job = pendingUploadJobs.get(jobId);
+            } else {
+                job = uploadJobs.get(jobId);
+            }
+
+            // Check if job exists
+            if (job != null) {
+                // Remove job
+                if (pending) {
+                    pendingUploadJobs.remove(jobId);
+                } else {
+                    uploadJobs.remove(jobId);
+                }
+            }
+        }
+
+        if (job != null) {
+            // Get job callback
+            UploadJobCallback callback = job.getCallback();
+
+            // Call callback
+            if (callback != null) {
+                callback.onError();
+            }
+        }
+    }
+
+    public void failDownloadJob(int jobId, boolean pending) {
+        DownloadJob job;
+
+        Log.v("POKO", "FAILED DOWNLOAD");
+        synchronized (this) {
+            // Get job
+            if (pending) {
+                job = pendingDownloadJobs.get(jobId);
+            } else {
+                job = downloadJobs.get(jobId);
+            }
+
+            // Check if job exists
+            if (job != null) {
+                // Remove job
+                if (pending) {
+                    pendingDownloadJobs.remove(jobId);
+                } else {
+                    downloadJobs.remove(jobId);
+                }
+            }
+        }
+
+        if (job != null) {
+            // Get job callback
+            DownloadJobCallback callback = job.getCallback();
+
+            // Call callback
+            if (callback != null) {
+                callback.onError();
             }
         }
     }
 
     private class UploadJob {
         private Integer id;
+        private String contentName;
         private String extension;
         private byte[] binary;
         private Long size;
+        private Long ack;
         private UploadJobCallback callback;
+
+        public UploadJob() {
+            ack = 0L;
+        }
 
         public Integer getId() {
             return id;
@@ -215,6 +459,22 @@ public class ContentTransferManager {
         public void setExtension(String extension) {
             this.extension = extension;
         }
+
+        public Long getAck() {
+            return ack;
+        }
+
+        public void setAck(Long ack) {
+            this.ack = ack;
+        }
+
+        public String getContentName() {
+            return contentName;
+        }
+
+        public void setContentName(String contentName) {
+            this.contentName = contentName;
+        }
     }
 
     private class DownloadJob {
@@ -225,6 +485,15 @@ public class ContentTransferManager {
         private int size;
         private int left;
         private DownloadJobCallback callback;
+        private Queue<byte[]> pendingBuffers;
+        private PokoLock copyLock;
+        private boolean started;
+
+        public DownloadJob() {
+            pendingBuffers = new ArrayDeque<>();
+            copyLock = new PokoLock();
+            started = false;
+        }
 
         public int getId() {
             return id;
@@ -281,13 +550,35 @@ public class ContentTransferManager {
         public void setCallback(DownloadJobCallback callback) {
             this.callback = callback;
         }
+
+        public synchronized void putBytesToQueue(byte[] part) {
+            pendingBuffers.add(part);
+        }
+
+        public synchronized Queue<byte[]> getBytesQueue() {
+            return pendingBuffers;
+        }
+
+        public PokoLock getCopyLock() {
+            return copyLock;
+        }
+
+        public boolean isStarted() {
+            return started;
+        }
+
+        public void setStarted(boolean started) {
+            this.started = started;
+        }
     }
 
     public static abstract class UploadJobCallback {
-        public abstract void run(String contentName);
+        public abstract void onSuccess(String contentName);
+        public abstract void onError();
     }
 
     public static abstract class DownloadJobCallback {
-        public abstract void run(String contentName, byte[] bytes);
+        public abstract void onSuccess(String contentName, byte[] bytes);
+        public abstract void onError();
     }
 }

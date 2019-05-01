@@ -9,14 +9,12 @@ import com.murphy.pokotalk.data.extra.DateChangeItem;
 import com.murphy.pokotalk.data.group.MessagePokoListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.view.DateChangeMessageItem;
-import com.murphy.pokotalk.view.ListViewDetectable;
+import com.murphy.pokotalk.view.ImageMessageItem;
 import com.murphy.pokotalk.view.MessageItem;
 import com.murphy.pokotalk.view.SpecialMessageItem;
 import com.murphy.pokotalk.view.TextMessageItem;
 
 public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
-    private boolean bottomAtFirst = true;
-
     public MessageListAdapter(Context context) {
         super(context);
         setPokoList(new MessagePokoListUI());
@@ -48,24 +46,33 @@ public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
 
     @Override
     public View createView(int position, View convertView, ViewGroup parent) {
+        // Get message
         PokoMessage message = (PokoMessage) items.get(position);
         MessageItem item = null;
+
+        // Recycle convert view if it is type of message view we need
         if (convertView != null) {
             switch (message.getMessageType()) {
-                case PokoMessage.TEXT_MESSAGE: {
+                case PokoMessage.TYPE_TEXT_MESSAGE: {
                     if (convertView instanceof TextMessageItem) {
                         item = (TextMessageItem) convertView;
                     }
                     break;
                 }
-                case PokoMessage.MEMBER_JOIN:
-                case PokoMessage.MEMBER_EXIT: {
+                case PokoMessage.TYPE_IMAGE: {
+                    if (convertView instanceof ImageMessageItem) {
+                        item = (ImageMessageItem) convertView;
+                    }
+                    break;
+                }
+                case PokoMessage.TYPE_MEMBER_JOIN:
+                case PokoMessage.TYPE_MEMBER_EXIT: {
                     if (convertView instanceof SpecialMessageItem) {
                         item = (SpecialMessageItem) convertView;
                     }
                     break;
                 }
-                case PokoMessage.APP_DATE_MESSAGE: {
+                case PokoMessage.TYPE_APP_DATE_MESSAGE: {
                     if (convertView instanceof DateChangeMessageItem) {
                         item = (DateChangeMessageItem) convertView;
                     }
@@ -77,18 +84,23 @@ public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
             }
         }
 
+        // Create new message view if we can not recycle convert view
         if (item == null) {
             switch (message.getMessageType()) {
-                case PokoMessage.TEXT_MESSAGE: {
+                case PokoMessage.TYPE_TEXT_MESSAGE: {
                     item = new TextMessageItem(context);
                     break;
                 }
-                case PokoMessage.MEMBER_JOIN:
-                case PokoMessage.MEMBER_EXIT: {
+                case PokoMessage.TYPE_IMAGE: {
+                    item = new ImageMessageItem(context);
+                    break;
+                }
+                case PokoMessage.TYPE_MEMBER_JOIN:
+                case PokoMessage.TYPE_MEMBER_EXIT: {
                     item = new SpecialMessageItem(context);
                     break;
                 }
-                case PokoMessage.APP_DATE_MESSAGE: {
+                case PokoMessage.TYPE_APP_DATE_MESSAGE: {
                     item = new DateChangeMessageItem(context);
                     break;
                 }
@@ -97,15 +109,9 @@ public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
             }
             item.inflate();
         }
-        item.setMessage(message);
 
-        /* Position at bottom at first */
-        if (bottomAtFirst && position == getCount() - 1) {
-            bottomAtFirst = false;
-            if (parent != null && parent instanceof ListViewDetectable) {
-                ((ListViewDetectable) parent).postScrollToBottom();
-            }
-        }
+        // Set message
+        item.setMessage(message);
 
         return item;
     }

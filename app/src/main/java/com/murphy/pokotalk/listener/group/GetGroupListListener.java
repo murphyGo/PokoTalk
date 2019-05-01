@@ -58,7 +58,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
 
                     /* If the message is history, send get history */
                     if (lastMessage.getSpecialContent() == null &&
-                            lastMessage.getMessageType() == PokoMessage.MEMBER_JOIN) {
+                            lastMessage.getMessageType() == PokoMessage.TYPE_MEMBER_JOIN) {
                         PokoServer.getInstance().sendGetMemberJoinHistory(group.getGroupId(),
                                 lastMessage.getMessageId());
                     }

@@ -7,7 +7,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.content.ContentTransferManager;
+import com.murphy.pokotalk.content.ContentTransferManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;

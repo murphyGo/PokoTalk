@@ -58,7 +58,7 @@ public class DataCollection {
         if (u != null) {
             if (u.getUserId() == user.getUserId()) {
                 u.update(user);
-                return false;
+                return true;
             }
         }
 

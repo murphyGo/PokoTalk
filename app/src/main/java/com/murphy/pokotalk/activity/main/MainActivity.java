@@ -161,29 +161,42 @@ public class MainActivity extends FragmentActivity
 
     // Called when application data loaded, show activity and popup loin activity if necessary
     private void showMainActivity() {
+        // Get session
+        Session session = Session.getInstance();
+
         // We should show login activity if session id does not exists
-        if (!Session.getInstance().sessionIdExists()) {
+        if (!session.sessionIdExists()) {
+            // Set root view invisible
+            rootView.setVisibility(View.INVISIBLE);
+
             Intent intent = new Intent(this, LoginActivity.class);
             startActivityForResult(intent, RequestCode.LOGIN.value);
+        } else {
+            if (session.hasLogined() && app.shouldRequestUpToDateDataSinceFirstLogin()) {
+                /* Get up-to-date contact and group and event list */
+                server.sendGetContactList();
+                server.sendGetGroupList();
+                server.sendGetEventList();
+            }
+
+            // Set root view visible
+            rootView.setVisibility(View.VISIBLE);
+
+            // Set view pager adapter
+            viewPagerAdapter = new MainFragmentViewPagerAdapter(this,
+                    getSupportFragmentManager(), fragments);
+            viewPager.setAdapter(viewPagerAdapter);
+
+            // Set navigation view selected listener
+            tabLayout.setupWithViewPager(viewPager);
+
+            // Set icons of tab
+            tabLayout.getTabAt(0).setIcon(R.drawable.user_list);
+            tabLayout.getTabAt(1).setIcon(R.drawable.chat_icon);
+            tabLayout.getTabAt(2).setIcon(R.drawable.event_icon);
+            tabLayout.getTabAt(3).setIcon(R.drawable.settings);
+            //navigationMenu.setOnNavigationItemSelectedListener(this);
         }
-
-        // Set root view visible
-        rootView.setVisibility(View.VISIBLE);
-
-        // Set view pager adapter
-        viewPagerAdapter = new MainFragmentViewPagerAdapter(this,
-                getSupportFragmentManager(), fragments);
-        viewPager.setAdapter(viewPagerAdapter);
-
-        // Set navigation view selected listener
-        tabLayout.setupWithViewPager(viewPager);
-
-        // Set icons of tab
-        tabLayout.getTabAt(0).setIcon(R.drawable.user_list);
-        tabLayout.getTabAt(1).setIcon(R.drawable.chat_icon);
-        tabLayout.getTabAt(2).setIcon(R.drawable.event_icon);
-        tabLayout.getTabAt(3).setIcon(R.drawable.settings);
-        //navigationMenu.setOnNavigationItemSelectedListener(this);
     }
 
     @Override
@@ -294,11 +307,14 @@ public class MainActivity extends FragmentActivity
                             @Override
                             public void run() {
                                 // Show activity view
-                                rootView.setVisibility(View.VISIBLE);
+                                showMainActivity();
                             }
                         });
                     }
                 });
+            } else {
+                // Show activity right away
+                showMainActivity();
             }
         } else if (resultCode == RESULT_CANCELED) {
             finish();

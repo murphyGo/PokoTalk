@@ -47,6 +47,8 @@ public class Serializer {
 
         if (lastSeen != null) {
             values.put(SessionSchema.Entry.LAST_SEEN, calendarToEpochInMills(lastSeen));
+        } else {
+            values.putNull(SessionSchema.Entry.LAST_SEEN);
         }
 
         return values;
@@ -65,10 +67,14 @@ public class Serializer {
         values.put(UsersSchema.Entry.NICKNAME, user.getNickname());
         if (picture != null) {
             values.put(UsersSchema.Entry.PICTURE, picture);
+        } else {
+            values.putNull(UsersSchema.Entry.PICTURE);
         }
 
         if (lastSeen != null) {
             values.put(UsersSchema.Entry.LAST_SEEN, calendarToEpochInMills(lastSeen));
+        } else {
+            values.putNull(UsersSchema.Entry.LAST_SEEN);
         }
 
         return values;
@@ -98,6 +104,8 @@ public class Serializer {
         values.put(ContactsSchema.Entry.INVITED, invited);
         if (groupChatId != null) {
             values.put(ContactsSchema.Entry.GROUP_CHAT_ID, groupChatId);
+        } else {
+            values.putNull(ContactsSchema.Entry.GROUP_CHAT_ID);
         }
 
         return values;
@@ -113,10 +121,14 @@ public class Serializer {
         values.put(GroupsSchema.Entry.ACK, group.getAck());
         if (name != null) {
             values.put(GroupsSchema.Entry.NAME, group.getGroupName());
+        } else {
+            values.putNull(GroupsSchema.Entry.NAME);
         }
 
         if (alias != null) {
             values.put(GroupsSchema.Entry.ALIAS, group.getAlias());
+        } else {
+            values.putNull(GroupsSchema.Entry.ALIAS);
         }
 
         return values;
@@ -134,6 +146,9 @@ public class Serializer {
     public static ContentValues obtainMessageValues(Group group, PokoMessage message) {
         ContentValues values = new ContentValues();
 
+        String content = message.getContent();
+        String specialContent = message.getSpecialContent();
+
         values.put(MessagesSchema.Entry.GROUP_ID, group.getGroupId());
         values.put(MessagesSchema.Entry.MESSAGE_ID, message.getMessageId());
         values.put(MessagesSchema.Entry.MESSAGE_TYPE, message.getMessageType());
@@ -141,8 +156,17 @@ public class Serializer {
         values.put(MessagesSchema.Entry.NB_NOT_READ, message.getNbNotReadUser());
         values.put(MessagesSchema.Entry.IMPORTANCE, message.getImportanceLevel());
         values.put(MessagesSchema.Entry.DATE, calendarToEpochInMills(message.getDate()));
-        values.put(MessagesSchema.Entry.CONTENTS, message.getContent());
-        values.put(MessagesSchema.Entry.SPECIAL_CONTENTS, message.getSpecialContent());
+        if (content == null) {
+            values.putNull(MessagesSchema.Entry.CONTENTS);
+        } else {
+            values.put(MessagesSchema.Entry.CONTENTS, content);
+        }
+
+        if (specialContent == null) {
+            values.putNull(MessagesSchema.Entry.SPECIAL_CONTENTS);
+        } else {
+            values.put(MessagesSchema.Entry.SPECIAL_CONTENTS, specialContent);
+        }
 
         return values;
     }
@@ -165,6 +189,8 @@ public class Serializer {
         values.put(EventsSchema.Entry.EVENT_CREATOR, creatorId);
         if (description != null) {
             values.put(EventsSchema.Entry.EVENT_DESCRIPTION, description);
+        } else {
+            values.putNull(EventsSchema.Entry.EVENT_DESCRIPTION);
         }
 
         return values;
@@ -193,9 +219,13 @@ public class Serializer {
         values.put(EventLocationSchema.Entry.LOCATION_LONGITUDE, longitude);
         if (category != null) {
             values.put(EventLocationSchema.Entry.LOCATION_CATEGORY, category);
+        } else {
+            values.putNull(EventLocationSchema.Entry.LOCATION_CATEGORY);
         }
         if (address != null) {
             values.put(EventLocationSchema.Entry.LOCATION_ADDRESS, address);
+        } else {
+            values.putNull(EventLocationSchema.Entry.LOCATION_ADDRESS);
         }
 
         return values;

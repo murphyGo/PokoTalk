@@ -91,7 +91,7 @@ public class GetContactListListener extends PokoServer.PokoListener {
                 // Insert or update all contact data
                 for (Contact contact : contactList.getList()) {
                     ContentValues userValues = Serializer.obtainUserValues(contact);
-                    long count = PokoDatabaseHelper.insertOrUpdateUserData(db, contact, userValues);
+                    long count = PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
                     if (count < 0) {
                         Log.e("POKO", "Failed to update contact data");
                     }

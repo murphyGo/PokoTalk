@@ -22,11 +22,11 @@ public class OnDisconnectionListener extends PokoServer.SocketEventListener {
     public void call(Status status, Object... args) {
         PokoTalkApp app = PokoTalkApp.getInstance();
 
-        if (app.isLogout()) {
+        if (app.isLogoutState()) {
             // Logout, it is intentional disconnection
 
         } else {
-            // Not logout, it is disconnection problem
+            // Not logoutState, it is disconnection problem
             PokoServer.getInstance().setConnected(false);
 
             Session session = Session.getInstance();

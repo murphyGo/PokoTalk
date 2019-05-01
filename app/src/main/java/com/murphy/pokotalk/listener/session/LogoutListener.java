@@ -20,7 +20,7 @@ public class LogoutListener extends PokoServer.PokoListener {
 
     @Override
     public void callSuccess(Status status, Object... args) {
-        /* Set session logout and remove session data */
+        /* Set session logoutState and remove session data */
         Session session = Session.getInstance();
         if (session.hasLogined()) {
             session.setLogouted();

@@ -35,7 +35,7 @@ public class LogoutBewareDialog extends DialogFragment {
                 .setPositiveButton(R.string.logout_positive_button, new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        // Apply action for logout
+                        // Apply action for logoutState
                         listener.logoutOptionSelected(OPTION_LOGOUT);
                     }
                 })

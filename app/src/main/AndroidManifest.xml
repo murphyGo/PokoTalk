@@ -46,6 +46,8 @@
             android:parentActivityName=".activity.main.MainActivity"/>
         <activity android:name=".activity.chat.GroupMemberInvitationActivity"
             android:parentActivityName=".activity.chat.ChatActivity"/>
+        <activity android:name=".activity.chat.ChatImageShowActivity"
+            android:parentActivityName=".activity.chat.ChatActivity"/>
         <activity android:name=".activity.event.EventCreationActivity"
             android:parentActivityName=".activity.main.MainActivity"/>
         <activity android:name=".activity.event.EventLocationSelectionActivity"/>
@@ -61,7 +63,7 @@
             android:permission="android.permission.BIND_JOB_SERVICE"/>
 
         <service
-            android:name=".server.content.ContentLoadService"
+            android:name=".service.ContentService"
             android:enabled="true"
             android:exported="false" />
 

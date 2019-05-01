@@ -1,5 +1,7 @@
 package com.murphy.pokotalk.data.user;
 
+import android.util.Log;
+
 import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
@@ -24,6 +26,12 @@ public class User extends Item {
         this.nickname = nickname;
         this.picture = picture;
         initList();
+
+        //Log.e("POKO", nickname + " UPDATE PICTURE TO " + picture);
+
+        if (picture == "null") {
+            Log.e("POKO", "BAD, picture given string null");
+        }
     }
 
     protected void initList() {
@@ -85,5 +93,11 @@ public class User extends Item {
 
     public void setPicture(String picture) {
         this.picture = picture;
+
+        //Log.e("POKO", nickname + " UPDATE PICTURE TO " + picture);
+
+        if (picture == "null") {
+            Log.e("POKO", "BAD, picture given string null");
+        }
     }
 }

@@ -1,9 +1,11 @@
 package com.murphy.pokotalk.activity.chat;
 
+import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -21,6 +23,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
@@ -29,14 +32,19 @@ import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.adapter.group.GroupMemberListAdapter;
+import com.murphy.pokotalk.adapter.ViewCreationCallback;
 import com.murphy.pokotalk.adapter.chat.MessageListAdapter;
+import com.murphy.pokotalk.adapter.group.GroupMemberListAdapter;
+import com.murphy.pokotalk.content.ContentManager;
+import com.murphy.pokotalk.content.ContentStream;
+import com.murphy.pokotalk.content.ContentTransferManager;
+import com.murphy.pokotalk.content.ImageEncoder;
 import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessagePokoList;
@@ -48,14 +56,18 @@ import com.murphy.pokotalk.data.user.UserPokoList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.service.ContentService;
 import com.murphy.pokotalk.view.ListViewDetectable;
 
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 public class ChatActivity extends AppCompatActivity
         implements PopupMenu.OnMenuItemClickListener,
         GroupExitWarningDialog.Listener,
-        NavigationView.OnNavigationItemSelectedListener {
+        NavigationView.OnNavigationItemSelectedListener,
+        ChatAttachOptionFragment.Listener {
     private int groupId;
     private PokoServer server;
     private DataCollection collection;
@@ -65,6 +77,8 @@ public class ChatActivity extends AppCompatActivity
     private ListView memberListView;
     private Toolbar slideMenuButton;
     private EditText messageInputView;
+    private HorizontalScrollView attachOptionLayout;
+    private Button attachOptionButton;
     private Button sendMessageButton;
     private DrawerLayout drawerLayout;
     private LinearLayout slideMenuLayout;
@@ -73,6 +87,7 @@ public class ChatActivity extends AppCompatActivity
     private MessageListAdapter messageListAdapter;
     private GroupMemberListAdapter memberListAdapter;
     private Group group;
+    private ChatAttachOptionFragment attachOptionFragment;
     private int sendId;
     private Session session;
     private boolean firstRead = true;
@@ -94,6 +109,8 @@ public class ChatActivity extends AppCompatActivity
         slideMenuButton = findViewById(R.id.slideMenuButton);
         messageListView =  findViewById(R.id.messageList);
         messageInputView = findViewById(R.id.messageInputText);
+        attachOptionLayout = findViewById(R.id.chatAttachOptionLayout);
+        attachOptionButton = findViewById(R.id.chatAttachOptionButton);
         sendMessageButton = findViewById(R.id.sendMessageButton);
         drawerLayout = findViewById(R.id.drawerLayout);
 
@@ -118,6 +135,7 @@ public class ChatActivity extends AppCompatActivity
         /* Set group name */
         groupNameView.setText(group.getGroupName());
 
+        /* Get server and session */
         server = PokoServer.getInstance();
         session = Session.getInstance();
 
@@ -164,6 +182,7 @@ public class ChatActivity extends AppCompatActivity
             try {
                 messageListAdapter = new MessageListAdapter(this);
                 messageListAdapter.getPokoList().copyFromPokoList(group.getMessageList());
+                messageListAdapter.setViewCreationCallback(messageViewCreationCallback);
                 messageListView.setAdapter(messageListAdapter);
                 messageListView.setKeepVerticalPosition(true);
                 messageListView.postScrollToBottom();
@@ -184,6 +203,10 @@ public class ChatActivity extends AppCompatActivity
         /* Add widget listeners */
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
         sendMessageButton.setOnClickListener(messageSendButtonListener);
+        attachOptionButton.setOnClickListener(attachOptionButtonListener);
+
+        /* Do not show attach option layout at first */
+        attachOptionLayout.setVisibility(View.GONE);
 
         /* Attach server event callbacks */
         server.attachActivityCallback(Constants.sessionLoginName, sessionLoginListener);
@@ -300,12 +323,14 @@ public class ChatActivity extends AppCompatActivity
         finish();
     }
 
-    private PokoMessage createSentMessage(int sendId, String content, @Nullable Integer importanceLevel) {
+    private PokoMessage createSentMessage(int sendId, String content,
+                                          int messageType, int importanceLevel) {
         PokoMessage message = new PokoMessage();
         message.setWriter(session.getUser());
         message.setSendId(sendId);
         message.setContent(content);
-        message.setMessageType(importanceLevel);
+        message.setMessageType(messageType);
+        message.setImportanceLevel(importanceLevel);
 
         return message;
     }
@@ -330,16 +355,65 @@ public class ChatActivity extends AppCompatActivity
                                 Toast.LENGTH_SHORT).show();
                         return;
                     }
+
+                    // Increment send id
                     sendId++;
-                    PokoMessage message = createSentMessage(sendId, content, PokoMessage.NORMAL);
-                    server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.NORMAL);
+
+                    // Create message to send
+                    PokoMessage message = createSentMessage(sendId, content,
+                            PokoMessage.TYPE_TEXT_MESSAGE, PokoMessage.IMPORTANCE_NORMAL);
+
+                    // Send message to server
+                    server.sendNewMessage(group.getGroupId(), sendId, content, PokoMessage.IMPORTANCE_NORMAL);
+
+                    // Add sent but not completed message list
                     group.getMessageList().addSentMessage(message);
+
+                    // Clear input text edit
                     messageInputView.setText("");
                 } finally {
                     PokoLock.getDataLockInstance().releaseWriteLock();
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
+            }
+        }
+    };
+
+    private View.OnClickListener attachOptionButtonListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            int visibility = attachOptionLayout.getVisibility();
+
+            if (visibility == View.VISIBLE) {
+                // Hide attach option layout
+                attachOptionLayout.setVisibility(View.GONE);
+
+                // Check if the fragment exists
+                if (attachOptionFragment != null) {
+                    // Remove the fragment
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .remove(attachOptionFragment)
+                            .commit();
+
+                    attachOptionFragment = null;
+                }
+            } else if (visibility == View.GONE) {
+                // Show attach option layout
+                attachOptionLayout.setVisibility(View.VISIBLE);
+
+                // Check if there is no fragment
+                if (attachOptionFragment == null) {
+                    // Create fragment
+                    attachOptionFragment = new ChatAttachOptionFragment();
+
+                    // Add the fragment to attach option layout
+                    getSupportFragmentManager()
+                            .beginTransaction()
+                            .add(R.id.chatAttachOptionLayout, attachOptionFragment)
+                            .commit();
+                }
             }
         }
     };
@@ -513,8 +587,6 @@ public class ChatActivity extends AppCompatActivity
                             endId = Math.min(endId, group.getAck());
 
                             server.sendReadNbreadOfMessages(group.getGroupId(), ackStart, endId);
-                            Log.v("POKO", "ackstrt " + ackStart + " ack end " + ackEnd);
-                            Log.v("POKO", "ACKED, next nbread is " + ackStart + " to " + endId);
                         }
 
                         /* Refresh NbNotReadUser number */
@@ -605,6 +677,59 @@ public class ChatActivity extends AppCompatActivity
         }
     };
 
+    /* View creation callbacks */
+    private ViewCreationCallback<PokoMessage> messageViewCreationCallback =
+            new ViewCreationCallback<PokoMessage>() {
+                @Override
+                public void run(View view, PokoMessage item) {
+                    if (view == null || item == null) {
+                        return;
+                    }
+
+                    if (item.getMessageType() == PokoMessage.TYPE_IMAGE) {
+                        // Add click listener for image message
+                        view.setOnClickListener(
+                                new ImageMessageClickListener(getApplicationContext(), item));
+                    }
+
+                    // Add long click listener
+                    view.setOnLongClickListener(messageLongClickListener);
+                }
+            };
+
+    // Message long click listener
+    private View.OnLongClickListener messageLongClickListener = new View.OnLongClickListener() {
+        @Override
+        public boolean onLongClick(View v) {
+            return false;
+        }
+    };
+
+    // Image message click listener
+    static class  ImageMessageClickListener implements View.OnClickListener {
+        private Context context;
+        private PokoMessage message;
+
+        public ImageMessageClickListener(Context context, PokoMessage message) {
+            this.context = context;
+            this.message = message;
+        }
+
+        @Override
+        public void onClick(View v) {
+            // Message should exist and be image message.
+            if (message == null || message.getMessageType() != PokoMessage.TYPE_IMAGE) {
+                Toast.makeText(context, R.string.chat_not_image_message, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Start image show activity
+            Intent intent = new Intent(context, ChatImageShowActivity.class);
+            intent.putExtra("contentName", message.getContent());
+            context.startActivity(intent);
+        }
+    }
+
     /* Popup menu code */
     private void open_menu(View v) {
         PopupMenu popup = new PopupMenu(this, v);
@@ -617,6 +742,112 @@ public class ChatActivity extends AppCompatActivity
         GroupExitWarningDialog warningDialog = new GroupExitWarningDialog();
         warningDialog.setGroup(group);
         warningDialog.show(getSupportFragmentManager(), "채팅방 나가기 경고");
+    }
+
+    @Override
+    public void onImageAttachedToMessage(final Bitmap bitmap) {
+        // Encode to jpeg format
+        final byte[] binary = ImageEncoder.encodeToJPEG(bitmap);
+
+        // Increment send id
+        sendId++;
+
+        // Create message to send
+        final PokoMessage message = createSentMessage(sendId, null,
+                PokoMessage.TYPE_IMAGE, PokoMessage.IMPORTANCE_NORMAL);
+
+        // Send image message
+        int imageId = ContentTransferManager.getInstance().addUploadJob(binary,
+                ContentManager.EXT_JPG,
+                new ContentTransferManager.UploadJobCallback() {
+                    @Override
+                    public void onSuccess(String contentName) {
+                        // Put content in cache
+                        ContentManager.getInstance().putImageContentInCache(contentName, bitmap);
+
+                        // Put image binary data to store as file
+                        ContentService.putImageBinary(contentName, binary);
+
+                        // Start service to save content as a file
+                        Intent intent = new Intent(getApplicationContext(), ContentService.class);
+                        intent.putExtra("command", ContentService.CMD_STORE_CONTENT);
+                        intent.putExtra("contentName", contentName);
+                        intent.putExtra("contentType", ContentTransferManager.TYPE_IMAGE);
+                        startService(intent);
+
+                        // Save content name
+                        message.setContent(contentName);
+                    }
+
+                    @Override
+                    public void onError() {
+                        // Remove message
+
+                    }
+                });
+
+        Log.v("POKO", "SEND IMAGE MESSAGE upload send id " + imageId + ", send id " + sendId);
+        // Send image message
+        server.sendNewImageMessage(group.getGroupId(), sendId, imageId, PokoMessage.IMPORTANCE_NORMAL);
+
+        // Add sent but not completed message list
+        group.getMessageList().addSentMessage(message);
+    }
+
+    @Override
+    public void onBinaryAttachedToMessage(final ContentStream contentStream) {
+        // Byte buffer maximum 10MB
+        ByteBuffer buffer = ByteBuffer.allocate(1024*1024*10);
+
+        byte[] chunk;
+
+        try {
+            while((chunk = contentStream.getNextChunk()) != null) {
+                buffer.put(chunk);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+
+        byte[] binary = buffer.array();
+
+        // Increment send id
+        sendId++;
+
+        // Create message to send
+        final PokoMessage message = createSentMessage(sendId, null,
+                PokoMessage.TYPE_FILE_SHARE, PokoMessage.IMPORTANCE_NORMAL);
+
+        // Send file share message
+        int fileId = ContentTransferManager.getInstance().addUploadJob(binary,
+                "binary",
+                new ContentTransferManager.UploadJobCallback() {
+                    @Override
+                    public void onSuccess(String contentName) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(ChatActivity.this,
+                                        "Uploaded!", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onError() {
+                        // Remove message
+
+                    }
+                });
+
+        Log.v("POKO", "SEND BINARY MESSAGE upload send id " + fileId + ", send id " + sendId);
+
+        // Send image message
+        server.sendNewFileShareMessage(group.getGroupId(), sendId, fileId, PokoMessage.IMPORTANCE_NORMAL);
+
+        // Add sent but not completed message list
+        group.getMessageList().addSentMessage(message);
     }
 
     @Override
@@ -725,7 +956,6 @@ public class ChatActivity extends AppCompatActivity
             return;
         }
 
-        Log.v("POKO", "request nbread min "+ minId + ", max " + maxId);
         server.sendReadNbreadOfMessages(group.getGroupId(), minId, maxId);
     }
 
@@ -754,8 +984,6 @@ public class ChatActivity extends AppCompatActivity
                     // So we mark position of second item that will remain after update.
                     messageListView.markScrollPosition(1);
 
-                    Log.v("POKO", "Mark position");
-
                     // Get user
                     Contact user = Session.getInstance().getUser();
 
@@ -782,13 +1010,15 @@ public class ChatActivity extends AppCompatActivity
                     try {
                         while (cursor.moveToNext()) {
                             try {
+                                // Parse message
                                 PokoMessage message = Parser.parseMessage(cursor);
+
+                                // Add message only if it is new message
                                 if (messageList.updateItem(message) == message) {
                                     readMessages.add(message);
                                 }
                             } catch (Exception e) {
                                 e.printStackTrace();
-                                Log.v("POKO", "Failed to parse message");
                             }
                         }
                     } finally {
@@ -798,7 +1028,8 @@ public class ChatActivity extends AppCompatActivity
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
-                    // We must scroll to mark after mark
+
+                    // We must scroll to mark after mark when error
                     messageListView.scrollToMark(0);
                 } finally {
                     PokoLock.getDataLockInstance().releaseWriteLock();
@@ -820,15 +1051,22 @@ public class ChatActivity extends AppCompatActivity
                         MessagePokoListUI messageListUI = (MessagePokoListUI) messageListAdapter.getPokoList();
                         // We now count delta of number of date change message.
                         messageListUI.startCountDateChangeMessage();
+
+                        // Update all read messages
                         for (PokoMessage message : readMessages) {
                             messageListUI.updateItem(message);
                         }
 
+                        // Find how many date change messages created or removed
                         int dateChangeMessageNumDelta = messageListUI.endCountDateChangeMessage();
 
+                        // Notify message list has been changed
                         messageListAdapter.notifyDataSetChanged();
+
+                        // Compute changed message number
                         int size = readMessages.size() + dateChangeMessageNumDelta;
-                        Log.v("POKO", "READ " + readMessages.size() + " messages");
+
+                        // Scroll to original position
                         messageListView.scrollToMark(size);
 
                     } finally {
@@ -838,13 +1076,16 @@ public class ChatActivity extends AppCompatActivity
                     e.printStackTrace();
                 }
 
-                /* Request nbNotRead of messages read */
+                // Request nbNotRead of messages read
                 requestNbreadOfMessages(readMessages);
             }
 
-            /* If it is a first read, scrolls to bottom */
+            // Check if it is a first read
             if (ChatActivity.this.firstRead) {
+                // Scroll to bottom
                 messageListView.postScrollToBottom();
+
+                // Not first read anymore
                 ChatActivity.this.firstRead = false;
             }
         }

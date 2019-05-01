@@ -28,8 +28,8 @@ public class SpecialMessageItem extends MessageItem {
     public void setMessage(PokoMessage message) {
         this.message = message;
         switch(message.getMessageType()) {
-            case PokoMessage.MEMBER_JOIN:
-            case PokoMessage.MEMBER_EXIT:{
+            case PokoMessage.TYPE_MEMBER_JOIN:
+            case PokoMessage.TYPE_MEMBER_EXIT:{
                 setContent(message.getSpecialContent());
                 break;
             }

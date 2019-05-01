@@ -20,6 +20,8 @@ import com.murphy.pokotalk.listener.chat.MessageAckListener;
 import com.murphy.pokotalk.listener.chat.NewMessageListener;
 import com.murphy.pokotalk.listener.chat.ReadMessageListener;
 import com.murphy.pokotalk.listener.chat.ReadNbreadOfMessages;
+import com.murphy.pokotalk.listener.chat.SendFileShareMessageListener;
+import com.murphy.pokotalk.listener.chat.SendImageMessageListener;
 import com.murphy.pokotalk.listener.chat.SendMessageListener;
 import com.murphy.pokotalk.listener.connection.OnConnectionListener;
 import com.murphy.pokotalk.listener.connection.OnDisconnectionListener;
@@ -192,7 +194,7 @@ public class PokoServer extends ServerSocket {
                 PokoLock.getDataLockInstance().acquireWriteLock();
                 try {
                     Log.v("SERVER DATA " + getEventName(), data.toString());
-                    Log.v("HANDLING THREAD " + getEventName(), "" + Thread.currentThread().getId());
+                    //Log.v("HANDLING THREAD " + getEventName(), "" + Thread.currentThread().getId());
                     /* Start application callback */
                     if (status.isSuccess()) {
                         callSuccess(status, args);
@@ -330,6 +332,34 @@ public class PokoServer extends ServerSocket {
             jsonData.put("content", content);
             jsonData.put("importance", importanceLevel);
             socket.emit(Constants.sendMessageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendNewImageMessage(int groupId, int messageSendId, int imageSendId,
+                               @Nullable Integer importanceLevel) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("messageSendId", messageSendId);
+            jsonData.put("imageSendId", imageSendId);
+            jsonData.put("importance", importanceLevel);
+            socket.emit(Constants.sendImageMessageName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendNewFileShareMessage(int groupId, int messageSendId, int fileSendId,
+                                    @Nullable Integer importanceLevel) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("groupId", groupId);
+            jsonData.put("messageSendId", messageSendId);
+            jsonData.put("fileSendId", fileSendId);
+            jsonData.put("importance", importanceLevel);
+            socket.emit(Constants.sendFileShareMessageName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -538,6 +568,8 @@ public class PokoServer extends ServerSocket {
         socket.on(Constants.readMessageName, new ReadMessageListener(context));
         socket.on(Constants.readNbreadOfMessages, new ReadNbreadOfMessages(context));
         socket.on(Constants.sendMessageName, new SendMessageListener(context));
+        socket.on(Constants.sendImageMessageName, new SendImageMessageListener(context));
+        socket.on(Constants.sendFileShareMessageName, new SendFileShareMessageListener(context));
         socket.on(Constants.newMessageName, new NewMessageListener(context));
         socket.on(Constants.messageAckName, new MessageAckListener(context));
         socket.on(Constants.ackMessageName, new AckMessageListener(context));

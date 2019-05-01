@@ -18,17 +18,17 @@ public class PokoMessage extends Item {
     private int nbNotReadUser;    // number of users has not read this message
 
     /* PokoMessage type constants */
-    public static final int TEXT_MESSAGE = 0;
-    public static final int MEMBER_JOIN = 1;
-    public static final int MEMBER_EXIT = 2;
-    public static final int IMAGE = 3;
-    public static final int FILESHARE = 4;
-    public static final int APP_DATE_MESSAGE = 1000;
+    public static final int TYPE_TEXT_MESSAGE = 0;
+    public static final int TYPE_MEMBER_JOIN = 1;
+    public static final int TYPE_MEMBER_EXIT = 2;
+    public static final int TYPE_IMAGE = 3;
+    public static final int TYPE_FILE_SHARE = 4;
+    public static final int TYPE_APP_DATE_MESSAGE = 1000;
 
     /* PokoMessage importance level */
-    public static final int NORMAL = 0;
-    public static final int IMPORTANT = 1;
-    public static final int VERY_IMPORTANT = 2;
+    public static final int IMPORTANCE_NORMAL = 0;
+    public static final int IMPORTANCE_IMPORTANT = 1;
+    public static final int IMPORTANCE_VERY_IMPORTANT = 2;
 
     public PokoMessage() {
 
@@ -127,10 +127,10 @@ public class PokoMessage extends Item {
 
     public String getRealContent() {
         switch (getMessageType()) {
-            case TEXT_MESSAGE: {
+            case TYPE_TEXT_MESSAGE: {
                 return getContent();
             }
-            case MEMBER_JOIN: {
+            case TYPE_MEMBER_JOIN: {
                 String content = getSpecialContent();
                 if (content == null) {
                     return getWriter().getNickname() + " 님이 초대하셨습니다.";
@@ -138,13 +138,13 @@ public class PokoMessage extends Item {
                     return content;
                 }
             }
-            case MEMBER_EXIT: {
+            case TYPE_MEMBER_EXIT: {
                 return getSpecialContent();
             }
-            case IMAGE: {
+            case TYPE_IMAGE: {
                 return "사진";
             }
-            case FILESHARE: {
+            case TYPE_FILE_SHARE: {
                 return "파일";
             }
             default: {

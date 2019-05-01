@@ -7,6 +7,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
@@ -55,7 +56,12 @@ public class SessionLoginListener extends PokoServer.PokoListener {
             int userId = userInfo.getInt("userId");
             String email = userInfo.getString("email");
             String nickname = userInfo.getString("nickname");
-            String picture = userInfo.getString("picture");
+            String picture;
+            if (userInfo.has("picture") && !userInfo.isNull("picture")) {
+                picture = userInfo.getString("picture");
+            } else {
+                picture = null;
+            }
 
             /* Parse last seen string to Calendar */
             Calendar lastSeen = Parser.epochInMillsToCalendar(userInfo.getLong("lastSeen"));
@@ -74,11 +80,21 @@ public class SessionLoginListener extends PokoServer.PokoListener {
                 session.setUser(user);
             }
 
-            /* Get up-to-date contact and group and event list */
-            PokoServer server = PokoServer.getInstance();
-            server.sendGetContactList();
-            server.sendGetGroupList();
-            server.sendGetEventList();
+            // Get application
+            PokoTalkApp app = PokoTalkApp.getInstance();
+
+            // Mark login timestamp if it is a first login
+            app.setLoginTimeIfFirst();
+
+            /** NOTE: We do not request lists in logout mode since MainActivity
+            /*  will request lists when application data is loaded */
+            if (!app.isLogoutState()) {
+                /* Get up-to-date contact and group and event list */
+                PokoServer server = PokoServer.getInstance();
+                server.sendGetContactList();
+                server.sendGetGroupList();
+                server.sendGetEventList();
+            }
 
             putData("session", session);
         } catch(Exception e) {
@@ -105,9 +121,14 @@ public class SessionLoginListener extends PokoServer.PokoListener {
         @Override
         protected void doJob(HashMap<String, Object> data) {
             Session session = (Session) data.get("session");
+
+            if (session == null) {
+                return;
+            }
+
             User user = session.getUser();
 
-            if (session == null || user == null) {
+            if (user == null) {
                 return;
             }
 

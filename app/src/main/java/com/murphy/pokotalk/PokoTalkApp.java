@@ -40,6 +40,7 @@ import com.murphy.pokotalk.service.PokoTalkService;
 import com.naver.maps.map.NaverMapSdk;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 
 public class PokoTalkApp extends Application
@@ -78,7 +79,14 @@ public class PokoTalkApp extends Application
     public static final int LOAD_FAIL = 3;
 
     // Logout variable
-    public boolean logout = false;
+    public boolean logoutState = false;
+
+    // First session login timestamp
+    private Calendar firstLogin = null;
+
+    // Timeout value since first session login for client to request up-to-date
+    // list data again
+    public static final long REQUEST_UP_TO_DATE_DATA_AGAIN_TIMEOUT = 5000;
 
     public static PokoTalkApp getInstance() {
         return instance;
@@ -120,7 +128,10 @@ public class PokoTalkApp extends Application
         requestQueue = Volley.newRequestQueue(this);
 
         // Start data load AsyncTask
-        new DataLoadAsyncTask().execute(this);
+        new DataLoadAsyncTask()
+                .setLoadSessionData(true)
+                .setSendSessionLogin(true)
+                .execute(this);
 
         // Attach callbacks
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
@@ -133,7 +144,9 @@ public class PokoTalkApp extends Application
      */
     static class DataLoadAsyncTask
             extends AsyncTask<PokoTalkApp, Void, PokoTalkApp> {
-        PokoTalkApp app;
+        private PokoTalkApp app;
+        private boolean loadSessionData = true;
+        private boolean sendSessionLogin = true;
 
         @Override
         protected PokoTalkApp doInBackground(PokoTalkApp[] objects) {
@@ -143,13 +156,16 @@ public class PokoTalkApp extends Application
             // Load application data
             loadApplicationData();
 
-            // Get session
-            Session session = Session.getInstance();
+            // Check if we should send session login
+            if (sendSessionLogin) {
+                // Get session
+                Session session = Session.getInstance();
 
-            // Try to login if session data is loaded
-            if (session.sessionIdExists()) {
-                PokoServer server = PokoServer.getInstance();
-                server.sendSessionLogin(session.getSessionId());
+                // Try to login if session data is loaded
+                if (session.sessionIdExists()) {
+                    PokoServer server = PokoServer.getInstance();
+                    server.sendSessionLogin(session.getSessionId());
+                }
             }
 
             return app;
@@ -177,8 +193,11 @@ public class PokoTalkApp extends Application
                 PokoLock.getDataLockInstance().acquireWriteLock();
 
                 try {
-                    // Load session data
-                    PokoDatabaseManager.loadSessionData(context);
+                    // Check if we need to load session data
+                    if (loadSessionData) {
+                        // Load session data
+                        PokoDatabaseManager.loadSessionData(context);
+                    }
 
                     // Get session and user
                     Session session = Session.getInstance();
@@ -200,15 +219,15 @@ public class PokoTalkApp extends Application
                     // Check if session id exists
                     if (Session.getInstance().sessionIdExists()) {
                         // Set state success
-                        app.appDataLoadState = app.LOAD_SUCCESS;
+                        app.appDataLoadState = PokoTalkApp.LOAD_SUCCESS;
                     } else {
                         // Session id must exist, no data;
-                        app.appDataLoadState = app.LOAD_NO_DATA;
+                        app.appDataLoadState = PokoTalkApp.LOAD_NO_DATA;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                     // Error loading app data
-                    app.appDataLoadState = app.LOAD_FAIL;
+                    app.appDataLoadState = PokoTalkApp.LOAD_FAIL;
                 } finally {
                     PokoLock.getDataLockInstance().releaseWriteLock();
 
@@ -219,6 +238,26 @@ public class PokoTalkApp extends Application
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+
+        public boolean isLoadSessionData() {
+            return loadSessionData;
+        }
+
+        public DataLoadAsyncTask setLoadSessionData(boolean loadSessionData) {
+            this.loadSessionData = loadSessionData;
+
+            return this;
+        }
+
+        public boolean isSendSessionLogin() {
+            return sendSessionLogin;
+        }
+
+        public DataLoadAsyncTask setSendSessionLogin(boolean sendSessionLogin) {
+            this.sendSessionLogin = sendSessionLogin;
+
+            return this;
         }
     }
 
@@ -237,12 +276,12 @@ public class PokoTalkApp extends Application
         }
     }
 
-    // Do all the stuffs to logout user in application
+    // Do all the stuffs to logoutState user in application
     public void logoutUser() {
-        // Set logout
-        logout = true;
+        // Set logoutState
+        logoutState = true;
 
-        // Send logout and disconnect
+        // Send logoutState and disconnect
         server.sendLogout();
         server.disconnect();
 
@@ -283,15 +322,18 @@ public class PokoTalkApp extends Application
     }
 
     public void startLoadingApplicationData() {
-        // Logout job done, set logout false
-        logout = false;
+        // Logout job done, set logoutState false
+        logoutState = false;
 
         // Reset application data loaded state
         appDataLoaded = false;
         appDataLoadState = 0;
 
         // Start data load AsyncTask
-        new DataLoadAsyncTask().execute(this);
+        new DataLoadAsyncTask()
+                .setLoadSessionData(false)
+                .setSendSessionLogin(false)
+                .execute(this);
     }
 
     // Called when application is in foreground
@@ -321,6 +363,7 @@ public class PokoTalkApp extends Application
 
     // This method create notification channels, it will work only for the first time
     private void createNotificationChannels() {
+        // Notification channels are available higher than android oreo
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel channel1 = new NotificationChannel(
                     CHANNEL_1_ID,
@@ -392,21 +435,27 @@ public class PokoTalkApp extends Application
     private ActivityCallback newMessageCallback = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
+            // Get group and message data
             Group group = (Group) getData("group");
             PokoMessage message = (PokoMessage) getData("message");
+
             if (group != null && message != null) {
 
                 // Notify only when it is not my message
                 if (!message.isMyMessage(Session.getInstance())) {
+
+                    // Check if the application is in foregroupnd
                     if (foreground) {
+
+                        // Get current chatting group
                         Group chatGroup = ChatManager.getChattingGroup();
+
                         // Notify with sound in app but when the user is not on chat of new message.
                         if (chatGroup == null || chatGroup.getGroupId() != group.getGroupId()) {
                             notificationManager.notifySoundInApp();
                         }
                     } else {
                         // Notify the user with high importance notification.
-                        Log.v("POKO", "NEW MESSAGE GROUP ID2 " + group.getGroupId());
                         notificationManager.notifyNewMessage(
                                 PokoTalkApp.CHANNEL_1_ID, group, message);
                     }
@@ -426,8 +475,26 @@ public class PokoTalkApp extends Application
     }
     public boolean isAppDataLoaded() { return appDataLoaded; }
     public int getAppDataLoadState() { return appDataLoadState; }
-    public boolean isLogout() {
-        return logout;
+    public boolean isLogoutState() {
+        return logoutState;
+    }
+    public void setLoginTimeIfFirst() {
+        if (firstLogin == null) {
+            synchronized (this) {
+                firstLogin = firstLogin == null? Calendar.getInstance() : firstLogin;
+            }
+        }
     }
 
+    /** This checks if timeout has elapsed since first session login.
+     *  This prevents requesting up-to-date list data twice at first run.
+     */
+    public boolean shouldRequestUpToDateDataSinceFirstLogin() {
+        if (firstLogin == null) {
+            return true;
+        }
+
+        return Calendar.getInstance().getTime().getTime() - firstLogin.getTime().getTime()
+                > REQUEST_UP_TO_DATE_DATA_AGAIN_TIMEOUT;
+    }
 }

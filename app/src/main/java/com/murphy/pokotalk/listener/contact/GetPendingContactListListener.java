@@ -110,7 +110,7 @@ public class GetPendingContactListListener extends PokoServer.PokoListener {
                 // Insert all invited pending contact data
                 for (PendingContact contact : invitedList.getList()) {
                     ContentValues userValues = Serializer.obtainUserValues(contact);
-                    long count = PokoDatabaseHelper.insertOrUpdateUserData(db, contact, userValues);
+                    long count = PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
                     if (count < 0) {
                         Log.e("POKO", "Failed to update pending contact data");
                     }
@@ -125,7 +125,7 @@ public class GetPendingContactListListener extends PokoServer.PokoListener {
                 // Insert all inviting pending contact data
                 for (PendingContact contact : invitingList.getList()) {
                     ContentValues userValues = Serializer.obtainUserValues(contact);
-                    long count = PokoDatabaseHelper.insertOrUpdateUserData(db, contact, userValues);
+                    long count = PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
                     if (count < 0) {
                         Log.e("POKO", "Failed to update pending contact data");
                     }

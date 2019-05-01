@@ -4,15 +4,16 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
-import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.db.schema.ContactsSchema;
 import com.murphy.pokotalk.data.db.schema.EventsSchema;
 import com.murphy.pokotalk.data.db.schema.GroupsSchema;
 import com.murphy.pokotalk.data.db.schema.MessagesSchema;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessagePokoList;
 import com.murphy.pokotalk.data.group.PokoMessage;
+import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserPokoList;
 
@@ -39,8 +40,7 @@ public class PokoDatabaseHelper {
         for (User participant : participantList.getList()) {
             ContentValues userValues = Serializer.obtainUserValues(participant);
             ContentValues participantValues = Serializer.obtainEventParticipantValues(event, participant);
-            //Log.v("POKO", "UPDATE GROUP MEMBER DATA " + member.getNickname() + ", " + member.getUserId());
-            PokoDatabaseHelper.insertOrUpdateUserData(db, participant, userValues);
+            PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
             PokoDatabaseHelper.insertOrIgnoreEventParticipantData(db, participantValues);
         }
     }
@@ -61,8 +61,7 @@ public class PokoDatabaseHelper {
         for (User member : memberList.getList()) {
             ContentValues userValues = Serializer.obtainUserValues(member);
             ContentValues memberValues = Serializer.obtainGroupMemberValues(group, member);
-            //Log.v("POKO", "UPDATE GROUP MEMBER DATA " + member.getNickname() + ", " + member.getUserId());
-            PokoDatabaseHelper.insertOrUpdateUserData(db, member, userValues);
+            PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
             PokoDatabaseHelper.insertOrIgnoreGroupMemberData(db, memberValues);
         }
 
@@ -73,13 +72,8 @@ public class PokoDatabaseHelper {
         }
     }
 
-    public static long insertOrUpdateUserData(SQLiteDatabase db, User user, ContentValues values) {
-        long count = insertOrIgnore(db, PokoDatabaseQuery.insertUserData, values);
-        if (count <= 0) {
-            return updateUserData(db, user, values);
-        } else {
-            return count;
-        }
+    public static long insertOrUpdateUserData(SQLiteDatabase db, ContentValues values) {
+        return insertOrReplace(db, PokoDatabaseQuery.insertUserData, values);
     }
 
     public static long insertOrUpdateSessionData(SQLiteDatabase db, ContentValues values) {
@@ -114,7 +108,11 @@ public class PokoDatabaseHelper {
         return insertOrIgnore(db, PokoDatabaseQuery.insertEventParticipantData, values);
     }
 
-    // args : userId
+    public static long updateSessionData(SQLiteDatabase db, Contact user, ContentValues values) {
+        String[] selectionValues = {Integer.toString(user.getUserId())};
+        return update(db, PokoDatabaseQuery.updateSessionData, values, selectionValues);
+    }
+
     public static long updateUserData(SQLiteDatabase db, User user, ContentValues values) {
         String[] selectionValues = {Integer.toString(user.getUserId())};
         return update(db, PokoDatabaseQuery.updateUserData, values, selectionValues);
@@ -286,6 +284,10 @@ public class PokoDatabaseHelper {
 
     public static Cursor readAllUserData(SQLiteDatabase db) {
         return db.rawQuery(PokoDatabaseQuery.readAllUserData, null);
+    }
+
+    public static Cursor readAllUserDataTEST(SQLiteDatabase db) {
+        return query(db, PokoDatabaseQuery.readAllUserDataTEST, null);
     }
 
     public static Cursor readGroupData(SQLiteDatabase db) {

@@ -86,7 +86,7 @@ public class NewContactListener extends PokoServer.PokoListener {
             try {
                 // Insert or update new user data
                 ContentValues userValues = Serializer.obtainUserValues(contact);
-                long count = PokoDatabaseHelper.insertOrUpdateUserData(db, contact, userValues);
+                long count = PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
                 if (count < 0) {
                     Log.e("POKO", "Failed to update new contact data");
                 }

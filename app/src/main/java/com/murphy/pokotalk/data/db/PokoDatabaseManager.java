@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.db.schema.UsersSchema;
 import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.event.PokoEvent;
@@ -178,7 +179,7 @@ public class PokoDatabaseManager {
         Cursor cursor = PokoDatabaseHelper.readAllUserData(db);
 
         // Get indexes for attributes
-        int userIdIndex = cursor.getColumnIndexOrThrow(ContactsSchema.Entry.USER_ID);
+        int userIdIndex = cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID);
         int pendingIndex = cursor.getColumnIndexOrThrow(ContactsSchema.Entry.PENDING);
         int invitedIndex = cursor.getColumnIndexOrThrow(ContactsSchema.Entry.INVITED);
         int groupChatIdIndex = cursor.getColumnIndexOrThrow(ContactsSchema.Entry.GROUP_CHAT_ID);

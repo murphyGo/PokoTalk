@@ -30,7 +30,7 @@ public class DateChangeMessageItem extends MessageItem {
     public void setMessage(PokoMessage message) {
         this.message = message;
         switch(message.getMessageType()) {
-            case PokoMessage.APP_DATE_MESSAGE: {
+            case PokoMessage.TYPE_APP_DATE_MESSAGE: {
                 setContent(message.getSpecialContent());
                 break;
             }

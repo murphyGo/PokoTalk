@@ -191,6 +191,13 @@ public class PokoDatabaseQuery {
                     null,
                     null);
 
+    public static PokoDatabaseQuery updateSessionData =
+            new PokoDatabaseQuery(QueryType.UPDATE,
+                    SessionSchema.Entry.TABLE_NAME,
+                    SessionSchema.Entry.USER_ID + " = ?",
+                    null,
+                    null);
+
     public static PokoDatabaseQuery updateUserData =
             new PokoDatabaseQuery(QueryType.UPDATE,
                     UsersSchema.Entry.TABLE_NAME,
@@ -281,8 +288,35 @@ public class PokoDatabaseQuery {
             };
 
     public static String readAllUserData =
-            "SELECT * " +
-                    "FROM Users LEFT JOIN Contacts ON Users.userId = Contacts.userId";
+            "SELECT " +
+                    UsersSchema.Entry.TABLE_NAME + "." + UsersSchema.Entry.USER_ID + ", " +
+                    UsersSchema.Entry.TABLE_NAME + "." + UsersSchema.Entry.EMAIL + ", " +
+                    UsersSchema.Entry.TABLE_NAME + "." + UsersSchema.Entry.NICKNAME + ", " +
+                    UsersSchema.Entry.TABLE_NAME + "." + UsersSchema.Entry.PICTURE + ", " +
+                    UsersSchema.Entry.TABLE_NAME + "." + UsersSchema.Entry.LAST_SEEN + ", " +
+                    ContactsSchema.Entry.TABLE_NAME + "." + ContactsSchema.Entry.GROUP_CHAT_ID + ", " +
+                    ContactsSchema.Entry.TABLE_NAME + "." + ContactsSchema.Entry.PENDING + ", " +
+                    ContactsSchema.Entry.TABLE_NAME + "." + ContactsSchema.Entry.INVITED + " " +
+                    "FROM " + UsersSchema.Entry.TABLE_NAME + " LEFT JOIN " +
+                    ContactsSchema.Entry.TABLE_NAME + " ON " +
+                    UsersSchema.Entry.TABLE_NAME + "." + UsersSchema.Entry.USER_ID + " = " +
+                    ContactsSchema.Entry.TABLE_NAME + "." + ContactsSchema.Entry.USER_ID;
+
+    public static PokoDatabaseQuery readAllUserDataTEST =
+            new PokoDatabaseQuery(QueryType.SELECT,
+                    UsersSchema.Entry.TABLE_NAME,
+                    null,
+                    null,
+                    null) {
+                @Override
+                public String[] getProjection() {
+                    String[] result = {UsersSchema.Entry.USER_ID,
+                            UsersSchema.Entry.NICKNAME,
+                            UsersSchema.Entry.EMAIL,
+                            UsersSchema.Entry.PICTURE};
+                    return result;
+                }
+            };
 
     public static PokoDatabaseQuery readGroupData =
             new PokoDatabaseQuery(QueryType.SELECT,

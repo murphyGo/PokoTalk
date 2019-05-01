@@ -189,4 +189,40 @@
     <string name="settings_user_hello_format">
     안녕하세요. %s님
     </string>
+
+    <string name="chat_send_button">
+    보내기
+    </string>
+
+    <string name="chat_message_box_hint">
+    메시지를 입력하세요
+    </string>
+
+    <string name="chat_attach_image_not_found">
+    메시지를 입력하세요
+    </string>
+
+    <string name="chat_locate_image_failed">
+    이미지를 불러올 수 없습니다&#8230;
+    </string>
+
+    <string name="group_image_summary">
+        사진
+    </string>
+
+    <string name="image_processing_error">
+    이미지 처리 오류가 발생했습니다.
+    </string>
+
+    <string name="chat_not_image_message">
+    사진 메시지가 아닙니다.
+    </string>
+
+    <string name="image_show_loading">
+    이미지를 불러오고 있습니다.
+    </string>
+
+    <string name="image_show_fail">
+    이미지를 불러오는 데 실패했습니다.
+    </string>
 </resources>

@@ -1,6 +1,7 @@
 package com.murphy.pokotalk.activity.settings;
 
 import android.Manifest;
+import android.content.ContentResolver;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -19,11 +20,13 @@ import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
+import com.murphy.pokotalk.content.ContentManager;
+import com.murphy.pokotalk.content.ContentTransferManager;
+import com.murphy.pokotalk.content.ImageEncoder;
+import com.murphy.pokotalk.content.ImageProcessor;
 import com.murphy.pokotalk.server.PokoServer;
-import com.murphy.pokotalk.server.content.ContentManager;
-import com.murphy.pokotalk.server.content.ContentTransferManager;
+import com.murphy.pokotalk.service.ContentService;
 
-import java.io.ByteArrayOutputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 
@@ -116,15 +119,22 @@ public class ProfileSettingActivity extends AppCompatActivity
                 // Get image uri
                 final Uri imageUri = data.getData();
                 if (imageUri != null) {
+                    // Get content resolver
+                    ContentResolver resolver = getContentResolver();
+
                     // Get input stream for image
-                    final InputStream imageStream = getContentResolver().openInputStream(imageUri);
+                    InputStream imageStream = resolver.openInputStream(imageUri);
 
                     // Decode image data and generate bitmap
-                    final Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+                    Bitmap selectedImage = BitmapFactory.decodeStream(imageStream);
+
+                    // Get bitmap with adjusted orientation
+                    Bitmap adjustedImage = ImageProcessor.adjustOrientation(
+                            this, resolver, selectedImage, imageUri);
 
                     // Start image edit activity
                     Intent intent = new Intent(getApplicationContext(), ImageEditionActivity.class);
-                    ImageEditionActivity.image =  selectedImage;
+                    ImageEditionActivity.image =  adjustedImage;
                     startActivityForResult(intent, Constants.RequestCode.IMAGE_EDITION.value);
                 }
             } catch (FileNotFoundException e) {
@@ -149,13 +159,11 @@ public class ProfileSettingActivity extends AppCompatActivity
         } else if (requestCode == Constants.RequestCode.IMAGE_EDITION.value) {
             if (resultCode == RESULT_OK && data != null) {
                 // Get image
-                Bitmap image = ImageEditionActivity.image;
+                final Bitmap image = ImageEditionActivity.image;
 
                 if (image != null) {
-                    // Compress to jpeg format
-                    ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                    image.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                    byte[] binary = stream.toByteArray();
+                    // Encode to jpeg format
+                    final byte[] binary = ImageEncoder.encodeToJPEG(image);
 
                     // Add upload job
                     int id = ContentTransferManager.getInstance().addUploadJob(
@@ -173,6 +181,21 @@ public class ProfileSettingActivity extends AppCompatActivity
                                                     Toast.LENGTH_LONG).show();
                                         }
                                     });
+
+                                    // Put content in cache
+                                    ContentManager.getInstance().putImageContentInCache(contentName, image);
+
+                                    // Start service to save content as a file
+                                    ContentService.putImageBinary(contentName, binary);
+                                    Intent intent = new Intent(getApplicationContext(), ContentService.class);
+                                    intent.putExtra("command", ContentService.CMD_STORE_CONTENT);
+                                    intent.putExtra("contentName", contentName);
+                                    intent.putExtra("contentType", ContentTransferManager.TYPE_IMAGE);
+                                    startService(intent);
+
+                                    // Finish activity
+                                    setResult(RESULT_OK);
+                                    finish();
                                 }
 
                                 @Override

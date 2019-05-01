@@ -1,13 +1,15 @@
 package com.murphy.pokotalk.listener.content;
 
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
+import com.murphy.pokotalk.content.ContentTransferManager;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.content.ContentTransferManager;
+import com.murphy.pokotalk.service.ContentService;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,14 +28,25 @@ public class StartUploadListener extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
 
+        // Get context
+        Context context = (Context) getData("context");
+
         try {
             if (data.has("uploadId") && data.has("contentName")) {
                 // Get upload id and content name
                 int uploadId = data.getInt("uploadId");
                 String contentName = data.getString("contentName");
 
-                // Start transfer data
-                ContentTransferManager.getInstance().uploadJob(uploadId, contentName);
+                // Set content name
+                ContentTransferManager.getInstance().setUploadJobContentName(uploadId, contentName);
+
+                // Make intent to start service
+                Intent intent = new Intent(context, ContentService.class);
+                intent.putExtra("command", ContentService.CMD_UPLOAD);
+                intent.putExtra("uploadId", uploadId);
+
+                // Start service to start upload
+                context.startService(intent);
             }
         } catch (JSONException e) {
             Log.e("POKO", "Failed to parse upload start");

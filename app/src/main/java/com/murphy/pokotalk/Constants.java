@@ -50,7 +50,7 @@ public class Constants {
     public static final String accountRegisteredName = "registerAccount";
     public static final String passwordLoginName = "passwordLogin";
     public static final String sessionLoginName = "sessionLogin";
-    public static final String logoutName = "logout";
+    public static final String logoutName = "logoutState";
 
     /* Contact event names */
     public static final String getContactListName = "getContactList";
@@ -78,6 +78,8 @@ public class Constants {
     public static final String readMessageName = "readMessage";
     public static final String readNbreadOfMessages = "readNbreadOfMessages";
     public static final String sendMessageName = "sendMessage";
+    public static final String sendImageMessageName = "sendImageMessage";
+    public static final String sendFileShareMessageName = "sendFileShareMessage";
     public static final String ackMessageName = "ackMessage";
     public static final String joinChatName = "joinChat";
     public static final String leaveChatName = "leaveChat";
@@ -124,7 +126,10 @@ public class Constants {
         PROFILE_UPDATE(4),
         PROFILE_GALLERY(5),
         PROFILE_CAMERA(6),
-        IMAGE_EDITION(7);
+        IMAGE_EDITION(7),
+        ATTACH_IMAGE(8),
+        ATTACH_CAMERA_PICTURE(9),
+        ATTACH_FILE(10);
 
         public final int value;
         RequestCode(int v) {

@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.server.content;
+package com.murphy.pokotalk.content;
 
 import android.content.Context;
 import android.content.Intent;
@@ -7,6 +7,7 @@ import android.util.Log;
 
 import com.murphy.pokotalk.data.content.PokoBinaryFile;
 import com.murphy.pokotalk.data.content.PokoImageFile;
+import com.murphy.pokotalk.service.ContentService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -27,9 +28,6 @@ public class ContentManager {
     private HashMap<String, byte[]> binaryCache;
     private HashMap<String, ImageContentLocateJob> imageLocateJobs;
     private HashMap<String, BinaryContentLocateJob> binaryLocateJobs;
-
-    public static final String TYPE_IMAGE = "image";
-    public static final String TYPE_BINARY = "binary";
 
     public static final String EXT_JPG = "jpg";
 
@@ -58,12 +56,44 @@ public class ContentManager {
         binaryLocateJobs = new HashMap<>();
     }
 
+    public static String getExtension(String contentName) {
+        int dotIndex = contentName.lastIndexOf('.');
+
+        if (dotIndex < 1) {
+            return null;
+        } else {
+            return contentName.substring(dotIndex + 1);
+        }
+    }
+
+    public void locateThumbnailImage(Context context, String contentName,
+                                     final ImageContentLoadCallback callback) {
+        // Get last dot character index
+        int dotIndex = contentName.lastIndexOf('.');
+
+        if (dotIndex < 1) {
+            // Invalid content name, fail job
+            callback.onError();
+        } else {
+            // Get image name and extension
+            String ext = contentName.substring(dotIndex + 1);
+            String name = contentName.substring(0, dotIndex);
+
+            // Make thumbnail image name
+            String thumbnailName = name + "_thumbnail." + ext;
+
+            // Locate thumbnail image
+            locateImage(context, thumbnailName, callback);
+        }
+    }
+
     public void locateImage(Context context, String contentName,
                             final ImageContentLoadCallback callback) {
         final ContentManager manager = this;
         Bitmap bitmap;
 
-        Log.v("POKO", "LOCATE IMAGE " + contentName);
+        Log.v("POKO", "LOCATE TYPE_IMAGE " + contentName);
+
         // First, check cache.
         synchronized (manager) {
             bitmap = imageCache.get(contentName);
@@ -71,7 +101,6 @@ public class ContentManager {
 
         // Check cache hit
         if (bitmap != null) {
-            Log.v("POKO", "CACHE HIT " + contentName);
             callback.onLoadImage(bitmap);
             return;
         }
@@ -83,8 +112,6 @@ public class ContentManager {
 
             if (job != null && job.addCallback(callback)) {
                 // Job exists and added callback, done
-
-                Log.v("POKO", "JOB EXISTS, DONE");
                 return;
             }
             // Create image locate job
@@ -97,18 +124,18 @@ public class ContentManager {
         }
 
         // Request service for file reading in asynchronous mode
-        Intent intent = new Intent(context, ContentLoadService.class);
+        Intent intent = new Intent(context, ContentService.class);
 
         // Put information
-        intent.putExtra("command", ContentLoadService.CMD_LOCATE_CONTENT);
+        intent.putExtra("command", ContentService.CMD_LOCATE_CONTENT);
         intent.putExtra("contentName", contentName);
-        intent.putExtra("contentType", TYPE_IMAGE);
+        intent.putExtra("contentType", ContentTransferManager.TYPE_IMAGE);
 
         // Start service
         context.startService(intent);
     }
 
-    public void locateFile(Context context, String contentName,
+    public void locateBinary(Context context, String contentName,
                            final BinaryContentLoadCallback callback) {
         final ContentManager manager = this;
         byte[] binary;
@@ -144,15 +171,33 @@ public class ContentManager {
         }
 
         // Request service for file reading in asynchronous mode
-        Intent intent = new Intent(context, ContentLoadService.class);
+        Intent intent = new Intent(context, ContentService.class);
 
         // Put information
-        intent.putExtra("command", ContentLoadService.CMD_LOCATE_CONTENT);
+        intent.putExtra("command", ContentService.CMD_LOCATE_CONTENT);
         intent.putExtra("contentName", contentName);
-        intent.putExtra("contentType", TYPE_BINARY);
+        intent.putExtra("contentType", ContentTransferManager.TYPE_IMAGE);
 
         // Start service
         context.startService(intent);
+    }
+
+    public Bitmap locateImageFromCache(String contentName) {
+        final ContentManager manager = this;
+
+        // Read image from cache
+        synchronized (manager) {
+            return imageCache.get(contentName);
+        }
+    }
+
+    public byte[] locateFileFromCache(String contentName) {
+        final ContentManager manager = this;
+
+        // Read image from cache
+        synchronized (manager) {
+            return binaryCache.get(contentName);
+        }
     }
 
     // Puts image content to cache
@@ -292,17 +337,19 @@ public class ContentManager {
             // Remove job from job list
             removeJob(contentManager);
 
+            Log.v("POKO", "LOCATING " + contentName + " DONE");
+
             synchronized (this) {
                 // Finish job
                 finished = true;
 
-                try {
-                    // Start all callback function
-                    for (int i = 0; i < callbacks.size(); i++) {
+                // Start all callback function
+                for (int i = 0; i < callbacks.size(); i++) {
+                    try {
                         startCallback(callbacks.get(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
         }
@@ -317,17 +364,19 @@ public class ContentManager {
             // Remove job from job list
             removeJob(contentManager);
 
+            Log.v("POKO", "LOCATING " + contentName + " FAILED");
+
             synchronized (this) {
                 // Finish job
                 finished = true;
 
-                try {
-                    // Start all callback function
-                    for (int i = 0; i < callbacks.size(); i++) {
+                // Start all callback function
+                for (int i = 0; i < callbacks.size(); i++) {
+                    try {
                         startCallback(callbacks.get(i));
+                    } catch (Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (Exception e) {
-                    e.printStackTrace();
                 }
             }
         }

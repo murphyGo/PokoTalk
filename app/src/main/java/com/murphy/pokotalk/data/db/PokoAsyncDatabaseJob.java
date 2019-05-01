@@ -13,10 +13,8 @@ import java.util.HashMap;
 
 public abstract class PokoAsyncDatabaseJob
         extends AsyncTask<HashMap<String, Object>, Void, Void> {
-    protected PokoSessionDatabase pokoSessionDatabase;
-    protected PokoUserDatabase pokoUserDatabase;
-
-    protected static boolean enabled = true;
+    private PokoSessionDatabase pokoSessionDatabase;
+    private PokoUserDatabase pokoUserDatabase;
 
     @Override
     protected synchronized Void doInBackground(HashMap<String, Object>... args) {
@@ -24,7 +22,7 @@ public abstract class PokoAsyncDatabaseJob
         Context context = app.getApplicationContext();
 
         /* Acquire DB job lock here.
-         * Lock acquire order is PokoLock -> Database lock.
+         * Lock acquire order is data Lock -> Database lock.
          * So Database jobs are always executed in order of
          * PokoLock acquisition, so that we can avoid execution order
          * change. */
@@ -50,7 +48,6 @@ public abstract class PokoAsyncDatabaseJob
                 doJob(args[0]);
             } finally {
                 /* We finally release database lock */
-                //Session.checkSessionData();
                 PokoLock.getDatabaseJobInstance().releaseWriteLock();
             }
         } catch (InterruptedException e) {

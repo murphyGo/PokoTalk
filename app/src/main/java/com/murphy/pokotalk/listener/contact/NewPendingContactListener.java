@@ -103,7 +103,7 @@ public class NewPendingContactListener extends PokoServer.PokoListener {
             try {
                 // Insert or update pending contact data
                 ContentValues userValues = Serializer.obtainUserValues(pendingContact);
-                long count = PokoDatabaseHelper.insertOrUpdateUserData(db, pendingContact, userValues);
+                long count = PokoDatabaseHelper.insertOrUpdateUserData(db, userValues);
                 if (count < 0) {
                     Log.e("POKO", "Failed to update pending contact data");
                 }

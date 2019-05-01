@@ -11,7 +11,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.server.content.ContentManager;
+import com.murphy.pokotalk.content.ContentManager;
 
 public class DownloadTestActivity extends AppCompatActivity {
     private Button downloadButton;

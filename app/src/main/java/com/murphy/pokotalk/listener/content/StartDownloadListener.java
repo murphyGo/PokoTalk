@@ -8,8 +8,8 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.content.ContentLoadService;
-import com.murphy.pokotalk.server.content.ContentTransferManager;
+import com.murphy.pokotalk.service.ContentService;
+import com.murphy.pokotalk.content.ContentTransferManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,8 +42,8 @@ public class StartDownloadListener extends PokoServer.PokoListener {
                 int size = data.getInt("size");
 
                 // Make intent to start service
-                Intent intent = new Intent(context, ContentLoadService.class);
-                intent.putExtra("command", ContentLoadService.CMD_START_DOWNLOAD);
+                Intent intent = new Intent(context, ContentService.class);
+                intent.putExtra("command", ContentService.CMD_START_DOWNLOAD);
                 intent.putExtra("downloadId", downloadId);
                 intent.putExtra("sendId", sendId);
                 intent.putExtra("size", size);

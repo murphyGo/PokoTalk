@@ -5,14 +5,14 @@ import android.database.Cursor;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.db.schema.SessionSchema;
-import com.murphy.pokotalk.data.event.EventLocation;
-import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.db.schema.EventLocationSchema;
 import com.murphy.pokotalk.data.db.schema.EventsSchema;
 import com.murphy.pokotalk.data.db.schema.GroupsSchema;
 import com.murphy.pokotalk.data.db.schema.MessagesSchema;
+import com.murphy.pokotalk.data.db.schema.SessionSchema;
 import com.murphy.pokotalk.data.db.schema.UsersSchema;
+import com.murphy.pokotalk.data.event.EventLocation;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -32,12 +32,19 @@ import java.util.Calendar;
 public class Parser {
     public static Contact parseUser(Cursor cursor) {
         Contact user = new Contact();
+        int pictureIndex = cursor.getColumnIndexOrThrow(SessionSchema.Entry.PICTURE);
         int lastSeenIndex = cursor.getColumnIndexOrThrow(SessionSchema.Entry.LAST_SEEN);
 
         user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(SessionSchema.Entry.USER_ID)));
         user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(SessionSchema.Entry.EMAIL)));
         user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(SessionSchema.Entry.NICKNAME)));
-        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(SessionSchema.Entry.PICTURE)));
+
+        if (cursor.isNull(pictureIndex)) {
+            user.setPicture(null);
+        } else {
+            user.setPicture(cursor.getString(pictureIndex));
+        }
+
         if (cursor.isNull(lastSeenIndex)) {
             user.setLastSeen(null);
         } else {
@@ -56,32 +63,56 @@ public class Parser {
 
     public static Stranger parseStranger(Cursor cursor) {
         Stranger user = new Stranger();
+
+        int pictureIndex = cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE);
+
         user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID)));
         user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.EMAIL)));
         user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.NICKNAME)));
-        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE)));
+
+        if (cursor.isNull(pictureIndex)) {
+            user.setPicture(null);
+        } else {
+            user.setPicture(cursor.getString(pictureIndex));
+        }
 
         return user;
     }
 
     public static PendingContact parsePendingContact(Cursor cursor) {
         PendingContact user = new PendingContact();
+
+        int pictureIndex = cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE);
+
         user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID)));
         user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.EMAIL)));
         user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.NICKNAME)));
-        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE)));
+
+        if (cursor.isNull(pictureIndex)) {
+            user.setPicture(null);
+        } else {
+            user.setPicture(cursor.getString(pictureIndex));
+        }
 
         return user;
     }
 
     public static Contact parseContact(Cursor cursor) {
         Contact user = new Contact();
+
+        int pictureIndex = cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE);
         int lastSeenIndex = cursor.getColumnIndexOrThrow(UsersSchema.Entry.LAST_SEEN);
 
         user.setUserId(cursor.getInt(cursor.getColumnIndexOrThrow(UsersSchema.Entry.USER_ID)));
         user.setEmail(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.EMAIL)));
         user.setNickname(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.NICKNAME)));
-        user.setPicture(cursor.getString(cursor.getColumnIndexOrThrow(UsersSchema.Entry.PICTURE)));
+
+        if (cursor.isNull(pictureIndex)) {
+            user.setPicture(null);
+        } else {
+            user.setPicture(cursor.getString(pictureIndex));
+        }
+
         if (cursor.isNull(lastSeenIndex)) {
             user.setLastSeen(null);
         } else {
@@ -100,7 +131,6 @@ public class Parser {
         group.setGroupId(cursor.getInt(cursor.getColumnIndexOrThrow(GroupsSchema.Entry.GROUP_ID)));
         group.setNbNewMessages(cursor.getInt(cursor.getColumnIndexOrThrow(GroupsSchema.Entry.NB_NEW_MESSAGES)));
         group.setAck(cursor.getInt(cursor.getColumnIndexOrThrow(GroupsSchema.Entry.ACK)));
-
 
         if (cursor.isNull(nameIndex)) {
             group.setGroupName(null);
@@ -135,7 +165,7 @@ public class Parser {
                 cursor.getLong(cursor.getColumnIndexOrThrow(MessagesSchema.Entry.DATE))));
 
         if (cursor.isNull(importanceIndex)) {
-            message.setImportanceLevel(PokoMessage.NORMAL);
+            message.setImportanceLevel(PokoMessage.IMPORTANCE_NORMAL);
         } else {
             message.setImportanceLevel(cursor.getInt(importanceIndex));
         }

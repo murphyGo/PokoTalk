@@ -43,7 +43,11 @@ public class PokoParser {
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
-        result.setPicture(jsonObject.getString("picture"));
+        if (jsonObject.has("picture") && !jsonObject.isNull("picture")) {
+            result.setPicture(jsonObject.getString("picture"));
+        } else {
+            result.setPicture(null);
+        }
         if (jsonObject.has("groupId") && !jsonObject.isNull("groupId")) {
             contactList.putContactGroupRelation(result.getUserId(), jsonObject.getInt("groupId"));
         } else {
@@ -65,7 +69,11 @@ public class PokoParser {
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
-        result.setPicture(jsonObject.getString("picture"));
+        if (jsonObject.has("picture") && !jsonObject.isNull("picture")) {
+            result.setPicture(jsonObject.getString("picture"));
+        } else {
+            result.setPicture(null);
+        }
 
         return result;
     }
@@ -77,7 +85,11 @@ public class PokoParser {
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
         result.setNickname(jsonObject.getString("nickname"));
-        result.setPicture(jsonObject.getString("picture"));
+        if (jsonObject.has("picture") && !jsonObject.isNull("picture")) {
+            result.setPicture(jsonObject.getString("picture"));
+        } else {
+            result.setPicture(null);
+        }
 
         return result;
     }
@@ -116,6 +128,12 @@ public class PokoParser {
                 if (exist == null) {
                     collection.updateUserList(member);
                 } else {
+                    // If existing member is stranger, update item
+                    // to get updated profile image of stranger
+                    if (exist instanceof Stranger) {
+                        exist.update(member);
+                    }
+
                     member = exist;
                 }
 
@@ -187,11 +205,12 @@ public class PokoParser {
         message.setMessageType(jsonObject.getInt("messageType"));
 
         switch (message.getMessageType()) {
-            case PokoMessage.TEXT_MESSAGE: {
+            case PokoMessage.TYPE_TEXT_MESSAGE:
+            case PokoMessage.TYPE_IMAGE: {
                 message.setContent(jsonObject.getString("content"));
                 break;
             }
-            case PokoMessage.MEMBER_EXIT: {
+            case PokoMessage.TYPE_MEMBER_EXIT: {
                 message.setSpecialContent(message.getWriter().getNickname() + "님이 방을 나가셨습니다.");
                 break;
             }
@@ -209,11 +228,11 @@ public class PokoParser {
     public static int parseMessageImportanceLevel(int level) throws ParseException {
         switch (level) {
             case 0:
-                return PokoMessage.NORMAL;
+                return PokoMessage.IMPORTANCE_NORMAL;
             case 1:
-                return PokoMessage.IMPORTANT;
+                return PokoMessage.IMPORTANCE_IMPORTANT;
             case 2:
-                return PokoMessage.VERY_IMPORTANT;
+                return PokoMessage.IMPORTANCE_VERY_IMPORTANT;
             default:
                 throw new ParseException("Unknown importance level", 1);
         }

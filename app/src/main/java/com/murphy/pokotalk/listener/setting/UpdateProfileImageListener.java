@@ -1,18 +1,24 @@
 package com.murphy.pokotalk.listener.setting;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
+import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.db.schema.SessionSchema;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.content.ContentTransferManager;
+import com.murphy.pokotalk.content.ContentTransferManager;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.HashMap;
 
 public class UpdateProfileImageListener extends PokoServer.PokoListener {
     public UpdateProfileImageListener(Context context) {
@@ -45,6 +51,8 @@ public class UpdateProfileImageListener extends PokoServer.PokoListener {
 
                 // Update user profile
                 user.setPicture(contentName);
+
+                putData("picture", contentName);
             }
         } catch (JSONException e) {
             Log.e("POKO", "Failed to parse profile image update response");
@@ -58,6 +66,49 @@ public class UpdateProfileImageListener extends PokoServer.PokoListener {
 
     @Override
     public PokoAsyncDatabaseJob getDatabaseJob() {
-        return null;
+        return new DatabaseJob();
+    }
+
+    static class DatabaseJob extends PokoAsyncDatabaseJob {
+        @Override
+        protected void doJob(HashMap<String, Object> data) {
+            String picture = (String) data.get("picture");
+            Contact user = Session.getInstance().getUser();
+
+            if (picture == null || user == null) {
+                return;
+            }
+
+            Log.v("POKO", "START TO WRITE PICTURE DATA " +
+                    user.getNickname() + ", " + user.getUserId());
+
+            /* Save user picture data */
+            SQLiteDatabase db = getWritableSessionDatabase();
+
+            if (db == null) {
+                return;
+            }
+
+            // Put picture data
+            ContentValues values = new ContentValues();
+            values.put(SessionSchema.Entry.PICTURE, picture);
+
+            // Start a transaction
+            db.beginTransaction();
+            try {
+                // Update session data
+                PokoDatabaseHelper.updateSessionData(db, user, values);
+
+                db.setTransactionSuccessful();
+                Log.v("POKO", "WRITE PICTURE DATA successfully");
+            } catch (Exception e) {
+                Log.v("POKO", "Failed to save picture data");
+            } finally {
+                // End a transaction
+                db.endTransaction();
+
+                db.releaseReference();
+            }
+        }
     }
 }

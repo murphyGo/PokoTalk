@@ -67,7 +67,7 @@ public class NewMessageListener extends PokoServer.PokoListener {
 
             /* If the message is history, send get history */
             if (message.getSpecialContent() == null
-                    && message.getMessageType() == PokoMessage.MEMBER_JOIN) {
+                    && message.getMessageType() == PokoMessage.TYPE_MEMBER_JOIN) {
                 PokoServer.getInstance().sendGetMemberJoinHistory(groupId, message.getMessageId());
             }
 

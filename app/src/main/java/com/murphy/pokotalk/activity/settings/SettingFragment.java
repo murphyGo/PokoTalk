@@ -1,7 +1,9 @@
 package com.murphy.pokotalk.activity.settings;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -19,10 +21,15 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.server.ActivityCallback;
+import com.murphy.pokotalk.server.PokoServer;
+import com.murphy.pokotalk.server.Status;
+import com.murphy.pokotalk.content.ContentManager;
 import com.murphy.pokotalk.view.ContactItem;
 
 public class SettingFragment extends Fragment
         implements LogoutBewareDialog.Listener {
+    private PokoServer server;
     private Contact user;
     private Button logoutButton;
     private Button profileImageButton;
@@ -95,10 +102,10 @@ public class SettingFragment extends Fragment
             public void onClick(View v) {
                 FragmentActivity activity = getActivity();
                 if (activity != null) {
-                    // Show beware dialog for logout
+                    // Show beware dialog for logoutState
                     LogoutBewareDialog dialog = new LogoutBewareDialog();
                     dialog.setListener(listener);
-                    dialog.show(activity.getSupportFragmentManager(), "logout beware");
+                    dialog.show(activity.getSupportFragmentManager(), "logoutState beware");
                 }
             }
         });
@@ -112,7 +119,17 @@ public class SettingFragment extends Fragment
             }
         });
 
+        server = PokoServer.getInstance();
+        server.attachActivityCallback(Constants.updateProfileImageName, profileImageListener);
+
         return view;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+
+        server.detachActivityCallback(Constants.updateProfileImageName, profileImageListener);
     }
 
     @Override
@@ -133,4 +150,46 @@ public class SettingFragment extends Fragment
             super.onActivityResult(requestCode, resultCode, data);
         }
     }
+
+    // Activity callbacks
+    private ActivityCallback profileImageListener = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            final String contentName = (String) getData("picture");
+
+            // Content name should exist
+            if (contentName == null) {
+                return;
+            }
+
+            // Locate profile image
+            ContentManager.getInstance().locateThumbnailImage(getContext(), contentName,
+                    new ContentManager.ImageContentLoadCallback() {
+                        @Override
+                        public void onLoadImage(Bitmap image) {
+                            Activity activity = getActivity();
+                            Log.v("POKO", "LOCATED THUMBNAIL OF " + contentName);
+                            if (activity != null) {
+                                activity.runOnUiThread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // Update image
+                                        userItem.setImg(contentName);
+                                    }
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onError() {
+
+                        }
+                    });
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
 }

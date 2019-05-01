@@ -2,6 +2,10 @@ package com.murphy.pokotalk.view;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -10,6 +14,7 @@ import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.user.Contact;
+import com.murphy.pokotalk.content.ContentManager;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -73,6 +78,40 @@ public class ContactDetailView extends FrameLayout {
 
     public void setImg(String img) {
         this.img = img;
+
+        if (img != null) {
+            if (img == "null") {
+                Log.e("POKO", "BAD, image of name string null");
+            }
+
+            // Locate image
+            ContentManager.getInstance().locateImage(context, img,
+                    new ContentManager.ImageContentLoadCallback() {
+                        @Override
+                        public void onError() {
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imageView.setImageResource(R.drawable.user);
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onLoadImage(final Bitmap image) {
+                            Handler handler = new Handler(Looper.getMainLooper());
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    imageView.setImageBitmap(image);
+                                }
+                            });
+                        }
+                    });
+        } else {
+            imageView.setImageResource(R.drawable.user);
+        }
     }
 
     public TextView getNicknameView() {

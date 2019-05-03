@@ -171,6 +171,7 @@ public class PokoServer extends ServerSocket {
             super.call(args);
 
             JSONObject data = (JSONObject) args[0];
+
             try {
                 String statusString = data.getString("status").toLowerCase();
                 Status status = null;
@@ -518,6 +519,18 @@ public class PokoServer extends ServerSocket {
             jsonData.put("type", type);
             jsonData.put("sendId", sendId);
             socket.emit(Constants.startDownloadName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendDownloadAck(int downloadId, int ack) {
+        try {
+            Log.v("POKO", "DOWNLOA ACK " + ack);
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("downloadId", downloadId);
+            jsonData.put("ack", ack);
+            socket.emit(Constants.downloadAckName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();
         }

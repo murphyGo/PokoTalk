@@ -13,11 +13,13 @@ public class ContentStream {
     private Context context;
     private InputStream contentStream;
     private int size;
+    private Uri uri;
 
-    private static final int CHUNK_SIZE = 4096;
+    private static final int CHUNK_SIZE = 1024 * 1024;
 
     public ContentStream(Context context, ContentResolver resolver, Uri uri) throws FileNotFoundException {
         this.context = context;
+        this.uri = uri;
 
         // Get input stream for content
         contentStream = resolver.openInputStream(uri);
@@ -82,5 +84,9 @@ public class ContentStream {
 
     public int getSize() {
         return size;
+    }
+
+    public Uri getUri() {
+        return uri;
     }
 }

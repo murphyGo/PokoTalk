@@ -49,7 +49,6 @@ import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.content.PokoBinaryFile;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.db.json.Parser;
@@ -797,7 +796,7 @@ public class ChatActivity extends AppCompatActivity
 
                 Toast.makeText(context, content, Toast.LENGTH_SHORT).show();
                 // Locate file
-                ContentManager.getInstance().locateBinary(context, contentName,
+                ContentManager.getInstance().locateBinary(context, contentName, fileName,
                         new ContentManager.BinaryContentLoadCallback() {
                             @Override
                             public void onError() {
@@ -812,7 +811,7 @@ public class ChatActivity extends AppCompatActivity
                             }
 
                             @Override
-                            public void onLoadBinary(byte[] bytes) {
+                            public void onLoadBinary(Uri uri) {
                                 // Get content string
                                 String content = message.getContent();
 
@@ -820,19 +819,11 @@ public class ChatActivity extends AppCompatActivity
                                     return;
                                 }
 
-                                // Create binary file object
-                                PokoBinaryFile binaryFile = new PokoBinaryFile();
-
-                                binaryFile.setFileName(contentName);
-
-                                // Get full path of file
-                                String path = binaryFile.getFullFilePath();
-
                                 // Make uri
                                 Uri binaryUri = FileProvider.getUriForFile(
                                         context,
                                         context.getApplicationContext()
-                                                .getPackageName() + ".provider", new File(path));
+                                                .getPackageName() + ".provider", new File(uri.getPath()));
 
                                 // Make intent to start file
                                 Intent intent = new Intent(Intent.ACTION_VIEW);
@@ -923,50 +914,13 @@ public class ChatActivity extends AppCompatActivity
         // Get file size
         int fileSize = contentStream.getSize();
 
-        // Limit of file size is 100MB
-        if (fileSize > 1024 * 1024 * 100) {
+        // Check if the file size is too big
+        if (fileSize > Constants.uploadFileSizeLimit) {
             // Show toast message and return
             Toast.makeText(this, R.string.chat_file_share_message_size_too_big,
                     Toast.LENGTH_SHORT).show();
             return;
         }
-        /*
-        // Byte buffer maximum 10MB
-        ByteBuffer buffer = ByteBuffer.allocate(fileSize);
-
-        byte[] chunk;
-        int readSize = 0;
-
-        // Mark current position
-        buffer.mark();
-
-        try {
-            // Read chunks from stream
-            while((chunk = contentStream.getNextChunk()) != null) {
-                // Put chunk into buffer
-                buffer.put(chunk);
-
-                // Add chunk size
-                readSize += chunk.length;
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        } finally {
-            // Close stream
-            contentStream.close();
-        }
-
-        // Go to first position
-        buffer.reset();
-
-        // Make bytes array
-        byte[] binary = new byte[readSize];
-
-        // Copy from ByteBuffer to byte array
-        buffer.get(binary);
-
-       */
 
         // Increment send id
         sendId++;
@@ -981,15 +935,18 @@ public class ChatActivity extends AppCompatActivity
                 new ContentTransferManager.UploadJobCallback() {
                     @Override
                     public void onSuccess(String contentName) {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                                Toast.makeText(ChatActivity.this,
-                                        "Uploaded!", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-
                         try {
+                            // Put image binary data to store as file
+                            ContentService.putFileUri(contentName, contentStream.getUri());
+
+                            // Start service to save content as a file
+                            Intent intent = new Intent(getApplicationContext(), ContentService.class);
+                            intent.putExtra("command", ContentService.CMD_STORE_CONTENT);
+                            intent.putExtra("fileName", fileName);
+                            intent.putExtra("contentName", contentName);
+                            intent.putExtra("contentType", ContentTransferManager.TYPE_BINARY);
+                            startService(intent);
+
                             // Make json content
                             JSONObject jsonObject = new JSONObject();
                             jsonObject.put("fileName", fileName);

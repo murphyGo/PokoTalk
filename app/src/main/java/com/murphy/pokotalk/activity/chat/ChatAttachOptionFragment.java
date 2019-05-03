@@ -235,7 +235,7 @@ public class ChatAttachOptionFragment extends Fragment {
                 }
 
                 Log.v("POKO", "FILE NAME " + fileName);
-                Log.v("POKO", "FILE SIZE " + ContentReader.getFileSize(resolver,fileUri));
+                Log.v("POKO", "FILE SIZE " + ContentReader.getFileSize(resolver, fileUri));
 
                 ContentStream contentStream = null;
 

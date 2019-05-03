@@ -21,6 +21,8 @@ public class ContentTransferManager {
     public static final String TYPE_BINARY = "binary";
 
     public static final int DOWNLOAD_START_WAIT = 10000;
+    public static final int UPLOAD_WINDOW = 4 * 1024 * 1024;
+    public static final int UPLOAD_ACK_TIMEOUT = 10000;
 
     private int pendingUploadJobId = 1;
     private int pendingDownloadJobId = 1;
@@ -149,16 +151,88 @@ public class ContentTransferManager {
             // Send all data and finish
             server.sendUpload(job.getId(), job.getBinary());
         } else if (job.getMode() == UploadJob.STREAM_MODE) {
+            // Indicating if loop is broken by end of file
+            boolean eof = false;
+
             // Get stream
             ContentStream stream = job.getContentStream();
 
-            byte[] chunk;
+            // Send size
+            long send = job.getSend();
+
+            // Server ack
+            long ack = job.getAck();
+
+            // Chunk of data to send
+            byte[] chunk = null;
 
             try {
-                // Read chunk data till end of file
-                while ((chunk = stream.getNextChunk()) != null) {
-                    // Send chunk
-                    server.sendUpload(job.getId(), chunk);
+                while (true) {
+                    while (send < ack + ContentTransferManager.UPLOAD_WINDOW) {
+                        if (chunk == null) {
+                            // Read chunk
+                            chunk = stream.getNextChunk();
+                        }
+
+                        // Check if we read all data
+                        if (chunk == null) {
+                            eof = true;
+                            break;
+                        }
+
+                        // Send chunk
+                        server.sendUpload(job.getId(), chunk);
+                        send += chunk.length;
+                        Log.v("Poko", "SEND " + send + " Bytes (" + stream.getSize() +")");
+
+                        // Set chunk null
+                        chunk = null;
+                    }
+
+                    // Test if the break is caused by sent all data
+                    if (eof) {
+                        break;
+                    }
+
+                    // Read next chunk early for performance
+                    chunk = stream.getNextChunk();
+
+                    // Test eof
+                    if (chunk == null) {
+                        break;
+                    }
+
+                    synchronized (job) {
+                        // Get server ack
+                        ack = job.getAck();
+
+                        if (send >= ack + ContentTransferManager.UPLOAD_WINDOW) {
+                            while (true) {
+                                try {
+                                    // Update send
+                                    job.setSend(send);
+
+                                    // Wait until server ack comes
+                                    job.wait(UPLOAD_ACK_TIMEOUT);
+
+                                    // Get out of loop
+                                    break;
+                                } catch (InterruptedException e) {
+                                    // Interrupted, wait again
+                                    Thread.currentThread().interrupt();
+                                }
+                            }
+
+                            // Get server ack
+                            ack = job.getAck();
+
+                            if (send >= ack + ContentTransferManager.UPLOAD_WINDOW) {
+                                // Timeout, fail job
+                                // TODO: Fail the job
+                                break;
+                            }
+                        }
+                    }
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -176,9 +250,11 @@ public class ContentTransferManager {
             job = uploadJobs.get(jobId);
         }
 
-        // Update ack
-        if (job.getAck() < ack) {
-            job.setAck(ack);
+        synchronized (job) {
+            // Update ack
+            if (job.getAck() < ack) {
+                job.setAck(ack);
+            }
         }
 
         // Check if upload is done
@@ -188,6 +264,14 @@ public class ContentTransferManager {
             // Call callback
             if (callback != null) {
                 callback.onSuccess(job.getContentName());
+            }
+        } else {
+            synchronized (job) {
+                // Check if we can send more
+                if (job.getSend() < ack + ContentTransferManager.UPLOAD_WINDOW) {
+                    // Notify waiting thread
+                    job.notifyAll();
+                }
             }
         }
     }
@@ -264,16 +348,19 @@ public class ContentTransferManager {
                 // Get job from pending jobs
                 downloadJob = pendingDownloadJobs.get(sendId);
             }
-        }
 
-        if (downloadJob != null) {
-            // Put bytes to download Job
-            downloadJob.putBytesToQueue(part);
+            if (downloadJob != null) {
+                // Put bytes to download Job
+                downloadJob.putBytesToQueue(part);
+            }
         }
     }
 
     public void writeBytesFromJobQueue(int downloadId) {
         DownloadJob downloadJob;
+
+        // Get server
+        PokoServer server = PokoServer.getInstance();
 
         synchronized (this) {
             downloadJob = downloadJobs.get(downloadId);
@@ -330,7 +417,7 @@ public class ContentTransferManager {
 
                 while (true) {
                     // Get a byte package from queue
-                    synchronized (queue) {
+                    synchronized (downloadJob) {
                         part = queue.poll();
                     }
 
@@ -341,6 +428,12 @@ public class ContentTransferManager {
 
                     // Copy bytes to job buffer
                     copyByteToJobBuffer(downloadJob, part);
+
+                    // Calculate ack
+                    int ack = downloadJob.getSize() - downloadJob.getLeft();
+
+                    // Send ack to server
+                    server.sendDownloadAck(downloadJob.getId(), ack);
                 }
             } finally {
                 downloadJob.getCopyLock().releaseWriteLock();
@@ -348,14 +441,14 @@ public class ContentTransferManager {
         }
     }
 
-    protected void copyByteToJobBuffer(DownloadJob job, byte[] part) {
+    private void copyByteToJobBuffer(DownloadJob job, byte[] part) {
         int left = job.getLeft();
         int start = job.getSize() - left;
         int validSize = left < part.length ? left : part.length;
 
         left -= validSize;
 
-        Log.v("POKO", "LEFT " + left + "BYTES");
+        Log.v("POKO", "COPY " + part.length + " BYTES, LEFT " + left + " BYTES");
 
         // Set left
         job.setLeft(left);
@@ -364,13 +457,10 @@ public class ContentTransferManager {
         byte[] buffer = job.getBytes();
 
         // Copy data to buffer
-        for (int i = 0; i < validSize; i++) {
-            buffer[start + i] = part[i];
-        }
+        System.arraycopy(part, 0, buffer, start, validSize);
 
         // Check if download is done
         if (left == 0) {
-            Log.v("POKO", "DOWNLOAD DONE");
             synchronized (this) {
                 // Remove job
                 downloadJobs.remove(job.getId());
@@ -392,17 +482,14 @@ public class ContentTransferManager {
             return true;
         }
 
-        if (downloadJob.isFinished()) {
-            return true;
-        }
-
-        return false;
+        return downloadJob.isFinished();
     }
 
     public void failUploadJob(int jobId, boolean pending) {
         UploadJob job;
 
-        Log.v("POKO", "FAILED UPLOAD");
+        Log.v("POKO", "FAILED TO UPLOAD");
+
         synchronized (this) {
             // Get job
             if (pending) {
@@ -470,14 +557,16 @@ public class ContentTransferManager {
         private ContentStream contentStream;
         private byte[] binary;
         private Long size;
+        private Long send;
         private Long ack;
         private UploadJobCallback callback;
 
-        public static final int ALL_IN_ONE_MODE = 0;
-        public static final int STREAM_MODE = 1;
+        private static final int ALL_IN_ONE_MODE = 0;
+        private static final int STREAM_MODE = 1;
 
         public UploadJob(int mode) {
             ack = 0L;
+            send = 0L;
 
             this.mode = mode;
         }
@@ -490,11 +579,11 @@ public class ContentTransferManager {
             this.id = id;
         }
 
-        public byte[] getBinary() {
+        private byte[] getBinary() {
             return binary;
         }
 
-        public void setBinary(byte[] binary) {
+        private void setBinary(byte[] binary) {
             this.binary = binary;
         }
 
@@ -514,11 +603,11 @@ public class ContentTransferManager {
             this.callback = callback;
         }
 
-        public String getExtension() {
+        private String getExtension() {
             return extension;
         }
 
-        public void setExtension(String extension) {
+        private void setExtension(String extension) {
             this.extension = extension;
         }
 
@@ -530,6 +619,14 @@ public class ContentTransferManager {
             this.ack = ack;
         }
 
+        public Long getSend() {
+            return send;
+        }
+
+        public void setSend(Long send) {
+            this.send = send;
+        }
+
         public String getContentName() {
             return contentName;
         }
@@ -538,15 +635,15 @@ public class ContentTransferManager {
             this.contentName = contentName;
         }
 
-        public ContentStream getContentStream() {
+        private ContentStream getContentStream() {
             return contentStream;
         }
 
-        public void setContentStream(ContentStream contentStream) {
+        private void setContentStream(ContentStream contentStream) {
             this.contentStream = contentStream;
         }
 
-        public int getMode() {
+        private int getMode() {
             return mode;
         }
     }
@@ -564,6 +661,7 @@ public class ContentTransferManager {
         private boolean started;
         private boolean finished;
         private boolean success;
+        public int test = 0;
 
         public DownloadJob() {
             pendingBuffers = new ArrayDeque<>();
@@ -597,11 +695,11 @@ public class ContentTransferManager {
             this.type = type;
         }
 
-        public byte[] getBytes() {
+        private byte[] getBytes() {
             return bytes;
         }
 
-        public void setBytes(byte[] bytes) {
+        private void setBytes(byte[] bytes) {
             this.bytes = bytes;
         }
 
@@ -613,11 +711,11 @@ public class ContentTransferManager {
             this.size = size;
         }
 
-        public int getLeft() {
+        private int getLeft() {
             return left;
         }
 
-        public void setLeft(int left) {
+        private void setLeft(int left) {
             this.left = left;
         }
 
@@ -629,27 +727,27 @@ public class ContentTransferManager {
             this.callback = callback;
         }
 
-        public synchronized void putBytesToQueue(byte[] part) {
+        private synchronized void putBytesToQueue(byte[] part) {
             pendingBuffers.add(part);
         }
 
-        public synchronized Queue<byte[]> getBytesQueue() {
+        private synchronized Queue<byte[]> getBytesQueue() {
             return pendingBuffers;
         }
 
-        public PokoLock getCopyLock() {
+        private PokoLock getCopyLock() {
             return copyLock;
         }
 
-        public boolean isStarted() {
+        private boolean isStarted() {
             return started;
         }
 
-        public void setStarted(boolean started) {
+        private void setStarted(boolean started) {
             this.started = started;
         }
 
-        public boolean isFinished() {
+        private boolean isFinished() {
             return finished;
         }
 
@@ -661,7 +759,7 @@ public class ContentTransferManager {
             return !success;
         }
 
-        public void markJobSucceededAndStartCallback() {
+        private void markJobSucceededAndStartCallback() {
             if (finished) {
                 return;
             }
@@ -680,7 +778,7 @@ public class ContentTransferManager {
             }
         }
 
-        public void markJobFailedAndStartCallback() {
+        private void markJobFailedAndStartCallback() {
             if (finished) {
                 return;
             }

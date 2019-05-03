@@ -2,8 +2,11 @@ package com.murphy.pokotalk.data.content;
 
 import android.util.Log;
 
+import com.murphy.pokotalk.Constants;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -20,18 +23,20 @@ public abstract class ContentFile {
         fullFilePath = null;
     }
 
-    public abstract String getRootPath();
+    public abstract String getRootPath() throws FileNotFoundException;
 
-    public abstract String getRestPath();
+    public String getRestPath() {
+        return Constants.pokoTalkContentDirectory;
+    }
 
-    public String getFullFilePath() {
+    public String getFullFilePath() throws FileNotFoundException {
         if (fullFilePath == null) {
             fullFilePath = getFullDirectoryPath() + File.separator + getFileName();
         }
         return fullFilePath;
     }
 
-    public String getFullDirectoryPath() {
+    public String getFullDirectoryPath() throws FileNotFoundException {
         if (fullDirectoryPath == null) {
             fullDirectoryPath = getRootPath() + File.separator
                     + getRestPath();
@@ -46,6 +51,12 @@ public abstract class ContentFile {
             if (!directory.mkdirs())
                 throw new IOException("Failed to create directories");
         }
+    }
+
+    public boolean exists() throws IOException {
+        File file = new File(getFullFilePath());
+
+        return file.exists();
     }
 
     public void openReader() throws IOException {
@@ -67,14 +78,18 @@ public abstract class ContentFile {
 
     public void closeReader() throws IOException {
         Log.v("POKO", "close reader");
-        fileInputStream.close();
-        fileOutputStream = null;
+        if (fileInputStream != null) {
+            fileInputStream.close();
+            fileOutputStream = null;
+        }
     }
 
     public void closeWriter() throws IOException {
         Log.v("POKO", "Close writer");
-        fileOutputStream.close();
-        fileOutputStream = null;
+        if (fileOutputStream != null) {
+            fileOutputStream.close();
+            fileOutputStream = null;
+        }
     }
 
     public void flush() throws IOException {

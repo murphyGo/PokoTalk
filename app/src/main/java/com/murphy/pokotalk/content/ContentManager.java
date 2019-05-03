@@ -3,6 +3,7 @@ package com.murphy.pokotalk.content;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -27,7 +28,7 @@ import java.util.List;
 public class ContentManager {
     private static ContentManager instance = null;
     private HashMap<String, Bitmap> imageCache;
-    private HashMap<String, byte[]> binaryCache;
+    private HashMap<String, Uri> binaryCache;
     private HashMap<String, ImageContentLocateJob> imageLocateJobs;
     private HashMap<String, BinaryContentLocateJob> binaryLocateJobs;
 
@@ -56,6 +57,16 @@ public class ContentManager {
         binaryCache = new HashMap<>();
         imageLocateJobs = new HashMap<>();
         binaryLocateJobs = new HashMap<>();
+    }
+
+    public static String getFileNameWithoutExtension(String contentName) {
+        int dotIndex = contentName.lastIndexOf('.');
+
+        if (dotIndex < 1) {
+            return contentName;
+        } else {
+            return contentName.substring(0, dotIndex);
+        }
     }
 
     public static String getExtension(String contentName) {
@@ -138,20 +149,20 @@ public class ContentManager {
         context.startService(intent);
     }
 
-    public void locateBinary(Context context, String contentName,
+    public void locateBinary(Context context, String contentName, String fileName,
                            final BinaryContentLoadCallback callback) {
-        byte[] binary;
+        Uri uri;
 
         Log.v("POKO", "LOCATE TYPE_BINARY " + contentName);
 
         // First, check cache.
         synchronized (this) {
-            binary = binaryCache.get(contentName);
+            uri = binaryCache.get(contentName);
         }
 
         // Check cache hit
-        if (binary != null) {
-            callback.onLoadBinary(binary);
+        if (uri != null) {
+            callback.onLoadBinary(uri);
             return;
         }
 
@@ -168,6 +179,7 @@ public class ContentManager {
             // Create image locate job
             BinaryContentLocateJob newJob = new BinaryContentLocateJob();
             newJob.setContentName(contentName);
+            newJob.setFileName(fileName);
             newJob.addCallback(callback);
 
             // Add to job list
@@ -181,6 +193,7 @@ public class ContentManager {
         intent.putExtra("command", ContentService.CMD_LOCATE_CONTENT);
         intent.putExtra("contentName", contentName);
         intent.putExtra("contentType", ContentTransferManager.TYPE_BINARY);
+        intent.putExtra("fileName", fileName);
 
         // Start service
         context.startService(intent);
@@ -193,7 +206,7 @@ public class ContentManager {
         }
     }
 
-    public byte[] locateBinaryFromCache(String contentName) {
+    public Uri locateBinaryFromCache(String contentName) {
         // Read image from cache
         synchronized (this) {
             return binaryCache.get(contentName);
@@ -210,11 +223,11 @@ public class ContentManager {
     }
 
     // Puts binary content to cache
-    public void putBinaryContentInCache(String contentName, byte[] binary) {
+    public void putBinaryContentInCache(String contentName, Uri uri) {
         synchronized (this) {
             checkCacheSize(binaryCache);
 
-            binaryCache.put(contentName, binary);
+            binaryCache.put(contentName, uri);
         }
     }
 
@@ -390,18 +403,18 @@ public class ContentManager {
 
     public static abstract class BinaryContentLoadCallback
             extends ContentLoadCallback {
-        private byte[] bytes;
+        private Uri uri;
 
-        private void setBytes(byte[] bytes) {
-            this.bytes = bytes;
+        public void setUri(Uri uri) {
+            this.uri = uri;
         }
 
         @Override
         void onSuccess() {
-            onLoadBinary(bytes);
+            onLoadBinary(uri);
         }
 
-        public abstract void onLoadBinary(byte[] bytes);
+        public abstract void onLoadBinary(Uri uri);
     }
 
     public abstract class ContentLocateJob {
@@ -557,9 +570,15 @@ public class ContentManager {
                 file.setFileName(getContentName());
                 file.openWriter(false);
                 file.save(binary);
-                file.closeWriter();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    // Close file
+                    file.closeWriter();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -573,13 +592,32 @@ public class ContentManager {
     }
 
     public class BinaryContentLocateJob extends ContentLocateJob {
+        private Uri uri;
+        private String fileName;
+
+        public Uri getUri() {
+            return uri;
+        }
+
+        public void setUri(Uri uri) {
+            this.uri = uri;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public void setFileName(String fileName) {
+            this.fileName = fileName;
+        }
+
         @Override
         protected void startCallback(ContentLoadCallback callback) {
             if (callback instanceof BinaryContentLoadCallback) {
                 BinaryContentLoadCallback binaryCallback =
                         (BinaryContentLoadCallback) callback;
                 if (isSuccess()) {
-                    binaryCallback.setBytes(binary);
+                    binaryCallback.setUri(uri);
                     binaryCallback.run(true);
 
                 } else {
@@ -595,7 +633,7 @@ public class ContentManager {
 
         @Override
         protected void addToCache(ContentManager contentManager) {
-            contentManager.putBinaryContentInCache(getContentName(), getBinary());
+            contentManager.putBinaryContentInCache(getContentName(), getUri());
         }
 
         @Override
@@ -609,12 +647,19 @@ public class ContentManager {
 
             try {
                 // Write to file
-                file.setFileName(getContentName());
+                file.setFileName(getFileName());
+                file.setContentName(getContentName());
                 file.openWriter(false);
                 file.save(binary);
-                file.closeWriter();
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                try {
+                    // Close file
+                    file.closeWriter();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }

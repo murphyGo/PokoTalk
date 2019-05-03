@@ -16,9 +16,10 @@ public class Constants {
     public static final String chatDateChangeFormat = "yyyy년 M월 d일";
 
     /* Content location */
-    public static final String contentRootDirectory = "contents";
-    public static final String imageContentDirectory = "image";
-    public static final String binaryContentDirectory = "binary";
+    public static final String pokoTalkContentDirectory = "PokoTalk";
+
+    /* File upload size limit in bytes */
+    public static final int uploadFileSizeLimit = 1024 * 1024 * 100;    // 100MB
 
     /* Location for saved session and application data */
     public static final String fileEncoding = "UTF8";

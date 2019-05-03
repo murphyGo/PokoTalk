@@ -3,17 +3,19 @@ package com.murphy.pokotalk.service;
 import android.app.Service;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.IBinder;
 import android.util.Log;
 import android.util.SparseArray;
 
 import com.murphy.pokotalk.content.ContentManager;
+import com.murphy.pokotalk.content.ContentStream;
 import com.murphy.pokotalk.content.ContentTransferManager;
 import com.murphy.pokotalk.content.image.ImageDecoder;
-import com.murphy.pokotalk.data.content.ContentFile;
 import com.murphy.pokotalk.data.content.PokoBinaryFile;
 import com.murphy.pokotalk.data.content.PokoImageFile;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -29,7 +31,7 @@ public class ContentService extends Service {
 
     // Temporary memory for binary data of contents to store in device
     private static HashMap<String, byte[]> imageBinary = null;
-    private static HashMap<String, byte[]> fileBinary = null;
+    private static HashMap<String, Uri> fileUri = null;
 
     // Threads for locating contents
     // Service code may run in UI thread so we pass processing to worker threads
@@ -130,10 +132,10 @@ public class ContentService extends Service {
                 // Start thread
                 thread.start();
             }
-        }
 
-        // Enqueue intent
-        thread.enqueueIntent(intent);
+            // Enqueue intent
+            thread.enqueueIntent(intent);
+        }
     }
 
     private void processStoreContentCommand(Intent intent) {
@@ -174,10 +176,10 @@ public class ContentService extends Service {
                 // Start thread
                 thread.start();
             }
-        }
 
-        // Enqueue intent
-        thread.enqueueIntent(intent);
+            // Enqueue intent
+            thread.enqueueIntent(intent);
+        }
     }
 
     public static void putImageBinary(String contentName, byte[] bytes) {
@@ -190,13 +192,13 @@ public class ContentService extends Service {
         }
     }
 
-    public static void putFileBinary(String contentName, byte[] bytes) {
+    public static void putFileUri(String contentName, Uri uri) {
         synchronized (ContentService.class) {
-            if (fileBinary == null) {
-                fileBinary = new HashMap<>();
+            if (fileUri == null) {
+                fileUri = new HashMap<>();
             }
 
-            fileBinary.put(contentName, bytes);
+            fileUri.put(contentName, uri);
         }
     }
 
@@ -212,24 +214,24 @@ public class ContentService extends Service {
         }
     }
 
-    public static byte[] getFileBinary(String contentName) {
+    public static Uri getFileUri(String contentName) {
         synchronized (ContentService.class) {
-            byte[] bytes = fileBinary.remove(contentName);
+            Uri uri = fileUri.remove(contentName);
 
-            if (fileBinary.size() == 0) {
-                fileBinary = null;
+            if (fileUri.size() == 0) {
+                fileUri = null;
             }
 
-            return bytes;
+            return uri;
         }
     }
 
     private abstract static class IntentJobThread extends Thread {
         private int threadId;
-        private ContentService service;
+        protected ContentService service;
         private boolean shouldStop = false;
         private Queue<Intent> intentQueue;
-        public static final int WAIT_TIMEOUT = 12000;
+        private static final int WAIT_TIMEOUT = 12000;
 
         public IntentJobThread(ContentService service, int threadId) {
             this.service = service;
@@ -348,12 +350,9 @@ public class ContentService extends Service {
                 return;
             }
 
-            Log.v("POKO", "DOWNLOAD JOB INTENT " + this.downloadId + ", GIVEN " + downloadId);
-
             // Copy downloaded data to buffer
             transferManager.writeBytesFromJobQueue(downloadId);
 
-            Log.v("POKO", "Write bytes to buffer");
             // Check if download is done
             if (transferManager.hasDownloadEnded(downloadId)) {
                 // Done, stop thread
@@ -417,7 +416,12 @@ public class ContentService extends Service {
             // Get content type
             String contentType = intent.getStringExtra("contentType");
 
-            if (contentName == null || contentType == null) {
+            // Get file name
+            final String fileName = intent.getStringExtra("fileName");
+
+            // Test validity of input
+            if (contentName == null || contentType == null ||
+                    (contentName.equals(ContentTransferManager.TYPE_BINARY) && fileName == null)) {
                 return;
             }
 
@@ -499,19 +503,24 @@ public class ContentService extends Service {
                     PokoBinaryFile file = new PokoBinaryFile();
 
                     // Set content name
-                    file.setFileName(contentName);
+                    file.setFileName(fileName);
+                    file.setContentName(contentName);
 
                     // Read data
                     try {
-                        file.openReader();
-                        byte[] buffer = file.read();
-                        file.closeReader();
+                        // Test if the file exists
+                        if (file.exists()) {
+                            // Make uri for file
+                            Uri uri = Uri.fromFile(new File(file.getFullFilePath()));
 
-                        // Process binary data and finish job
-                        if (processBinaryAndCallback(job, buffer)) {
-                            break;
+                            // Finish job
+                            /** NOTE: Here we give null to binary argument because
+                            /*       the file is already exists. So the process
+                            /*       will skip file save phase.*/
+                            if (processBinaryAndCallback(job, uri, null)) {
+                                break;
+                            }
                         }
-
                     } catch (FileNotFoundException e) {
 
                     } catch (IOException e) {
@@ -524,9 +533,24 @@ public class ContentService extends Service {
                             new ContentTransferManager.DownloadJobCallback() {
                                 @Override
                                 public void onSuccess(String contentName, byte[] bytes) {
-                                    if (processBinaryAndCallback(job, bytes)) {
-                                        // Binary processing failed
-                                        contentManager.failBinaryLocateJob(contentName);
+                                    // Save file
+                                    PokoBinaryFile file = new PokoBinaryFile();
+
+                                    // Set file name
+                                    file.setFileName(fileName);
+                                    file.setContentName(contentName);
+
+                                    try {
+                                        // Make uri for file
+                                        Uri uri = Uri.fromFile(new File(file.getFullFilePath()));
+
+                                        // Finish binary file locate job
+                                        if (processBinaryAndCallback(job, uri, bytes)) {
+                                            // Binary processing failed
+                                            contentManager.failBinaryLocateJob(contentName);
+                                        }
+                                    } catch (FileNotFoundException e) {
+                                        e.printStackTrace();
                                     }
                                 }
 
@@ -577,10 +601,13 @@ public class ContentService extends Service {
         }
 
         private boolean processBinaryAndCallback(ContentManager.BinaryContentLocateJob job,
-                                                 byte[] buffer) {
-            if (buffer != null) {
-                // Set image
-                job.setBinary(buffer);
+                                                 Uri uri, byte[] binary) {
+            if (uri != null) {
+                // Set uri
+                job.setUri(uri);
+
+                // Set binary
+                job.setBinary(binary);
 
                 // Finish job
                 job.finishJobAndStartCallbacks();
@@ -633,42 +660,81 @@ public class ContentService extends Service {
         @Override
         protected void onIntent(Intent intent) {
             // Get content name and type
+            String fileName = intent.getStringExtra("fileName");
             String contentName = intent.getStringExtra("contentName");
             String contentType = intent.getStringExtra("contentType");
 
-            // Content name and type should exist
-            if (contentName == null || contentType == null) {
+            // Content name and type should exist, file name should exists when binary type
+            if (contentName == null || contentType == null ||
+                    (contentType.equals(ContentTransferManager.TYPE_BINARY) && fileName == null)) {
                 return;
             }
 
-            // Binary and file
-            byte[] bytes;
-            ContentFile file;
-
             // Create file and get binary data according to content type
             if (contentType.equals(ContentTransferManager.TYPE_IMAGE)) {
-                file = new PokoImageFile();
-                bytes = ContentService.getImageBinary(contentName);
+                // Make file
+                PokoImageFile file = new PokoImageFile();
+
+                // Get image binary
+                byte[] bytes = ContentService.getImageBinary(contentName);
+
+                // Binary data should exist
+                if (bytes != null) {
+                    try {
+                        // Write to file
+                        file.setFileName(contentName);
+                        file.openWriter(false);
+                        file.save(bytes);
+                        file.closeWriter();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             } else if (contentType.equals(ContentTransferManager.TYPE_BINARY)) {
-                file = new PokoBinaryFile();
-                bytes = ContentService.getFileBinary(contentName);
+                ContentStream stream = null;
+
+                // Make binary content file
+                PokoBinaryFile file = new PokoBinaryFile();
+                file.setContentName(contentName);
+                file.setFileName(fileName);
+
+                // Get file uri
+                Uri uri = ContentService.getFileUri(contentName);
+
+                try {
+                    // Make content input stream
+                    stream = new ContentStream(service, service.getContentResolver(), uri);
+
+                    // Allocate byte buffer
+                    byte[] buffer;
+
+                    // Open file writer
+                    file.openWriter(false);
+
+                    // Read original file data
+                    while((buffer = stream.getNextChunk()) != null) {
+                        // Write to output stream
+                        file.save(buffer);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } finally {
+                    // Close stream
+                    if (stream != null) {
+                        stream.close();
+                    }
+
+                    // Close file
+                    try {
+                        file.closeWriter();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
             } else {
                 // Invalid content type, just return
                 stopThread();
                 return;
-            }
-
-            // Binary data should exist
-            if (bytes != null) {
-                try {
-                    // Write to file
-                    file.setFileName(contentName);
-                    file.openWriter(false);
-                    file.save(bytes);
-                    file.closeWriter();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
             }
 
             // Done, stop thread

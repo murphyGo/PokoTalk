@@ -3,6 +3,8 @@ package com.murphy.pokotalk.content;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.murphy.pokotalk.data.content.PokoBinaryFile;
@@ -89,13 +91,12 @@ public class ContentManager {
 
     public void locateImage(Context context, String contentName,
                             final ImageContentLoadCallback callback) {
-        final ContentManager manager = this;
         Bitmap bitmap;
 
         Log.v("POKO", "LOCATE TYPE_IMAGE " + contentName);
 
         // First, check cache.
-        synchronized (manager) {
+        synchronized (this) {
             bitmap = imageCache.get(contentName);
         }
 
@@ -105,22 +106,24 @@ public class ContentManager {
             return;
         }
 
+        ImageContentLocateJob job;
+
         // Second, check device storage
-        synchronized (manager) {
+        synchronized (this) {
             // Check if job for same content is processing
-            ImageContentLocateJob job = getImageLoadJob(contentName);
+            job = getImageLoadJob(contentName);
 
             if (job != null && job.addCallback(callback)) {
                 // Job exists and added callback, done
                 return;
             }
             // Create image locate job
-            ImageContentLocateJob newJob = new ImageContentLocateJob();
-            newJob.setContentName(contentName);
-            newJob.addCallback(callback);
+            job = new ImageContentLocateJob();
+            job.setContentName(contentName);
+            job.addCallback(callback);
 
             // Add to job list
-            imageLocateJobs.put(contentName, newJob);
+            imageLocateJobs.put(contentName, job);
         }
 
         // Request service for file reading in asynchronous mode
@@ -137,11 +140,12 @@ public class ContentManager {
 
     public void locateBinary(Context context, String contentName,
                            final BinaryContentLoadCallback callback) {
-        final ContentManager manager = this;
         byte[] binary;
 
+        Log.v("POKO", "LOCATE TYPE_BINARY " + contentName);
+
         // First, check cache.
-        synchronized (manager) {
+        synchronized (this) {
             binary = binaryCache.get(contentName);
         }
 
@@ -152,7 +156,7 @@ public class ContentManager {
         }
 
         // Second, check device storage
-        synchronized (manager) {
+        synchronized (this) {
             // Check if job for same content is processing
             BinaryContentLocateJob job = getBinaryLoadJob(contentName);
 
@@ -176,26 +180,22 @@ public class ContentManager {
         // Put information
         intent.putExtra("command", ContentService.CMD_LOCATE_CONTENT);
         intent.putExtra("contentName", contentName);
-        intent.putExtra("contentType", ContentTransferManager.TYPE_IMAGE);
+        intent.putExtra("contentType", ContentTransferManager.TYPE_BINARY);
 
         // Start service
         context.startService(intent);
     }
 
     public Bitmap locateImageFromCache(String contentName) {
-        final ContentManager manager = this;
-
         // Read image from cache
-        synchronized (manager) {
+        synchronized (this) {
             return imageCache.get(contentName);
         }
     }
 
-    public byte[] locateFileFromCache(String contentName) {
-        final ContentManager manager = this;
-
+    public byte[] locateBinaryFromCache(String contentName) {
         // Read image from cache
-        synchronized (manager) {
+        synchronized (this) {
             return binaryCache.get(contentName);
         }
     }
@@ -280,17 +280,127 @@ public class ContentManager {
     }
 
 
-    public interface ContentLoadCallback {
-        void onError();
+    public static abstract class ContentLoadCallback {
+        private Handler handler;
+        private Runnable errorRunnable;
+        private Runnable successRunnable;
+        private boolean canceled = false;
+        private boolean started = false;
+
+        private ContentLoadCallback() {
+            final ContentLoadCallback callback = this;
+
+            // Callback runs in main UI thread
+            handler = new Handler(Looper.getMainLooper());
+
+            // Make error runnable to post to handler
+            errorRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    // Remove runnable
+                    synchronized (callback) {
+                        errorRunnable = null;
+                    }
+
+                    onError();
+                }
+            };
+
+            // Make success runnable to post to handler
+            successRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    // Remove runnable
+                    synchronized (callback) {
+                        successRunnable = null;
+                    }
+
+                    onSuccess();
+                }
+            };
+        }
+
+        public abstract void onError();
+        abstract void onSuccess();
+
+        // Starts callback, if isSuccess, success callback is called.
+        // If not, error callback is called.
+        // This methods does nothing if the callback is canceled.
+        protected synchronized void run(boolean isSuccess) {
+            // Check if the callback is canceled
+            if (canceled || started) {
+                return;
+            }
+
+            // Mark started so that callback does not get called twice
+            started = true;
+
+            if (isSuccess) {
+                // Post success callback
+                handler.post(successRunnable);
+            } else {
+                // Post error callback
+                handler.post(errorRunnable);
+            }
+        }
+
+        // Cancels callback to run if this callback has not started yet
+        public synchronized void cancel() {
+            // Test if the callback is already canceled
+            if (canceled) {
+                return;
+            }
+
+            // Set canceled true
+            canceled = true;
+
+            if (successRunnable != null) {
+                // Remove callback if posted
+                handler.removeCallbacks(successRunnable);
+
+                // Remove callback
+                successRunnable = null;
+            }
+
+            if (errorRunnable != null) {
+                // Remove callback if posted
+                handler.removeCallbacks(errorRunnable);
+
+                // Remove callback
+                errorRunnable = null;
+            }
+        }
     }
 
     public static abstract class ImageContentLoadCallback
-            implements ContentLoadCallback {
+            extends ContentLoadCallback {
+        private Bitmap image;
+
+        private void setImage(Bitmap image) {
+            this.image = image;
+        }
+
+        @Override
+        void onSuccess() {
+            onLoadImage(image);
+        }
+
         public abstract void onLoadImage(Bitmap image);
     }
 
     public static abstract class BinaryContentLoadCallback
-            implements ContentLoadCallback {
+            extends ContentLoadCallback {
+        private byte[] bytes;
+
+        private void setBytes(byte[] bytes) {
+            this.bytes = bytes;
+        }
+
+        @Override
+        void onSuccess() {
+            onLoadBinary(bytes);
+        }
+
         public abstract void onLoadBinary(byte[] bytes);
     }
 
@@ -299,7 +409,7 @@ public class ContentManager {
         protected byte[] binary;
         protected List<ContentLoadCallback> callbacks = new ArrayList<>();
         protected boolean finished = false;
-        protected boolean isError = false;
+        protected boolean isSuccess = false;
 
         public String getContentName() {
             return contentName;
@@ -327,6 +437,9 @@ public class ContentManager {
         public void finishJobAndStartCallbacks() {
             // Get content manager
             ContentManager contentManager = ContentManager.getInstance();
+
+            // Set success
+            setSuccess(true);
 
             // Store content as file
             saveContent();
@@ -359,7 +472,7 @@ public class ContentManager {
             ContentManager contentManager = ContentManager.getInstance();
 
             // Set error
-            setError(true);
+            setSuccess(false);
 
             // Remove job from job list
             removeJob(contentManager);
@@ -389,12 +502,12 @@ public class ContentManager {
             this.binary = binary;
         }
 
-        public boolean isError() {
-            return isError;
+        public boolean isSuccess() {
+            return isSuccess;
         }
 
-        public void setError(boolean error) {
-            isError = error;
+        public void setSuccess(boolean success) {
+            isSuccess = success;
         }
 
         protected abstract void startCallback(ContentLoadCallback callback);
@@ -411,10 +524,11 @@ public class ContentManager {
             if (callback instanceof ImageContentLoadCallback) {
                 ImageContentLoadCallback imageCallback =
                         (ImageContentLoadCallback) callback;
-                if (isError()) {
-                    imageCallback.onError();
+                if (isSuccess()) {
+                    imageCallback.setImage(image);
+                    imageCallback.run(true);
                 } else {
-                    imageCallback.onLoadImage(image);
+                    imageCallback.run(false);
                 }
             }
         }
@@ -464,10 +578,12 @@ public class ContentManager {
             if (callback instanceof BinaryContentLoadCallback) {
                 BinaryContentLoadCallback binaryCallback =
                         (BinaryContentLoadCallback) callback;
-                if (isError()) {
-                    binaryCallback.onError();
+                if (isSuccess()) {
+                    binaryCallback.setBytes(binary);
+                    binaryCallback.run(true);
+
                 } else {
-                    binaryCallback.onLoadBinary(binary);
+                    binaryCallback.run(false);
                 }
             }
         }

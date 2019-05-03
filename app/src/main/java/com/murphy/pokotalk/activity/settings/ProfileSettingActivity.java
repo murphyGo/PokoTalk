@@ -22,8 +22,8 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.content.ContentManager;
 import com.murphy.pokotalk.content.ContentTransferManager;
-import com.murphy.pokotalk.content.ImageEncoder;
-import com.murphy.pokotalk.content.ImageProcessor;
+import com.murphy.pokotalk.content.image.ImageEncoder;
+import com.murphy.pokotalk.content.image.ImageProcessor;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.service.ContentService;
 

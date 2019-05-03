@@ -3,8 +3,6 @@ package com.murphy.pokotalk.view;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,8 +11,8 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 
 import com.murphy.pokotalk.R;
-import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.content.ContentManager;
+import com.murphy.pokotalk.data.user.Contact;
 
 import de.hdodenhof.circleimageview.CircleImageView;
 
@@ -26,6 +24,7 @@ public class MemberSelectedItem extends FrameLayout {
     private CircleImageView imageView;
     private Button removeButton;
     private Contact contact;
+    protected ContentManager.ImageContentLoadCallback userImageLocateCallback;
 
     public MemberSelectedItem(Context context) {
         super(context);
@@ -35,9 +34,9 @@ public class MemberSelectedItem extends FrameLayout {
     public void inflate() {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.member_selected_item, this, true);
-        nicknameView = (TextView) view.findViewById(R.id.nickname);
-        imageView = (CircleImageView) view.findViewById(R.id.image);
-        removeButton = (Button) view.findViewById(R.id.removeButton);
+        nicknameView = view.findViewById(R.id.nickname);
+        imageView = view.findViewById(R.id.image);
+        removeButton = view.findViewById(R.id.removeButton);
     }
 
     public String getNickname() {
@@ -66,37 +65,34 @@ public class MemberSelectedItem extends FrameLayout {
     public void setImg(String img) {
         this.img = img;
 
+        // Cancel user image locate callback
+        if (userImageLocateCallback != null) {
+            userImageLocateCallback.cancel();
+            userImageLocateCallback = null;
+        }
+
         if (img != null) {
             if (img == "null") {
                 Log.e("POKO", "BAD, image of name string null");
             }
 
-            // Locate image
-            ContentManager.getInstance().locateThumbnailImage(context, img,
-                    new ContentManager.ImageContentLoadCallback() {
-                        @Override
-                        public void onError() {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imageView.setImageResource(R.drawable.user);
-                                }
-                            });
-                        }
+            userImageLocateCallback = new ContentManager.ImageContentLoadCallback() {
+                @Override
+                public void onError() {
+                    imageView.setImageResource(R.drawable.user);
+                }
 
-                        @Override
-                        public void onLoadImage(final Bitmap image) {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    imageView.setImageBitmap(image);
-                                }
-                            });
-                        }
-                    });
+                @Override
+                public void onLoadImage(final Bitmap image) {
+                    imageView.setImageBitmap(image);
+                }
+            };
+
+            // Locate image
+            ContentManager.getInstance()
+                    .locateThumbnailImage(context, img, userImageLocateCallback);
         } else {
+            // Set default image
             imageView.setImageResource(R.drawable.user);
         }
     }

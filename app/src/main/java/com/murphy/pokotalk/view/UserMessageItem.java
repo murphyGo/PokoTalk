@@ -3,8 +3,6 @@ package com.murphy.pokotalk.view;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.os.Handler;
-import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,9 +35,12 @@ public abstract class UserMessageItem extends MessageItem {
     protected CircleImageView userImageView;
     protected FrameLayout contentWrapperView;
     protected TextView textMessageView;
-    protected ImageView messageImageVihew;
+    protected ImageView messageImageView;
     protected TextView nbNotReadUserView;
     protected TextView timeView;
+    protected RelativeLayout fileShareLayout;
+    protected TextView fileNameView;
+    protected ContentManager.ImageContentLoadCallback userImageLocateCallback;
 
     public UserMessageItem(Context context) {
         super(context);
@@ -54,9 +55,11 @@ public abstract class UserMessageItem extends MessageItem {
         userImageView = view.findViewById(R.id.userImage);
         contentWrapperView = view.findViewById(R.id.messageContentWrapper);
         textMessageView = view.findViewById(R.id.messageContent);
-        messageImageVihew = view.findViewById(R.id.messageImageView);
+        messageImageView = view.findViewById(R.id.messageImageView);
         nbNotReadUserView = view.findViewById(R.id.nbNotReadUser);
         timeView = view.findViewById(R.id.time);
+        fileShareLayout = view.findViewById(R.id.messageFileShareLayout);
+        fileNameView = view.findViewById(R.id.messageFileName);
     }
 
     public String getNickname() {
@@ -107,37 +110,34 @@ public abstract class UserMessageItem extends MessageItem {
     public void setImg(String img) {
         this.img = img;
 
+        // Cancel user image locate callback
+        if (userImageLocateCallback != null) {
+            userImageLocateCallback.cancel();
+            userImageLocateCallback = null;
+        }
+
         if (img != null) {
             if (img == "null") {
                 Log.e("POKO", "BAD, image of name string null");
             }
 
-            // Locate image
-            ContentManager.getInstance().locateThumbnailImage(context, img,
-                    new ContentManager.ImageContentLoadCallback() {
-                        @Override
-                        public void onError() {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    userImageView.setImageResource(R.drawable.user);
-                                }
-                            });
-                        }
+            userImageLocateCallback = new ContentManager.ImageContentLoadCallback() {
+                @Override
+                public void onError() {
+                    userImageView.setImageResource(R.drawable.user);
+                }
 
-                        @Override
-                        public void onLoadImage(final Bitmap image) {
-                            Handler handler = new Handler(Looper.getMainLooper());
-                            handler.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    userImageView.setImageBitmap(image);
-                                }
-                            });
-                        }
-                    });
+                @Override
+                public void onLoadImage(final Bitmap image) {
+                    userImageView.setImageBitmap(image);
+                }
+            };
+
+            // Locate image
+            ContentManager.getInstance()
+                    .locateThumbnailImage(context, img, userImageLocateCallback);
         } else {
+            // Set default image
             userImageView.setImageResource(R.drawable.user);
         }
     }
@@ -195,7 +195,7 @@ public abstract class UserMessageItem extends MessageItem {
         return simpleDateFormat.format(calendar.getTime());
     }
 
-    public ImageView getMessageImageVihew() {
-        return messageImageVihew;
+    public ImageView getMessageImageView() {
+        return messageImageView;
     }
 }

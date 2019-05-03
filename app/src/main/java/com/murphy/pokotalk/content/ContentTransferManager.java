@@ -62,8 +62,8 @@ public class ContentTransferManager {
         // Set content stream
         job.setContentStream(contentStream);
 
-        //TODO: set file size
-        job.setSize(0L);
+        // Set file size
+        job.setSize((long) contentStream.getSize());
 
         return job.getId();
     }
@@ -102,8 +102,15 @@ public class ContentTransferManager {
             // Get server
             PokoServer server = PokoServer.getInstance();
 
-            // Send start upload
-            server.sendStartUpload(job.getId(), job.getBinary().length, job.getExtension());
+            // Get mode
+            int mode = job.getMode();
+
+            // Send start upload properly according to mode
+            if (mode == UploadJob.ALL_IN_ONE_MODE) {
+                server.sendStartUpload(job.getId(), job.getBinary().length, job.getExtension());
+            } else if (mode == UploadJob.STREAM_MODE) {
+                server.sendStartUpload(job.getId(), job.getContentStream().getSize(), job.getExtension());
+            }
         }
     }
 
@@ -155,6 +162,8 @@ public class ContentTransferManager {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+            } finally {
+                stream.close();
             }
         }
     }

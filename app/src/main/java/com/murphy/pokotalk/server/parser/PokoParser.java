@@ -206,7 +206,8 @@ public class PokoParser {
 
         switch (message.getMessageType()) {
             case PokoMessage.TYPE_TEXT_MESSAGE:
-            case PokoMessage.TYPE_IMAGE: {
+            case PokoMessage.TYPE_IMAGE:
+            case PokoMessage.TYPE_FILE_SHARE: {
                 message.setContent(jsonObject.getString("content"));
                 break;
             }

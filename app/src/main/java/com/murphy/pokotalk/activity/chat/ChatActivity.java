@@ -1,16 +1,21 @@
 package com.murphy.pokotalk.activity.chat;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.content.FileProvider;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
@@ -21,6 +26,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.HorizontalScrollView;
@@ -38,17 +44,18 @@ import com.murphy.pokotalk.adapter.group.GroupMemberListAdapter;
 import com.murphy.pokotalk.content.ContentManager;
 import com.murphy.pokotalk.content.ContentStream;
 import com.murphy.pokotalk.content.ContentTransferManager;
-import com.murphy.pokotalk.content.ImageEncoder;
+import com.murphy.pokotalk.content.image.ImageEncoder;
 import com.murphy.pokotalk.data.ChatManager;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.content.PokoBinaryFile;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessagePokoList;
-import com.murphy.pokotalk.data.group.MessagePokoListUI;
+import com.murphy.pokotalk.data.group.MessageList;
+import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
@@ -59,8 +66,10 @@ import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.service.ContentService;
 import com.murphy.pokotalk.view.ListViewDetectable;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.File;
 import java.util.ArrayList;
 
 public class ChatActivity extends AppCompatActivity
@@ -453,7 +462,7 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        MessagePokoListUI adapterList = (MessagePokoListUI) messageListAdapter.getPokoList();
+                        MessageListUI adapterList = (MessageListUI) messageListAdapter.getPokoList();
                         for (PokoMessage message : readMessages) {
                             adapterList.updateItem(message);
                         }
@@ -682,14 +691,27 @@ public class ChatActivity extends AppCompatActivity
             new ViewCreationCallback<PokoMessage>() {
                 @Override
                 public void run(View view, PokoMessage item) {
+                    // View and message should exist
                     if (view == null || item == null) {
                         return;
                     }
 
-                    if (item.getMessageType() == PokoMessage.TYPE_IMAGE) {
-                        // Add click listener for image message
-                        view.setOnClickListener(
-                                new ImageMessageClickListener(getApplicationContext(), item));
+                    // Get message type
+                    int messageType = item.getMessageType();
+
+                    switch (messageType) {
+                        case PokoMessage.TYPE_IMAGE: {
+                            // Add click listener for image message
+                            view.setOnClickListener(
+                                    new ImageMessageClickListener(getApplicationContext(), item));
+                            break;
+                        }
+                        case PokoMessage.TYPE_FILE_SHARE: {
+                            // Add click listener for file share message
+                            view.setOnClickListener(
+                                    new FileShareMessageClickListener(getApplicationContext(), item));
+                            break;
+                        }
                     }
 
                     // Add long click listener
@@ -727,6 +749,108 @@ public class ChatActivity extends AppCompatActivity
             Intent intent = new Intent(context, ChatImageShowActivity.class);
             intent.putExtra("contentName", message.getContent());
             context.startActivity(intent);
+        }
+    }
+
+    // Image message click listener
+    static class  FileShareMessageClickListener implements View.OnClickListener {
+        private Context context;
+        private PokoMessage message;
+
+        public FileShareMessageClickListener(Context context, PokoMessage message) {
+            this.context = context;
+            this.message = message;
+        }
+
+        @Override
+        public void onClick(View v) {
+            // Message should exist and be image message.
+            if (message == null || message.getMessageType() != PokoMessage.TYPE_FILE_SHARE) {
+                Toast.makeText(context, R.string.chat_not_file_message, Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            // Get content
+            String content = message.getContent();
+
+            if (content == null) {
+                return;
+            }
+
+            try {
+                // Get json content
+                JSONObject jsonObject = new JSONObject(content);
+
+                // Get content name and file name
+                final String contentName = jsonObject.getString("contentName");
+                final String fileName = jsonObject.getString("fileName");
+
+                if (contentName == null || fileName == null) {
+                    return;
+                }
+
+                // Get file extension
+                final String extension = ContentManager.getExtension(fileName);
+
+                // Get MIME file type
+                final String MIMEType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
+
+                Toast.makeText(context, content, Toast.LENGTH_SHORT).show();
+                // Locate file
+                ContentManager.getInstance().locateBinary(context, contentName,
+                        new ContentManager.BinaryContentLoadCallback() {
+                            @Override
+                            public void onError() {
+                                new Handler(Looper.getMainLooper()).post(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        // Show fail toast message
+                                        Toast.makeText(context, R.string.chat_file_load_fail,
+                                                Toast.LENGTH_SHORT).show();
+                                    }
+                                });
+                            }
+
+                            @Override
+                            public void onLoadBinary(byte[] bytes) {
+                                // Get content string
+                                String content = message.getContent();
+
+                                if (content == null) {
+                                    return;
+                                }
+
+                                // Create binary file object
+                                PokoBinaryFile binaryFile = new PokoBinaryFile();
+
+                                binaryFile.setFileName(contentName);
+
+                                // Get full path of file
+                                String path = binaryFile.getFullFilePath();
+
+                                // Make uri
+                                Uri binaryUri = FileProvider.getUriForFile(
+                                        context,
+                                        context.getApplicationContext()
+                                                .getPackageName() + ".provider", new File(path));
+
+                                // Make intent to start file
+                                Intent intent = new Intent(Intent.ACTION_VIEW);
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                                intent.setDataAndType(binaryUri, MIMEType);
+                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+                                try {
+                                    // Execute binary file
+                                    context.startActivity(intent);
+                                } catch (ActivityNotFoundException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -795,22 +919,54 @@ public class ChatActivity extends AppCompatActivity
     }
 
     @Override
-    public void onBinaryAttachedToMessage(final ContentStream contentStream) {
+    public void onBinaryAttachedToMessage(final String fileName, final ContentStream contentStream) {
+        // Get file size
+        int fileSize = contentStream.getSize();
+
+        // Limit of file size is 100MB
+        if (fileSize > 1024 * 1024 * 100) {
+            // Show toast message and return
+            Toast.makeText(this, R.string.chat_file_share_message_size_too_big,
+                    Toast.LENGTH_SHORT).show();
+            return;
+        }
+        /*
         // Byte buffer maximum 10MB
-        ByteBuffer buffer = ByteBuffer.allocate(1024*1024*10);
+        ByteBuffer buffer = ByteBuffer.allocate(fileSize);
 
         byte[] chunk;
+        int readSize = 0;
+
+        // Mark current position
+        buffer.mark();
 
         try {
+            // Read chunks from stream
             while((chunk = contentStream.getNextChunk()) != null) {
+                // Put chunk into buffer
                 buffer.put(chunk);
+
+                // Add chunk size
+                readSize += chunk.length;
             }
         } catch (IOException e) {
             e.printStackTrace();
             return;
+        } finally {
+            // Close stream
+            contentStream.close();
         }
 
-        byte[] binary = buffer.array();
+        // Go to first position
+        buffer.reset();
+
+        // Make bytes array
+        byte[] binary = new byte[readSize];
+
+        // Copy from ByteBuffer to byte array
+        buffer.get(binary);
+
+       */
 
         // Increment send id
         sendId++;
@@ -820,7 +976,7 @@ public class ChatActivity extends AppCompatActivity
                 PokoMessage.TYPE_FILE_SHARE, PokoMessage.IMPORTANCE_NORMAL);
 
         // Send file share message
-        int fileId = ContentTransferManager.getInstance().addUploadJob(binary,
+        int fileId = ContentTransferManager.getInstance().addUploadJob(contentStream,
                 "binary",
                 new ContentTransferManager.UploadJobCallback() {
                     @Override
@@ -832,19 +988,39 @@ public class ChatActivity extends AppCompatActivity
                                         "Uploaded!", Toast.LENGTH_SHORT).show();
                             }
                         });
+
+                        try {
+                            // Make json content
+                            JSONObject jsonObject = new JSONObject();
+                            jsonObject.put("fileName", fileName);
+                            jsonObject.put("contentName", contentName);
+
+                            // Stringify json data and set content
+                            message.setContent(jsonObject.toString());
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
                     public void onError() {
                         // Remove message
-
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                Toast.makeText(ChatActivity.this,
+                                        "Sorry, failed to upload file...",
+                                        Toast.LENGTH_SHORT).show();
+                            }
+                        });
                     }
                 });
 
         Log.v("POKO", "SEND BINARY MESSAGE upload send id " + fileId + ", send id " + sendId);
 
         // Send image message
-        server.sendNewFileShareMessage(group.getGroupId(), sendId, fileId, PokoMessage.IMPORTANCE_NORMAL);
+        server.sendNewFileShareMessage(group.getGroupId(), sendId, fileId,
+                PokoMessage.IMPORTANCE_NORMAL, fileName);
 
         // Add sent but not completed message list
         group.getMessageList().addSentMessage(message);
@@ -903,7 +1079,7 @@ public class ChatActivity extends AppCompatActivity
 
     protected void sendAckToLastMessage() {
         // Get last message
-        MessagePokoListUI messageListUI = (MessagePokoListUI) messageListAdapter.getPokoList();
+        MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
         PokoMessage lastMessage = messageListUI.getLastMessage();
         if (lastMessage != null) {
             int lastMessageId = lastMessage.getMessageId();
@@ -970,7 +1146,7 @@ public class ChatActivity extends AppCompatActivity
 
                 try {
                     // Find first messageId to start reading message.
-                    MessagePokoList messageList = group.getMessageList();
+                    MessageList messageList = group.getMessageList();
                     int startId;
                     if (messageList.getList().size() == 0) {
                         startId = -1;
@@ -1048,7 +1224,7 @@ public class ChatActivity extends AppCompatActivity
                 try {
                     PokoLock.getDataLockInstance().acquireWriteLock();
                     try {
-                        MessagePokoListUI messageListUI = (MessagePokoListUI) messageListAdapter.getPokoList();
+                        MessageListUI messageListUI = (MessageListUI) messageListAdapter.getPokoList();
                         // We now count delta of number of date change message.
                         messageListUI.startCountDateChangeMessage();
 

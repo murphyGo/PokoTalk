@@ -210,6 +210,10 @@
         사진
     </string>
 
+    <string name="group_file_share_summary">
+        파일
+    </string>
+
     <string name="image_processing_error">
     이미지 처리 오류가 발생했습니다.
     </string>
@@ -218,11 +222,35 @@
     사진 메시지가 아닙니다.
     </string>
 
+    <string name="chat_not_file_message">
+    파일 공유 메시지가 아닙니다.
+    </string>
+
+    <string name="chat_file_load_fail">
+    파일을 로드하는 데 실패했습니다.
+    </string>
+
     <string name="image_show_loading">
     이미지를 불러오고 있습니다.
     </string>
 
     <string name="image_show_fail">
     이미지를 불러오는 데 실패했습니다.
+    </string>
+
+    <string name="select_attach_file_title">
+    업로드할 파일을 선택해 주세요.
+    </string>
+
+    <string name="chat_file_share_message_prefix">
+    파일 공유 :
+    </string>
+
+    <string name="chat_file_share_message_file_name_error">
+    파일 이름을 읽을 수 없습니다.
+    </string>
+
+    <string name="chat_file_share_message_size_too_big">
+    파일 사이즈가 너무 큽니다.
     </string>
 </resources>

@@ -7,10 +7,10 @@ import com.murphy.pokotalk.data.user.User;
 import java.util.Calendar;
 import java.util.HashMap;
 
-public class MessagePokoList extends SortingPokoList<Integer, PokoMessage> {
+public class MessageList extends SortingPokoList<Integer, PokoMessage> {
     private HashMap<Integer, PokoMessage> sentMessages;
 
-    public MessagePokoList() {
+    public MessageList() {
         super();
         sentMessages = new HashMap<>();
     }

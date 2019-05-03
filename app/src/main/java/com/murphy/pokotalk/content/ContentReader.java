@@ -9,6 +9,7 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
+import android.provider.OpenableColumns;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -42,6 +43,59 @@ public class ContentReader {
         // Allocate buffer for file data
         byte[] buffer = new byte[(int)size];
         return  null;
+    }
+
+    public static String getFileName(ContentResolver resolver, Uri uri) {
+        String result = null;
+        String scheme = uri.getScheme();
+
+        if (scheme != null && scheme.equals("content")) {
+            Cursor cursor = resolver.query(uri, null, null, null, null);
+
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        result = cursor.getString(cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+
+        if (result == null) {
+            result = uri.getPath();
+
+            if (result == null) {
+                return null;
+            }
+
+            int cut = result.lastIndexOf('/');
+            if (cut != -1) {
+                result = result.substring(cut + 1);
+            }
+        }
+        return result;
+    }
+
+    public static int getFileSize(ContentResolver resolver, Uri uri) {
+        int result = -1;
+        String scheme = uri.getScheme();
+
+        if (scheme != null && scheme.equals("content")) {
+            Cursor cursor = resolver.query(uri, null, null, null, null);
+
+            if (cursor != null) {
+                try {
+                    if (cursor.moveToFirst()) {
+                        result = cursor.getInt(cursor.getColumnIndex(OpenableColumns.SIZE));
+                    }
+                } finally {
+                    cursor.close();
+                }
+            }
+        }
+        return result;
     }
 
     /* Get uri related content real local file path. */

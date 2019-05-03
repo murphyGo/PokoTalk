@@ -6,9 +6,10 @@ import android.view.ViewGroup;
 
 import com.murphy.pokotalk.adapter.DateChangeListAdapter;
 import com.murphy.pokotalk.data.extra.DateChangeItem;
-import com.murphy.pokotalk.data.group.MessagePokoListUI;
+import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.view.DateChangeMessageItem;
+import com.murphy.pokotalk.view.FileShareMessageItem;
 import com.murphy.pokotalk.view.ImageMessageItem;
 import com.murphy.pokotalk.view.MessageItem;
 import com.murphy.pokotalk.view.SpecialMessageItem;
@@ -17,12 +18,12 @@ import com.murphy.pokotalk.view.TextMessageItem;
 public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
     public MessageListAdapter(Context context) {
         super(context);
-        setPokoList(new MessagePokoListUI());
+        setPokoList(new MessageListUI());
     }
 /*
     @Override
     public long getItemId(int position) {
-        return ((MessagePokoListUI) pokoList).getKey(items.get(position));
+        return ((MessageListUI) pokoList).getKey(items.get(position));
     }
 */
     @Override
@@ -65,6 +66,12 @@ public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
                     }
                     break;
                 }
+                case PokoMessage.TYPE_FILE_SHARE: {
+                    if (convertView instanceof FileShareMessageItem) {
+                        item = (FileShareMessageItem) convertView;
+                    }
+                    break;
+                }
                 case PokoMessage.TYPE_MEMBER_JOIN:
                 case PokoMessage.TYPE_MEMBER_EXIT: {
                     if (convertView instanceof SpecialMessageItem) {
@@ -93,6 +100,10 @@ public class MessageListAdapter extends DateChangeListAdapter<PokoMessage> {
                 }
                 case PokoMessage.TYPE_IMAGE: {
                     item = new ImageMessageItem(context);
+                    break;
+                }
+                case PokoMessage.TYPE_FILE_SHARE: {
+                    item = new FileShareMessageItem(context);
                     break;
                 }
                 case PokoMessage.TYPE_MEMBER_JOIN:

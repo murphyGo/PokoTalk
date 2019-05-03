@@ -31,7 +31,7 @@ public class GroupPokoListUI extends SortingPokoList<Integer, Group> {
         return new ListSorter<Long, Group>(getList()) {
             @Override
             public Long getItemKey(Group item) {
-                MessagePokoList messageList = item.getMessageList();
+                MessageList messageList = item.getMessageList();
                 PokoMessage lastMessage = messageList.getLastMessage();
                 if (lastMessage == null)
                     return null;

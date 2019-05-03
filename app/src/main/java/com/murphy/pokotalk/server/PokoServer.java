@@ -352,13 +352,14 @@ public class PokoServer extends ServerSocket {
     }
 
     public void sendNewFileShareMessage(int groupId, int messageSendId, int fileSendId,
-                                    @Nullable Integer importanceLevel) {
+                                    @Nullable Integer importanceLevel, String fileName) {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("groupId", groupId);
             jsonData.put("messageSendId", messageSendId);
             jsonData.put("fileSendId", fileSendId);
             jsonData.put("importance", importanceLevel);
+            jsonData.put("fileName", fileName);
             socket.emit(Constants.sendFileShareMessageName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();

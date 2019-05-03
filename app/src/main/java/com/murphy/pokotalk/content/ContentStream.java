@@ -12,6 +12,7 @@ import java.util.Arrays;
 public class ContentStream {
     private Context context;
     private InputStream contentStream;
+    private int size;
 
     private static final int CHUNK_SIZE = 4096;
 
@@ -20,6 +21,14 @@ public class ContentStream {
 
         // Get input stream for content
         contentStream = resolver.openInputStream(uri);
+
+        // Get file size
+        size = ContentReader.getFileSize(resolver, uri);
+
+        // File size should exist
+        if (size < 0) {
+            throw new FileNotFoundException("Can not find size of file");
+        }
     }
 
     public byte[] getNextChunk() throws IOException {
@@ -64,11 +73,14 @@ public class ContentStream {
         try {
             if (contentStream != null) {
                 contentStream.close();
+                contentStream = null;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-
+    public int getSize() {
+        return size;
+    }
 }

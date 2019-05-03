@@ -10,7 +10,7 @@ import android.widget.TextView;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
@@ -131,7 +131,7 @@ public class GroupItem extends FrameLayout {
         }
     }
 
-    public void setLastMessage(MessagePokoList messages) {
+    public void setLastMessage(MessageList messages) {
         lastMessage = messages.getLastMessage();
         if (lastMessage == null) {
             lastMessageView.setText("");
@@ -145,6 +145,11 @@ public class GroupItem extends FrameLayout {
                 }
                 case PokoMessage.TYPE_IMAGE: {
                     lastMessageView.setText(R.string.group_image_summary);
+                    lastMessageDateView.setText(getLastMessageDateString(lastMessage.getDate()));
+                    break;
+                }
+                case PokoMessage.TYPE_FILE_SHARE: {
+                    lastMessageView.setText(R.string.group_file_share_summary);
                     lastMessageDateView.setText(getLastMessageDateString(lastMessage.getDate()));
                     break;
                 }

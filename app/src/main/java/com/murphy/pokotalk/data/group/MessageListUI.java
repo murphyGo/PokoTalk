@@ -10,10 +10,10 @@ import java.util.HashMap;
 /** Message list for message ListView in ChatActivity.
  * It has date change messaging feature.
  */
-public class MessagePokoListUI extends DateChangeBorderPokoList<Integer, Integer, PokoMessage> {
+public class MessageListUI extends DateChangeBorderPokoList<Integer, Integer, PokoMessage> {
     protected HashMap<Integer, PokoMessage> sentMessages;
 
-    public MessagePokoListUI() {
+    public MessageListUI() {
         super();
         sentMessages = new HashMap<>();
     }

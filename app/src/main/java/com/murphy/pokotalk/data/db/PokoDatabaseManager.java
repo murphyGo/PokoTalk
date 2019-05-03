@@ -18,7 +18,7 @@ import com.murphy.pokotalk.data.db.schema.GroupMembersSchema;
 import com.murphy.pokotalk.data.db.schema.SessionSchema;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
@@ -256,7 +256,7 @@ public class PokoDatabaseManager {
             // Loop for each group
             for (Group group : groupList.getList()) {
                 UserPokoList memberList = group.getMembers();
-                MessagePokoList messageList = group.getMessageList();
+                MessageList messageList = group.getMessageList();
 
                 // Query group members and last message
                 Cursor memberCursor = PokoDatabaseHelper.readGroupMemberData(db, group.getGroupId());

@@ -82,6 +82,32 @@
                     android:src="@null"
                     android:background="@drawable/text_message"/>
 
+                <RelativeLayout
+                    android:id="@+id/messageFileShareLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layoutDirection="ltr"
+                    android:background="@drawable/text_message">
+
+                    <TextView
+                        android:id="@+id/messageFileNamePrefix"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:textSize="16sp"
+                        android:text="@string/chat_file_share_message_prefix"/>
+
+                    <TextView
+                        android:id="@+id/messageFileName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_toEndOf="@id/messageFileNamePrefix"
+                        android:textColor="@color/blue"
+                        android:textSize="16sp"
+                        android:text="afew.jpg"/>
+
+                </RelativeLayout>
+
             </FrameLayout>
 
             <TextView

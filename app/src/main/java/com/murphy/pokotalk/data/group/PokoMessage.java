@@ -36,9 +36,6 @@ public class PokoMessage extends Item {
 
     public void update(Item item) {
         PokoMessage message = (PokoMessage) item;
-        setContent(message.getContent());
-        setDate(message.getDate());
-        setMessageType(message.getMessageType());
         setNbNotReadUser(message.getNbNotReadUser());
     }
 

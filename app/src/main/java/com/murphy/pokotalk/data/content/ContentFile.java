@@ -1,10 +1,6 @@
 package com.murphy.pokotalk.data.content;
 
-import android.os.Environment;
 import android.util.Log;
-
-import com.murphy.pokotalk.Constants;
-import com.murphy.pokotalk.data.db.deprecated.FileManager;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -12,7 +8,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 
 public abstract class ContentFile {
-    protected static String rootPath = null;
     protected String fullFilePath;
     protected String fullDirectoryPath;
     protected String fileName;
@@ -25,15 +20,8 @@ public abstract class ContentFile {
         fullFilePath = null;
     }
 
-    public static String getRootPath() {
-        if (rootPath == null) {
-            File sdcardFolder = Environment.getExternalStorageDirectory();
-            String sdcardPath = sdcardFolder.getAbsolutePath();
-            rootPath = sdcardPath + File.separator + Constants.contentRootDirectory;
-        }
+    public abstract String getRootPath();
 
-        return rootPath;
-    }
     public abstract String getRestPath();
 
     public String getFullFilePath() {
@@ -45,7 +33,7 @@ public abstract class ContentFile {
 
     public String getFullDirectoryPath() {
         if (fullDirectoryPath == null) {
-            fullDirectoryPath = FileManager.getRootPath() + File.separator
+            fullDirectoryPath = getRootPath() + File.separator
                     + getRestPath();
         }
         return fullDirectoryPath;

@@ -10,7 +10,7 @@ import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -51,7 +51,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
                     JSONObject jsonLastMessage = jsonObject.getJSONObject("lastMessage");
                     PokoMessage lastMessage = PokoParser.parseMessage(jsonLastMessage);
                     group = list.getItemByKey(group.getGroupId());
-                    MessagePokoList messageList = group.getMessageList();
+                    MessageList messageList = group.getMessageList();
 
                     // Update item and assign message the message updated in the list.
                     lastMessage = messageList.updateItem(lastMessage);

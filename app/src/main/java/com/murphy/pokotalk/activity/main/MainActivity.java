@@ -44,7 +44,7 @@ import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactPokoList;
@@ -337,7 +337,7 @@ public class MainActivity extends FragmentActivity
                 return;
 
             // Get message list of group
-            MessagePokoList messageList = group.getMessageList();
+            MessageList messageList = group.getMessageList();
             List<PokoMessage> messages = messageList.getList();
 
             // Cut messages if there are too many many messages
@@ -366,7 +366,7 @@ public class MainActivity extends FragmentActivity
                 PokoLock.getDataLockInstance().acquireWriteLock();
 
                 // Get message list of group
-                MessagePokoList messageList = group.getMessageList();
+                MessageList messageList = group.getMessageList();
                 List<PokoMessage> messages = messageList.getList();
 
                 // We allow at most MESSAGE_CUT_THRESHOLD messages persist in memory

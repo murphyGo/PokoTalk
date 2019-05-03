@@ -7,7 +7,7 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 
 import org.json.JSONException;
@@ -172,7 +172,7 @@ public class FileManager {
         }
 
         MessageFile messageFile = getMessageFile(group);
-        MessagePokoList messageList = group.getMessageList();
+        MessageList messageList = group.getMessageList();
         PokoMessage lastReadMessage = messageList.getItemByKey(messageFile.getLastMessageId());
         if (lastReadMessage == null) {
             return false;

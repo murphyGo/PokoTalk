@@ -11,7 +11,7 @@ import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -49,7 +49,7 @@ public class ReadNbreadOfMessages extends PokoServer.PokoListener {
             }
 
             /* Parse all message and sort in time */
-            MessagePokoList messageList = group.getMessageList();
+            MessageList messageList = group.getMessageList();
 
             for (int i = 0; i < jsonNbNotReads.length(); i++) {
                 JSONObject jsonNbNotRead = jsonNbNotReads.getJSONObject(i);

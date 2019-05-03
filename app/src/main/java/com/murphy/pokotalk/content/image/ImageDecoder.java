@@ -1,4 +1,4 @@
-package com.murphy.pokotalk.content;
+package com.murphy.pokotalk.content.image;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

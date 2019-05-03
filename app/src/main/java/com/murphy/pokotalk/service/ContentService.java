@@ -9,7 +9,7 @@ import android.util.SparseArray;
 
 import com.murphy.pokotalk.content.ContentManager;
 import com.murphy.pokotalk.content.ContentTransferManager;
-import com.murphy.pokotalk.content.ImageDecoder;
+import com.murphy.pokotalk.content.image.ImageDecoder;
 import com.murphy.pokotalk.data.content.ContentFile;
 import com.murphy.pokotalk.data.content.PokoBinaryFile;
 import com.murphy.pokotalk.data.content.PokoImageFile;
@@ -495,7 +495,7 @@ public class ContentService extends Service {
                         break;
                     }
 
-                    // Create image file
+                    // Create binary file
                     PokoBinaryFile file = new PokoBinaryFile();
 
                     // Set content name

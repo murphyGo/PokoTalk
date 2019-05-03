@@ -12,7 +12,8 @@ public class TextMessageItem extends UserMessageItem {
         this.content = content;
 
         // Hide image view and show message view
-        messageImageVihew.setVisibility(View.GONE);
+        messageImageView.setVisibility(View.GONE);
+        fileShareLayout.setVisibility(View.GONE);
         textMessageView.setVisibility(View.VISIBLE);
 
         // Set content

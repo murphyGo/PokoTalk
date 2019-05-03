@@ -14,12 +14,12 @@ public class Group extends Item {
     private int groupId;
     private int nbNewMessages;
     private UserPokoList members;
-    private MessagePokoList messageList;
+    private MessageList messageList;
     private int ack;
 
     public Group() {
         members = new UserPokoList();
-        messageList = new MessagePokoList();
+        messageList = new MessageList();
         nbNewMessages = 0;
         ack = -1;
     }
@@ -35,7 +35,7 @@ public class Group extends Item {
 
     public void refreshNbNewMessages() {
         Session session = Session.getInstance();
-        MessagePokoList messageList = getMessageList();
+        MessageList messageList = getMessageList();
         ArrayList<PokoMessage> messages = messageList.getList();
 
         ListSorter<Integer, PokoMessage> sorter =
@@ -100,11 +100,11 @@ public class Group extends Item {
         return this.members.removeItemByKey(this.members.getKey(member));
     }
 
-    public MessagePokoList getMessageList() {
+    public MessageList getMessageList() {
         return messageList;
     }
 
-    public void setMessageList(MessagePokoList messages) {
+    public void setMessageList(MessageList messages) {
         this.messageList = messages;
     }
 

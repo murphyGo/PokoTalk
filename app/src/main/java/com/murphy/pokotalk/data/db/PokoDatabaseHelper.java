@@ -11,7 +11,7 @@ import com.murphy.pokotalk.data.db.schema.GroupsSchema;
 import com.murphy.pokotalk.data.db.schema.MessagesSchema;
 import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.MessagePokoList;
+import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
@@ -48,7 +48,7 @@ public class PokoDatabaseHelper {
     public static void insertOrUpdateGroupData(SQLiteDatabase db, Group group) {
         // Insert or update group data
         UserPokoList memberList = group.getMembers();
-        MessagePokoList messageList = group.getMessageList();
+        MessageList messageList = group.getMessageList();
 
         // Insert or update group data
         ContentValues groupValues = Serializer.obtainGroupValues(group);

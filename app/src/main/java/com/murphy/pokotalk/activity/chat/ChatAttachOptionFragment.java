@@ -21,14 +21,16 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.settings.CameraPermissionDialog;
+import com.murphy.pokotalk.content.ContentReader;
 import com.murphy.pokotalk.content.ContentStream;
-import com.murphy.pokotalk.content.ImageProcessor;
+import com.murphy.pokotalk.content.image.ImageProcessor;
 
 import java.io.FileNotFoundException;
 import java.io.InputStream;
@@ -42,7 +44,7 @@ public class ChatAttachOptionFragment extends Fragment {
 
     public interface Listener {
         void onImageAttachedToMessage(Bitmap bitmap);
-        void onBinaryAttachedToMessage(ContentStream contentStream);
+        void onBinaryAttachedToMessage(String fileName, ContentStream contentStream);
     }
 
     @Override
@@ -149,8 +151,11 @@ public class ChatAttachOptionFragment extends Fragment {
             // Add openable category
             target.addCategory(Intent.CATEGORY_OPENABLE);
 
+            // Get choose menu title
+            String title = getString(R.string.select_attach_file_title);
+
             // Make chooser
-            Intent chooser = Intent.createChooser(target, "Ev");
+            Intent chooser = Intent.createChooser(target, title);
 
             // Start choice
             startActivityForResult(chooser, Constants.RequestCode.ATTACH_FILE.value);
@@ -204,25 +209,45 @@ public class ChatAttachOptionFragment extends Fragment {
                 // Get file uri
                 final Uri fileUri = data.getData();
 
-                Log.v("POKO", "FILE " + fileUri.getPath());
-
                 // Get content resolver
                 ContentResolver resolver = context.getContentResolver();
 
+                // Get file name
+                String fileName = ContentReader.getFileName(resolver, fileUri);
+
+                // Get file extension
+                ContentResolver cR = context.getContentResolver();
+                MimeTypeMap mime = MimeTypeMap.getSingleton();
+                String extension = mime.getExtensionFromMimeType(cR.getType(fileUri));
+
+                // Check if extension is in file
+                if (fileName != null) {
+                    // Get last index of dot
+                    int lastIndex = fileName.lastIndexOf('.');
+
+                    // Check if file name has no extension or suffix after dot does not
+                    // equals to file extension
+                    if (lastIndex < 0 || (fileName.length() > lastIndex + 1
+                            && !fileName.substring(lastIndex + 1).equals(extension))) {
+                        // Add extension to file name
+                        fileName += '.' + extension;
+                    }
+                }
+
+                Log.v("POKO", "FILE NAME " + fileName);
+                Log.v("POKO", "FILE SIZE " + ContentReader.getFileSize(resolver,fileUri));
+
                 ContentStream contentStream = null;
+
                 Log.v("POKO", "START READ CHUNKS");
                 try {
                     // Get input stream for image
                     contentStream = new ContentStream(context, resolver, fileUri);
 
                     // Stat listener callback
-                    listener.onBinaryAttachedToMessage(contentStream);
+                    listener.onBinaryAttachedToMessage(fileName, contentStream);
                 } catch (FileNotFoundException e) {
                     e.printStackTrace();
-                }
-
-                if (contentStream != null) {
-                    contentStream.close();
                 }
             } else {
                 super.onActivityResult(requestCode, resultCode, data);

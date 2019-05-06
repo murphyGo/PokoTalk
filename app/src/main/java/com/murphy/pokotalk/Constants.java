@@ -38,10 +38,11 @@ public class Constants {
     public static final String attchedFileDirectory = "attach";
 
     /* Permission request code */
-    public static final int ALL_PERMISSION = 2;
+    public static final int ALL_PERMISSION = 100;
     public static final int READ_EXTERNAL_STORAGE = 0;
     public static final int WRITE_EXTERNAL_STORAGE = 1;
     public static final int CAMERA_PERMISSION = 2;
+    public static final int LOCATION_PERMISSION = 3;
 
     /* PokoEvent names
     * event names must not conflict to Socket's predefined event names
@@ -109,6 +110,12 @@ public class Constants {
     public static final String downloadName = "download";
     public static final String downloadAckName = "downloadAck";
 
+    /* Location share */
+    public static final String joinRealtimeLocationShareName = "joinRealtimeLocationShare";
+    public static final String exitRealtimeLocationShareName = "exitRealtimeLocationShare";
+    public static final String updateRealtimeLocationName = "updateRealtimeLocation";
+    public static final String realtimeLocationShareBroadcastName = "realtimeLocationShareBroadcast";
+
     /* Settings events */
     public static final String updateProfileImageName = "updateProfileImage";
 
@@ -130,7 +137,9 @@ public class Constants {
         IMAGE_EDITION(7),
         ATTACH_IMAGE(8),
         ATTACH_CAMERA_PICTURE(9),
-        ATTACH_FILE(10);
+        ATTACH_FILE(10),
+        EVENT_DETAIL(11),
+        LOCATION_SETTING(12);
 
         public final int value;
         RequestCode(int v) {

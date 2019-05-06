@@ -5,11 +5,11 @@ import com.murphy.pokotalk.data.list.ItemPokoList;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class ContactPokoList extends ItemPokoList<Integer, Contact> {
+public class ContactList extends ItemPokoList<Integer, Contact> {
     protected HashMap<Integer, ContactGroupRelation> contactChatMapUserId;
     protected HashMap<Integer, ContactGroupRelation> contactChatMapGroupId;
 
-    public ContactPokoList() {
+    public ContactList() {
         super();
         contactChatMapUserId = new HashMap<>();
         contactChatMapGroupId = new HashMap<>();

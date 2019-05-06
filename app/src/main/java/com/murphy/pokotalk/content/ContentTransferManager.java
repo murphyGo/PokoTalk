@@ -1,5 +1,7 @@
 package com.murphy.pokotalk.content;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.util.SparseArray;
 
@@ -44,6 +46,7 @@ public class ContentTransferManager {
         return instance;
     }
 
+    // Add upload job which uses all in one mode
     public synchronized int addUploadJob(byte[] binary, String extension,
                                          UploadJobCallback callback) {
         // Make job
@@ -51,15 +54,18 @@ public class ContentTransferManager {
 
         // Set binary buffer and size
         job.setBinary(binary);
+
+        // Set file size
         job.setSize((long) binary.length);
 
         return job.getId();
     }
 
+    // Add upload job which uses chunk mode
     public synchronized int addUploadJob(ContentStream contentStream, String extension,
                                          UploadJobCallback callback) {
         // Make job
-        UploadJob job = addUploadJob(UploadJob.STREAM_MODE, extension, callback);
+        UploadJob job = addUploadJob(UploadJob.CHUNK_MODE, extension, callback);
 
         // Set content stream
         job.setContentStream(contentStream);
@@ -70,6 +76,7 @@ public class ContentTransferManager {
         return job.getId();
     }
 
+    // Common routine for adding upload job
     private synchronized UploadJob addUploadJob(int mode, String extension,
                                                 UploadJobCallback callback) {
         // Make temporary id
@@ -84,6 +91,9 @@ public class ContentTransferManager {
         // Add to pending list
         pendingUploadJobs.put(pendingId, job);
 
+        // Start timeout
+        job.startTimeout();
+
         return job;
     }
 
@@ -91,15 +101,20 @@ public class ContentTransferManager {
         // Get pending job
         UploadJob job = pendingUploadJobs.get(pendingId);
 
-        if (job != null) {
-            // Remove pending job
-            pendingUploadJobs.remove(pendingId);
+        if (job != null && !job.isFinished()) {
+            synchronized (job) {
+                // Remove pending job
+                pendingUploadJobs.remove(pendingId);
 
-            // Update job id to upload id
-            job.setId(uploadId);
+                // Add to active jobs
+                uploadJobs.put(uploadId, job);
 
-            // Add to active jobs
-            uploadJobs.put(uploadId, job);
+                // Reset timeout
+                job.resetTimeout();
+
+                // Start job
+                job.start(uploadId);
+            }
 
             // Get server
             PokoServer server = PokoServer.getInstance();
@@ -107,10 +122,10 @@ public class ContentTransferManager {
             // Get mode
             int mode = job.getMode();
 
-            // Send start upload properly according to mode
+            // Send start upload message properly according to mode
             if (mode == UploadJob.ALL_IN_ONE_MODE) {
                 server.sendStartUpload(job.getId(), job.getBinary().length, job.getExtension());
-            } else if (mode == UploadJob.STREAM_MODE) {
+            } else if (mode == UploadJob.CHUNK_MODE) {
                 server.sendStartUpload(job.getId(), job.getContentStream().getSize(), job.getExtension());
             }
         }
@@ -123,7 +138,7 @@ public class ContentTransferManager {
             // Get job
             job = uploadJobs.get(uploadId);
 
-            if (job == null) {
+            if (job == null || job.isFinished()) {
                 return;
             }
 
@@ -139,7 +154,7 @@ public class ContentTransferManager {
             // Get job
             job = uploadJobs.get(uploadId);
 
-            if (job == null) {
+            if (job == null || job.isFinished()) {
                 return;
             }
         }
@@ -150,7 +165,7 @@ public class ContentTransferManager {
         if (job.getMode() == UploadJob.ALL_IN_ONE_MODE) {
             // Send all data and finish
             server.sendUpload(job.getId(), job.getBinary());
-        } else if (job.getMode() == UploadJob.STREAM_MODE) {
+        } else if (job.getMode() == UploadJob.CHUNK_MODE) {
             // Indicating if loop is broken by end of file
             boolean eof = false;
 
@@ -197,8 +212,8 @@ public class ContentTransferManager {
                     // Read next chunk early for performance
                     chunk = stream.getNextChunk();
 
-                    // Test eof
-                    if (chunk == null) {
+                    // Test eof or the job is finished
+                    if (chunk == null || job.isFinished()) {
                         break;
                     }
 
@@ -226,9 +241,14 @@ public class ContentTransferManager {
                             // Get server ack
                             ack = job.getAck();
 
+                            // Break upload if the job finished
+                            if (job.isFinished()) {
+                                break;
+                            }
+
                             if (send >= ack + ContentTransferManager.UPLOAD_WINDOW) {
                                 // Timeout, fail job
-                                // TODO: Fail the job
+                                job.failJobAndStartCallback();
                                 break;
                             }
                         }
@@ -248,6 +268,10 @@ public class ContentTransferManager {
         synchronized (this) {
             // Get job
             job = uploadJobs.get(jobId);
+
+            if (job == null || job.isFinished()) {
+                return;
+            }
         }
 
         synchronized (job) {
@@ -255,16 +279,15 @@ public class ContentTransferManager {
             if (job.getAck() < ack) {
                 job.setAck(ack);
             }
+
+            // Reset timeout
+            job.resetTimeout();
         }
 
         // Check if upload is done
         if (job.getSize() <= job.getAck()) {
-            UploadJobCallback callback = job.getCallback();
-
-            // Call callback
-            if (callback != null) {
-                callback.onSuccess(job.getContentName());
-            }
+            // Mark success and start callback
+            job.finishJobAndStartCallback();
         } else {
             synchronized (job) {
                 // Check if we can send more
@@ -288,6 +311,9 @@ public class ContentTransferManager {
         job.setType(type);
         job.setCallback(callback);
 
+        // Start timeout
+        job.startTimeout();
+
         // Add to download jobs
         pendingDownloadJobs.put(pendingId, job);
 
@@ -306,33 +332,30 @@ public class ContentTransferManager {
             job = pendingDownloadJobs.get(sendId);
         }
 
-        if (job != null) {
-            synchronized (job) {
-                // Update id to download id
-                job.setId(downloadId);
-
-                // Set size
-                job.setSize(size);
-
-                // Set bytes left
-                job.setLeft(size);
-
-                // Allocate buffer
-                job.setBytes(new byte[size]);
-
-                // Set started
-                job.setStarted(true);
-
-                // Awake waiting threads to write in buffer
-                job.notifyAll();
-            }
-
+        if (job != null && !job.isFinished()) {
             synchronized (this) {
                 // Remove from pending download job
                 pendingDownloadJobs.remove(sendId);
 
                 // Add to download jobs
                 downloadJobs.put(downloadId, job);
+
+                synchronized (job) {
+                    // Set size
+                    job.setSize(size);
+
+                    // Set bytes left
+                    job.setLeft(size);
+
+                    // Allocate buffer
+                    job.setBytes(new byte[size]);
+
+                    // Reset timeout
+                    job.resetTimeout();
+
+                    // Start job
+                    job.start(downloadId);
+                }
             }
         }
     }
@@ -349,7 +372,7 @@ public class ContentTransferManager {
                 downloadJob = pendingDownloadJobs.get(sendId);
             }
 
-            if (downloadJob != null) {
+            if (downloadJob != null && !downloadJob.isFinished()) {
                 // Put bytes to download Job
                 downloadJob.putBytesToQueue(part);
             }
@@ -366,7 +389,7 @@ public class ContentTransferManager {
             downloadJob = downloadJobs.get(downloadId);
         }
 
-        if (downloadJob != null) {
+        if (downloadJob != null && !downloadJob.isFinished()) {
             synchronized (downloadJob) {
                 // Check if the job failed
                 if (downloadJob.isFinished()) {
@@ -382,15 +405,10 @@ public class ContentTransferManager {
                         Thread.currentThread().interrupt();
                     }
 
-                    if (!downloadJob.isStarted()) {
-                        // Timeout, get rid of the job
-                        synchronized (this) {
-                            // Remove job
-                            downloadJobs.remove(downloadJob.getId());
-                        }
-
+                    // Check for timeout or finished
+                    if (!downloadJob.isStarted() || downloadJob.isFinished()) {
                         // Mark the job failed and start callback
-                        downloadJob.markJobFailedAndStartCallback();
+                        downloadJob.failJobAndStartCallback();
 
                         return;
                     }
@@ -416,6 +434,11 @@ public class ContentTransferManager {
                 byte[] part;
 
                 while (true) {
+                    // Check if the job has finished
+                    if (downloadJob.isFinished()) {
+                        break;
+                    }
+
                     // Get a byte package from queue
                     synchronized (downloadJob) {
                         part = queue.poll();
@@ -450,6 +473,9 @@ public class ContentTransferManager {
 
         Log.v("POKO", "COPY " + part.length + " BYTES, LEFT " + left + " BYTES");
 
+        // Reset timeout
+        job.resetTimeout();
+
         // Set left
         job.setLeft(left);
 
@@ -461,13 +487,8 @@ public class ContentTransferManager {
 
         // Check if download is done
         if (left == 0) {
-            synchronized (this) {
-                // Remove job
-                downloadJobs.remove(job.getId());
-            }
-
             // Mark the job succeeded and start callback
-            job.markJobSucceededAndStartCallback();
+            job.finishJobAndStartCallback();
         }
     }
 
@@ -488,8 +509,6 @@ public class ContentTransferManager {
     public void failUploadJob(int jobId, boolean pending) {
         UploadJob job;
 
-        Log.v("POKO", "FAILED TO UPLOAD");
-
         synchronized (this) {
             // Get job
             if (pending) {
@@ -500,22 +519,8 @@ public class ContentTransferManager {
 
             // Check if job exists
             if (job != null) {
-                // Remove job
-                if (pending) {
-                    pendingUploadJobs.remove(jobId);
-                } else {
-                    uploadJobs.remove(jobId);
-                }
-            }
-        }
-
-        if (job != null) {
-            // Get job callback
-            UploadJobCallback callback = job.getCallback();
-
-            // Call callback
-            if (callback != null) {
-                callback.onError();
+                // Fail the job and start callback
+                job.failJobAndStartCallback();
             }
         }
     }
@@ -523,7 +528,6 @@ public class ContentTransferManager {
     public void failDownloadJob(int jobId, boolean pending) {
         DownloadJob job;
 
-        Log.v("POKO", "FAILED DOWNLOAD");
         synchronized (this) {
             // Get job
             if (pending) {
@@ -534,24 +538,185 @@ public class ContentTransferManager {
 
             // Check if job exists
             if (job != null) {
-                // Remove job
-                if (pending) {
-                    pendingDownloadJobs.remove(jobId);
-                } else {
-                    downloadJobs.remove(jobId);
-                }
+                // Fail the job and start callback
+                job.failJobAndStartCallback();
             }
-        }
-
-        if (job != null) {
-            // Fail the job and start callback
-            job.markJobFailedAndStartCallback();
         }
     }
 
-    private class UploadJob {
-        private Integer id;
+    abstract private class TransferJob {
+        private int id;
         private String contentName;
+        private Handler handler;
+        private Runnable timeoutJob;
+        private Runnable scheduledJob;
+
+        private boolean started;
+        private boolean finished;
+        private boolean success;
+
+        private static final int TIMEOUT = 10000;
+
+        public TransferJob() {
+            handler = new Handler(Looper.getMainLooper());
+            started = false;
+            finished = false;
+            success = false;
+            scheduledJob = null;
+
+            // Make timeout job
+            timeoutJob = new Runnable() {
+                @Override
+                public void run() {
+                    // Remove job
+                    scheduledJob = null;
+
+                    // Timeout, fail the job
+                    failJobAndStartCallback();
+                }
+            };
+        }
+
+        public synchronized void startTimeout() {
+            if (scheduledJob == null && !isFinished()) {
+                // Post timeout callback
+                handler.postDelayed(timeoutJob, TIMEOUT);
+                scheduledJob = timeoutJob;
+            }
+        }
+
+        public synchronized void resetTimeout() {
+            if (scheduledJob != null && !isFinished()) {
+                // Cancel timeout callback
+                handler.removeCallbacks(scheduledJob);
+            }
+
+            // Post timeout callback
+            handler.postDelayed(timeoutJob, TIMEOUT);
+            scheduledJob = timeoutJob;
+        }
+
+        public synchronized void cancelTimeout() {
+            if (scheduledJob != null) {
+                handler.removeCallbacks(scheduledJob);
+                scheduledJob = null;
+            }
+        }
+
+        public synchronized void start(int jobId) {
+            if (isStarted()) {
+                return;
+            }
+
+            // Set started
+            started = true;
+
+            // Update job id
+            setId(jobId);
+
+            // Notify all threads that are waiting for the job to be started
+            notifyAll();
+        }
+
+        public Integer getId() {
+            return id;
+        }
+
+        public void setId(Integer id) {
+            this.id = id;
+        }
+
+        public String getContentName() {
+            return contentName;
+        }
+
+        public void setContentName(String contentName) {
+            this.contentName = contentName;
+        }
+
+        public boolean isStarted() {
+            return started;
+        }
+
+        public boolean isFinished() {
+            return finished;
+        }
+
+        public void setFinished(boolean finished) {
+            this.finished = finished;
+        }
+
+        public boolean isSuccess() {
+            return success;
+        }
+
+        public void setSuccess(boolean success) {
+            this.success = success;
+        }
+
+        public boolean isFailed() {
+            return !success;
+        }
+
+        public void finishJobAndStartCallback() {
+            // If finished already, just return
+            if (isFinished()) {
+                return;
+            }
+
+            synchronized (this) {
+                // If finished already, just return
+                if (isFinished()) {
+                    return;
+                }
+
+                // Cancel timeout
+                cancelTimeout();
+
+                // Set finished set succeeded
+                setFinished(true);
+                setSuccess(true);
+            }
+
+            // Remove the job from list
+            removeJobFromList();
+
+            // Start callback
+            startCallback(true);
+        }
+
+        public void failJobAndStartCallback() {
+            // If finished already, just return
+            if (isFinished()) {
+                return;
+            }
+
+            synchronized (this) {
+                // If finished already, just return
+                if (isFinished()) {
+                    return;
+                }
+
+                // Cancel timeout
+                cancelTimeout();
+
+                // Set finished and failed
+                setFinished(true);
+                setSuccess(false);
+            }
+
+            // Remove the job from list
+            removeJobFromList();
+
+            // Start callback
+            startCallback(false);
+        }
+
+        abstract void startCallback(boolean success);
+        abstract void removeJobFromList();
+    }
+
+    private class UploadJob extends TransferJob {
         private String extension;
         private int mode;
         private ContentStream contentStream;
@@ -561,22 +726,16 @@ public class ContentTransferManager {
         private Long ack;
         private UploadJobCallback callback;
 
-        private static final int ALL_IN_ONE_MODE = 0;
-        private static final int STREAM_MODE = 1;
+        private static final int ALL_IN_ONE_MODE = 0;   // It sends all data with one message
+        private static final int CHUNK_MODE = 1;        // It sends by dividing into small chunks
 
         public UploadJob(int mode) {
+            super();
+
             ack = 0L;
             send = 0L;
 
             this.mode = mode;
-        }
-
-        public Integer getId() {
-            return id;
-        }
-
-        public void setId(Integer id) {
-            this.id = id;
         }
 
         private byte[] getBinary() {
@@ -627,14 +786,6 @@ public class ContentTransferManager {
             this.send = send;
         }
 
-        public String getContentName() {
-            return contentName;
-        }
-
-        public void setContentName(String contentName) {
-            this.contentName = contentName;
-        }
-
         private ContentStream getContentStream() {
             return contentStream;
         }
@@ -646,11 +797,31 @@ public class ContentTransferManager {
         private int getMode() {
             return mode;
         }
+
+        @Override
+        void startCallback(boolean success) {
+            if (callback != null) {
+                if (success) {
+                    callback.onSuccess(getContentName());
+                } else {
+                    callback.onError();
+                }
+            }
+        }
+
+        @Override
+        void removeJobFromList() {
+            synchronized (ContentTransferManager.getInstance()) {
+                if (isStarted()) {
+                    pendingUploadJobs.remove(getId());
+                } else {
+                    uploadJobs.remove(getId());
+                }
+            }
+        }
     }
 
-    private class DownloadJob {
-        private int id;
-        private String contentName;
+    private class DownloadJob extends TransferJob {
         private String type;
         private byte[] bytes;
         private int size;
@@ -658,33 +829,12 @@ public class ContentTransferManager {
         private DownloadJobCallback callback;
         private Queue<byte[]> pendingBuffers;
         private PokoLock copyLock;
-        private boolean started;
-        private boolean finished;
-        private boolean success;
-        public int test = 0;
 
         public DownloadJob() {
+            super();
+
             pendingBuffers = new ArrayDeque<>();
             copyLock = new PokoLock();
-            started = false;
-            finished = false;
-            success = false;
-        }
-
-        public int getId() {
-            return id;
-        }
-
-        public void setId(int id) {
-            this.id = id;
-        }
-
-        public String getContentName() {
-            return contentName;
-        }
-
-        public void setContentName(String contentName) {
-            this.contentName = contentName;
         }
 
         public String getType() {
@@ -739,61 +889,25 @@ public class ContentTransferManager {
             return copyLock;
         }
 
-        private boolean isStarted() {
-            return started;
-        }
-
-        private void setStarted(boolean started) {
-            this.started = started;
-        }
-
-        private boolean isFinished() {
-            return finished;
-        }
-
-        public boolean isSucceeded() {
-            return !success;
-        }
-
-        public boolean isFailed() {
-            return !success;
-        }
-
-        private void markJobSucceededAndStartCallback() {
-            if (finished) {
-                return;
-            }
-
-            synchronized (this) {
-                if (finished) {
-                    return;
-                }
-
-                finished = true;
-                success = true;
-            }
-
+        @Override
+        void startCallback(boolean success) {
             if (callback != null) {
-                callback.onSuccess(contentName, bytes);
+                if (success) {
+                    callback.onSuccess(getContentName(), bytes);
+                } else {
+                    callback.onError();
+                }
             }
         }
 
-        private void markJobFailedAndStartCallback() {
-            if (finished) {
-                return;
-            }
-
-            synchronized (this) {
-                if (finished) {
-                    return;
+        @Override
+        void removeJobFromList() {
+            synchronized (ContentTransferManager.getInstance()) {
+                if (isStarted()) {
+                    pendingDownloadJobs.remove(getId());
+                } else {
+                    downloadJobs.remove(getId());
                 }
-
-                finished = true;
-                success = false;
-            }
-
-            if (callback != null) {
-                callback.onError();
             }
         }
     }

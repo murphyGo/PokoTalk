@@ -10,6 +10,8 @@
     <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
     <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
     <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -65,6 +67,7 @@
         <activity android:name=".activity.settings.ProfileSettingActivity"/>
         <activity android:name=".activity.settings.ImageEditionActivity"/>
         <activity android:name=".activity.settings.DownloadTestActivity"/>
+        <activity android:name=".activity.chat.LocationShareActivity"/>
 
         <service
             android:name=".service.PokoTalkService"

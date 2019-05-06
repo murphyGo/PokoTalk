@@ -28,7 +28,7 @@ import com.murphy.pokotalk.adapter.group.MemberCandidateListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.parser.PokoParser;
 import com.murphy.pokotalk.view.MemberCandidateItem;
@@ -93,8 +93,8 @@ public class EventCreationActivity extends AppCompatActivity
 
         // Set adapter
         adapter = new MemberCandidateListAdapter(this);
-        ContactPokoList contactListUI = (ContactPokoList) adapter.getPokoList();
-        ContactPokoList contactList = DataCollection.getInstance().getContactList();
+        ContactList contactListUI = (ContactList) adapter.getPokoList();
+        ContactList contactList = DataCollection.getInstance().getContactList();
         contactListUI.copyFromPokoList(contactList);
         eventParticipantListView.setAdapter(adapter);
 

@@ -52,13 +52,15 @@ import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.db.json.Parser;
+import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -88,6 +90,7 @@ public class ChatActivity extends AppCompatActivity
     private HorizontalScrollView attachOptionLayout;
     private Button attachOptionButton;
     private Button sendMessageButton;
+    private Button locationShareButton;
     private DrawerLayout drawerLayout;
     private LinearLayout slideMenuLayout;
     private NavigationView navigationView;
@@ -95,6 +98,7 @@ public class ChatActivity extends AppCompatActivity
     private MessageListAdapter messageListAdapter;
     private GroupMemberListAdapter memberListAdapter;
     private Group group;
+    private PokoEvent event;
     private ChatAttachOptionFragment attachOptionFragment;
     private int sendId;
     private Session session;
@@ -121,6 +125,7 @@ public class ChatActivity extends AppCompatActivity
         attachOptionButton = findViewById(R.id.chatAttachOptionButton);
         sendMessageButton = findViewById(R.id.sendMessageButton);
         drawerLayout = findViewById(R.id.drawerLayout);
+        locationShareButton = findViewById(R.id.chatLocationShareButton);
 
         Intent intent = getIntent();
         if (intent == null) {
@@ -128,6 +133,7 @@ public class ChatActivity extends AppCompatActivity
         }
 
         groupId = intent.getIntExtra("groupId", -1);
+
         if (groupId < 0) {
             creationError("그룹 ID 오류");
         }
@@ -135,6 +141,18 @@ public class ChatActivity extends AppCompatActivity
         group = DataCollection.getInstance().getGroupList().getItemByKey(groupId);
         if (group == null) {
             creationError("해당 그룹이 없습니다.");
+        }
+
+        // Get event list
+        EventList eventList = collection.getEventList();
+
+        // Get event information
+        EventList.EventGroupRelation relation = eventList.getEventGroupRelationByGroupId(groupId);
+
+        if (relation != null) {
+            event = eventList.getItemByKey(relation.getEventId());
+        } else {
+            event = null;
         }
 
         /* Start chat for this group */
@@ -169,6 +187,13 @@ public class ChatActivity extends AppCompatActivity
         /* Add slide menu item click listener */
         navigationView = slideMenuLayout.findViewById(R.id.chatSlideMenu);
         navigationView.setNavigationItemSelectedListener(this);
+
+        if (event == null) {
+            // Hide location share menu
+            locationShareButton.setVisibility(View.GONE);
+            MenuItem item = navigationView.getMenu().findItem(R.id.chat_share_location);
+            item.setVisible(false);
+        }
 
         try {
             PokoLock.getDataLockInstance().acquireWriteLock();
@@ -212,6 +237,7 @@ public class ChatActivity extends AppCompatActivity
         backspaceButton.setOnClickListener(backspaceButtonClickListener);
         sendMessageButton.setOnClickListener(messageSendButtonListener);
         attachOptionButton.setOnClickListener(attachOptionButtonListener);
+        locationShareButton.setOnClickListener(locationShareClickListener);
 
         /* Do not show attach option layout at first */
         attachOptionLayout.setVisibility(View.GONE);
@@ -426,6 +452,13 @@ public class ChatActivity extends AppCompatActivity
         }
     };
 
+    private View.OnClickListener locationShareClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            startLocationShareActivity();
+        }
+    };
+
     /* Server event listeners */
     // This callback get called when connection to server gets lost and
     // the user reconnects and login. So we request data to be up to date.
@@ -622,7 +655,7 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        UserPokoList memberList = (UserPokoList) memberListAdapter.getPokoList();
+                        UserList memberList = (UserList) memberListAdapter.getPokoList();
                         for (User member : members) {
                             memberList.updateItem(member);
                         }
@@ -650,7 +683,7 @@ public class ChatActivity extends AppCompatActivity
                         return;
 
                     if (readGroup.getGroupId() == group.getGroupId()) {
-                        UserPokoList memberList = (UserPokoList) memberListAdapter.getPokoList();
+                        UserList memberList = (UserList) memberListAdapter.getPokoList();
                         for (User member : members) {
                             memberList.removeItemByKey(member.getUserId());
                         }
@@ -752,7 +785,7 @@ public class ChatActivity extends AppCompatActivity
     }
 
     // Image message click listener
-    static class  FileShareMessageClickListener implements View.OnClickListener {
+    static class FileShareMessageClickListener implements View.OnClickListener {
         private Context context;
         private PokoMessage message;
 
@@ -995,14 +1028,20 @@ public class ChatActivity extends AppCompatActivity
 
     private boolean menuItemClick(MenuItem menuItem) {
         switch (menuItem.getItemId()){
-            case R.id.invite_contacts:
+            case R.id.invite_contacts: {
                 Intent intent = new Intent(this, GroupMemberInvitationActivity.class);
                 intent.putExtra("groupId", group.getGroupId());
                 startActivity(intent);
                 break;
-            case R.id.exit_group:
+            }
+            case R.id.exit_group: {
                 open_exit_warning();
                 break;
+            }
+            case R.id.chat_share_location: {
+                startLocationShareActivity();
+                break;
+            }
             default:
                 Toast.makeText(this, "문제가 발생했습니다.",
                         Toast.LENGTH_SHORT).show();
@@ -1090,6 +1129,17 @@ public class ChatActivity extends AppCompatActivity
         }
 
         server.sendReadNbreadOfMessages(group.getGroupId(), minId, maxId);
+    }
+
+    private void startLocationShareActivity() {
+        if (event != null) {
+            // Make intent
+            Intent intent = new Intent(getApplicationContext(), LocationShareActivity.class);
+            intent.putExtra("eventId", event.getEventId());
+
+            // Start location share activity
+            startActivity(intent);
+        }
     }
 
     class ReadMoreMessageTask extends AsyncTask<Object, Void, ArrayList<PokoMessage>> {

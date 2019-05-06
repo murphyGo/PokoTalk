@@ -36,6 +36,7 @@ public class EventListFragment extends Fragment {
 
     public interface Listener {
         void openEventOptionDialog(PokoEvent event);
+        void startGroupChat(int groupId);
     }
 
     @Override
@@ -124,6 +125,15 @@ public class EventListFragment extends Fragment {
 
         if (requestCode == Constants.RequestCode.EVENT_CREATE.value) {
 
+        } else if (requestCode == Constants.RequestCode.EVENT_DETAIL.value) {
+            // Get group id
+            int groupId = data.getIntExtra("groupId", -1);
+
+            // Check validity of group id
+            if (groupId >= 0 && listener != null) {
+                // Start group chat
+                listener.startGroupChat(groupId);
+            }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
@@ -235,7 +245,7 @@ public class EventListFragment extends Fragment {
                     // Start event detail activity
                     Intent intent = new Intent(getActivity(), EventDetailActivity.class);
                     intent.putExtra("eventId", event.getEventId());
-                    startActivity(intent);
+                    startActivityForResult(intent, Constants.RequestCode.EVENT_DETAIL.value);
                 }
             });
 

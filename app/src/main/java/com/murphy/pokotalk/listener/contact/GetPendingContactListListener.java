@@ -10,10 +10,10 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.json.Serializer;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
-import com.murphy.pokotalk.data.user.StrangerPokoList;
+import com.murphy.pokotalk.data.user.PendingContactList;
+import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.server.parser.PokoParser;
@@ -38,10 +38,10 @@ public class GetPendingContactListListener extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        ContactPokoList contactList = collection.getContactList();
-        PendingContactPokoList invitedContactList = collection.getInvitedContactList();
-        PendingContactPokoList invitingContactList = collection.getInvitingContactList();
-        StrangerPokoList strangerList = collection.getStrangerList();
+        ContactList contactList = collection.getContactList();
+        PendingContactList invitedContactList = collection.getInvitedContactList();
+        PendingContactList invitingContactList = collection.getInvitingContactList();
+        StrangerList strangerList = collection.getStrangerList();
         try {
             invitedContactList.startUpdateList();
             invitingContactList.startUpdateList();
@@ -93,8 +93,8 @@ public class GetPendingContactListListener extends PokoServer.PokoListener {
         @Override
         protected void doJob(HashMap<String, Object> data) {
             DataCollection collection = DataCollection.getInstance();
-            PendingContactPokoList invitedList = collection.getInvitedContactList();
-            PendingContactPokoList invitingList = collection.getInvitingContactList();
+            PendingContactList invitedList = collection.getInvitedContactList();
+            PendingContactList invitingList = collection.getInvitingContactList();
 
             Log.v("POKO", "START TO WRITE pending contact list DATA");
 

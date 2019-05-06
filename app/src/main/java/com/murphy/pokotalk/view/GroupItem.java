@@ -13,7 +13,7 @@ import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -89,8 +89,8 @@ public class GroupItem extends FrameLayout {
 
         /* Get contact, group relation */
         DataCollection collection = DataCollection.getInstance();
-        ContactPokoList contactList = collection.getContactList();
-        ContactPokoList.ContactGroupRelation relation =
+        ContactList contactList = collection.getContactList();
+        ContactList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByGroupId(group.getGroupId());
         /* If group is for contact chat */
         if (relation != null) {

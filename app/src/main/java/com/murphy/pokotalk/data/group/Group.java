@@ -4,7 +4,7 @@ import com.murphy.pokotalk.data.Item;
 import com.murphy.pokotalk.data.list.ListSorter;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 
 import java.util.ArrayList;
 
@@ -13,12 +13,12 @@ public class Group extends Item {
     private String alias;
     private int groupId;
     private int nbNewMessages;
-    private UserPokoList members;
+    private UserList members;
     private MessageList messageList;
     private int ack;
 
     public Group() {
-        members = new UserPokoList();
+        members = new UserList();
         messageList = new MessageList();
         nbNewMessages = 0;
         ack = -1;
@@ -84,11 +84,11 @@ public class Group extends Item {
         this.nbNewMessages = nbNewMessages;
     }
 
-    public UserPokoList getMembers() {
+    public UserList getMembers() {
         return members;
     }
 
-    public void setMembers(UserPokoList members) {
+    public void setMembers(UserList members) {
         this.members = members;
     }
 

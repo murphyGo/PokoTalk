@@ -47,7 +47,7 @@ import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -450,6 +450,20 @@ public class MainActivity extends FragmentActivity
         dialog.show(getSupportFragmentManager(), "이벤트 옵션");
     }
 
+    @Override
+    public void startGroupChat(int groupId) {
+        // Get group list
+        GroupPokoList groupPokoList = collection.getGroupList();
+
+        // Find group
+        Group group = groupPokoList.getItemByKey(groupId);
+
+        if (group != null) {
+            // Start chat
+            startGroupChat(group);
+        }
+    }
+
     /* Dialog result listeners */
     @Override
     public void contactDetailOptionClick(Contact contact, int option) {
@@ -541,9 +555,9 @@ public class MainActivity extends FragmentActivity
     /* Chat methods */
     public void startContactChat(Contact contact) {
         Group contactChatGroup = null;
-        ContactPokoList contactList = collection.getContactList();
+        ContactList contactList = collection.getContactList();
         GroupPokoList groupList = collection.getGroupList();
-        ContactPokoList.ContactGroupRelation relation =
+        ContactList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByUserId(contact.getUserId());
         if (relation != null) {
             contactChatGroup = groupList.getItemByKey(relation.getGroupId());

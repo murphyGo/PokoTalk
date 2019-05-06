@@ -4,27 +4,27 @@ import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
+import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerPokoList;
+import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
 
 public class DataCollection {
-    private ContactPokoList contactList;
-    private PendingContactPokoList invitedContactList;
-    private PendingContactPokoList invitingContactList;
-    private StrangerPokoList strangerList;
+    private ContactList contactList;
+    private PendingContactList invitedContactList;
+    private PendingContactList invitingContactList;
+    private StrangerList strangerList;
     private GroupPokoList groupList;
     private EventList eventList;
     private static DataCollection instance;
 
     public DataCollection() {
-        contactList = new ContactPokoList();
-        invitedContactList = new PendingContactPokoList();
-        invitingContactList = new PendingContactPokoList();
-        strangerList = new StrangerPokoList();
+        contactList = new ContactList();
+        invitedContactList = new PendingContactList();
+        invitingContactList = new PendingContactList();
+        strangerList = new StrangerList();
         groupList = new GroupPokoList();
         eventList = new EventList();
     }
@@ -49,10 +49,10 @@ public class DataCollection {
      * @return true if user is successfully inserted or updated, false otherwise.
      */
     public boolean updateUserList(User user) {
-        ContactPokoList contactList = getContactList();
-        PendingContactPokoList invitedContactList = getInvitedContactList();
-        PendingContactPokoList invitingContactList = getInvitingContactList();
-        StrangerPokoList strangerList = getStrangerList();
+        ContactList contactList = getContactList();
+        PendingContactList invitedContactList = getInvitedContactList();
+        PendingContactList invitingContactList = getInvitingContactList();
+        StrangerList strangerList = getStrangerList();
 
         User u = Session.getInstance().getUser();
         if (u != null) {
@@ -108,17 +108,17 @@ public class DataCollection {
         return null;
     }
 
-    /** Removes user with id from list and move to StrangerPokoList
+    /** Removes user with id from list and move to StrangerList
      * If the user is Stranger or session user, do nothing.
      * @param userId
-     * @return Stranger user moved to StrangerPokoList
+     * @return Stranger user moved to StrangerList
      */
     public Stranger moveUserToStrangerList(int userId) {
         String email, nickname, picture;
-        ContactPokoList contactList = getContactList();
-        PendingContactPokoList invitedContactList = getInvitedContactList();
-        PendingContactPokoList invitingContactList = getInvitingContactList();
-        StrangerPokoList strangerList = getStrangerList();
+        ContactList contactList = getContactList();
+        PendingContactList invitedContactList = getInvitedContactList();
+        PendingContactList invitingContactList = getInvitingContactList();
+        StrangerList strangerList = getStrangerList();
 
         User user = Session.getInstance().getUser();
         if (user != null) {
@@ -176,19 +176,19 @@ public class DataCollection {
     }
 
     /* Getter methods */
-    public ContactPokoList getContactList() {
+    public ContactList getContactList() {
         return contactList;
     }
 
-    public PendingContactPokoList getInvitedContactList() {
+    public PendingContactList getInvitedContactList() {
         return invitedContactList;
     }
 
-    public PendingContactPokoList getInvitingContactList() {
+    public PendingContactList getInvitingContactList() {
         return invitingContactList;
     }
 
-    public StrangerPokoList getStrangerList() { return strangerList; }
+    public StrangerList getStrangerList() { return strangerList; }
 
     public GroupPokoList getGroupList() {
         return groupList;

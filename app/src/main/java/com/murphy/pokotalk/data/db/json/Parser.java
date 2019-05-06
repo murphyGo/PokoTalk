@@ -11,16 +11,17 @@ import com.murphy.pokotalk.data.db.schema.GroupsSchema;
 import com.murphy.pokotalk.data.db.schema.MessagesSchema;
 import com.murphy.pokotalk.data.db.schema.SessionSchema;
 import com.murphy.pokotalk.data.db.schema.UsersSchema;
+import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.Stranger;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
@@ -203,10 +204,12 @@ public class Parser {
 
     public static PokoEvent parseEvent(Cursor cursor) throws Exception {
         DataCollection collection = DataCollection.getInstance();
+        EventList eventList = collection.getEventList();
         Contact user = Session.getInstance().getUser();
         PokoEvent event = new PokoEvent();
 
         int descriptionIndex = cursor.getColumnIndexOrThrow(EventsSchema.Entry.EVENT_DESCRIPTION);
+        int groupIdIndex = cursor.getColumnIndexOrThrow(EventsSchema.Entry.GROUP_ID);
 
         event.setEventId(cursor.getInt(cursor.getColumnIndexOrThrow(EventsSchema.Entry.EVENT_ID)));
         event.setEventName(cursor.getString(cursor.getColumnIndexOrThrow(EventsSchema.Entry.EVENT_NAME)));
@@ -220,6 +223,13 @@ public class Parser {
             event.setDescription(null);
         } else {
             event.setDescription(cursor.getString(descriptionIndex));
+        }
+
+        if (cursor.isNull(groupIdIndex)) {
+            eventList.removeEventGroupRelationByEventId(event.getEventId());
+        } else {
+            int groupId = cursor.getInt(groupIdIndex);
+            eventList.putEventGroupRelation(event.getEventId(), groupId);
         }
 
         /* Parse creator user */
@@ -322,9 +332,9 @@ public class Parser {
         return user;
     }
 
-    public static ContactPokoList.ContactGroupRelation parseContactGroupRelation(JSONObject jsonObject)
+    public static ContactList.ContactGroupRelation parseContactGroupRelation(JSONObject jsonObject)
         throws JSONException {
-        ContactPokoList.ContactGroupRelation relation = new ContactPokoList.ContactGroupRelation();
+        ContactList.ContactGroupRelation relation = new ContactList.ContactGroupRelation();
         relation.setContactUserId(jsonObject.getInt("contactUserId"));
         relation.setGroupId(jsonObject.getInt("groupId"));
 
@@ -338,7 +348,7 @@ public class Parser {
         Contact user = Session.getInstance().getUser();
         Group group = new Group();
         int userId = Session.getInstance().getUser().getUserId();
-        UserPokoList memberList = group.getMembers();
+        UserList memberList = group.getMembers();
         JSONArray jsonMembers = jsonGroup.getJSONArray("members");
 
         group.setGroupId(jsonGroup.getInt("groupId"));

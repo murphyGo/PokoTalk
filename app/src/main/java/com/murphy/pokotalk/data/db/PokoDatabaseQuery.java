@@ -404,7 +404,8 @@ public class PokoDatabaseQuery {
                             EventsSchema.Entry.EVENT_DESCRIPTION,
                             EventsSchema.Entry.EVENT_DATE,
                             EventsSchema.Entry.EVENT_STARTED,
-                            EventsSchema.Entry.ACK};
+                            EventsSchema.Entry.ACK,
+                            EventsSchema.Entry.GROUP_ID};
                     return result;
                 }
             };

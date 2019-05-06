@@ -2,13 +2,13 @@ package com.murphy.pokotalk.data.user;
 
 import com.murphy.pokotalk.data.list.ItemPokoList;
 
-public class UserPokoList extends ItemPokoList<Integer, User> {
-    public UserPokoList() {
+public class StrangerList extends ItemPokoList<Integer, Stranger> {
+    public StrangerList() {
         super();
     }
 
     @Override
-    public Integer getKey(User user) {
+    public Integer getKey(Stranger user) {
         return user.getUserId();
     }
 }

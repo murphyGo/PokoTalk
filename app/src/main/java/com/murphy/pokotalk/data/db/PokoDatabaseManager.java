@@ -21,13 +21,13 @@ import com.murphy.pokotalk.data.group.GroupPokoList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
+import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerPokoList;
+import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 
 import java.util.ArrayDeque;
 import java.util.HashMap;
@@ -167,10 +167,10 @@ public class PokoDatabaseManager {
 
         // Get user lists
         DataCollection collection = DataCollection.getInstance();
-        ContactPokoList contactList = collection.getContactList();
-        PendingContactPokoList invitedPendingContactList = collection.getInvitedContactList();
-        PendingContactPokoList invitingPendingContactList = collection.getInvitingContactList();
-        StrangerPokoList strangerList = collection.getStrangerList();
+        ContactList contactList = collection.getContactList();
+        PendingContactList invitedPendingContactList = collection.getInvitedContactList();
+        PendingContactList invitingPendingContactList = collection.getInvitingContactList();
+        StrangerList strangerList = collection.getStrangerList();
 
         PokoUserDatabase database = PokoUserDatabase.getInstance(context, user.getUserId());
 
@@ -197,25 +197,34 @@ public class PokoDatabaseManager {
                     // Stranger will have pending attribute Null
                     Stranger stranger = Parser.parseStranger(cursor);
                     strangerList.updateItem(stranger);
-                    Log.v("POKO", "READ STRANGER " + stranger.getNickname() + ", " + stranger.getUserId());
+
+                    Log.v("POKO", "READ STRANGER " + stranger.getNickname() +
+                            ", " + stranger.getUserId());
                 } else {
                     int pending = cursor.getInt(pendingIndex);
                     if (pending > 0) {
                         // Pending contact
                         // Test if it is a invited or inviting pending contact
                         int invited = cursor.getInt(invitedIndex);
+
                         PendingContact pendingContact = Parser.parsePendingContact(cursor);
+
                         if (invited > 0) {
                             invitedPendingContactList.updateItem(pendingContact);
                         } else {
                             invitingPendingContactList.updateItem(pendingContact);
                         }
-                        Log.v("POKO", "READ PENDING CONTACT " + pendingContact.getNickname() + ", " + pendingContact.getUserId());
+
+                        Log.v("POKO", "READ PENDING CONTACT " +
+                                pendingContact.getNickname() + ", " + pendingContact.getUserId());
                     } else {
                         // Contact
                         Contact contact = Parser.parseContact(cursor);
                         contactList.updateItem(contact);
-                        Log.v("POKO", "READ CONTACT " + contact.getNickname() + ", " + contact.getUserId());
+
+                        Log.v("POKO", "READ CONTACT " + contact.getNickname() + ", " +
+                                contact.getUserId());
+
                         // See contact group chat data
                         if (!cursor.isNull(groupChatIdIndex)) {
                             int contactGroupId = cursor.getInt(groupChatIdIndex);
@@ -255,7 +264,7 @@ public class PokoDatabaseManager {
 
             // Loop for each group
             for (Group group : groupList.getList()) {
-                UserPokoList memberList = group.getMembers();
+                UserList memberList = group.getMembers();
                 MessageList messageList = group.getMessageList();
 
                 // Query group members and last message
@@ -322,7 +331,7 @@ public class PokoDatabaseManager {
 
             // Loop for each group
             for (PokoEvent event : eventList.getList()) {
-                UserPokoList participantList = event.getParticipants();
+                UserList participantList = event.getParticipants();
 
                 // Get event id
                 int eventId = event.getEventId();

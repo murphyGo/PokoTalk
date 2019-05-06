@@ -12,9 +12,9 @@ import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerPokoList;
+import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.murphy.pokotalk.server.parser.PokoParser;
@@ -52,8 +52,8 @@ public class MembersInvitedListener extends PokoServer.PokoListener {
             }
 
             DataCollection collection = DataCollection.getInstance();
-            StrangerPokoList strangerList = collection.getStrangerList();
-            UserPokoList memberList = group.getMembers();
+            StrangerList strangerList = collection.getStrangerList();
+            UserList memberList = group.getMembers();
             ArrayList<User> members = new ArrayList<>();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);

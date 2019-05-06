@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data.db.deprecated;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
+import com.murphy.pokotalk.data.user.PendingContactList;
 
 public class InvitedPendingContactListFile extends PendingContactListFile{
     @Override
@@ -11,7 +11,7 @@ public class InvitedPendingContactListFile extends PendingContactListFile{
     }
 
     @Override
-    public PendingContactPokoList getPendingContactList() {
+    public PendingContactList getPendingContactList() {
         return DataCollection.getInstance().getInvitedContactList();
     }
 }

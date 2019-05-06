@@ -3,7 +3,7 @@ package com.murphy.pokotalk.data.group;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.list.ListSorter;
 import com.murphy.pokotalk.data.list.SortingPokoList;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 
 import java.util.HashMap;
 
@@ -12,7 +12,7 @@ import java.util.HashMap;
  * Also it does not show contact chat with no message.
  */
 public class GroupPokoListUI extends SortingPokoList<Integer, Group> {
-    protected ContactPokoList contactList;
+    protected ContactList contactList;
     protected HashMap<Integer, Group> contactChatGroupWithNoMessage;
 
     public GroupPokoListUI() {
@@ -54,7 +54,7 @@ public class GroupPokoListUI extends SortingPokoList<Integer, Group> {
 
     @Override
     protected int addHashMapAndArrayList(Group group) {
-        ContactPokoList.ContactGroupRelation relation =
+        ContactList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByGroupId(group.getGroupId());
 
         if (relation != null && group.getMessageList().getLastMessage() == null) {

@@ -4,8 +4,6 @@ import android.content.ContentValues;
 
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
-import com.murphy.pokotalk.data.event.EventLocation;
-import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.db.schema.ContactsSchema;
 import com.murphy.pokotalk.data.db.schema.EventLocationSchema;
 import com.murphy.pokotalk.data.db.schema.EventParticipantsSchema;
@@ -15,13 +13,16 @@ import com.murphy.pokotalk.data.db.schema.GroupsSchema;
 import com.murphy.pokotalk.data.db.schema.MessagesSchema;
 import com.murphy.pokotalk.data.db.schema.SessionSchema;
 import com.murphy.pokotalk.data.db.schema.UsersSchema;
+import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.event.EventLocation;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
@@ -87,8 +88,8 @@ public class Serializer {
         Integer groupChatId = null;
         if (user instanceof Contact) {
             Contact contact = (Contact) user;
-            ContactPokoList contactList = DataCollection.getInstance().getContactList();
-            ContactPokoList.ContactGroupRelation relation =
+            ContactList contactList = DataCollection.getInstance().getContactList();
+            ContactList.ContactGroupRelation relation =
                     contactList.getContactGroupRelationByUserId(contact.getUserId());
 
             if (relation != null) {
@@ -156,6 +157,7 @@ public class Serializer {
         values.put(MessagesSchema.Entry.NB_NOT_READ, message.getNbNotReadUser());
         values.put(MessagesSchema.Entry.IMPORTANCE, message.getImportanceLevel());
         values.put(MessagesSchema.Entry.DATE, calendarToEpochInMills(message.getDate()));
+
         if (content == null) {
             values.putNull(MessagesSchema.Entry.CONTENTS);
         } else {
@@ -172,21 +174,34 @@ public class Serializer {
     }
 
     public static ContentValues obtainEventValues(PokoEvent event) {
+        EventList eventList = DataCollection.getInstance().getEventList();
         ContentValues values = new ContentValues();
         String name = event.getEventName();
         String description = event.getDescription();
+        int eventId = event.getEventId();
         int started = event.getState();
         long date = event.getEventDate().getTime().getTime();
         int ack = event.getAck();
         User creator = event.getCreator();
         int creatorId = creator.getUserId();
 
-        values.put(EventsSchema.Entry.EVENT_ID, event.getEventId());
+        values.put(EventsSchema.Entry.EVENT_ID, eventId);
         values.put(EventsSchema.Entry.EVENT_NAME, name);
         values.put(EventsSchema.Entry.EVENT_DATE, date);
         values.put(EventsSchema.Entry.ACK, ack);
         values.put(EventsSchema.Entry.EVENT_STARTED, started);
         values.put(EventsSchema.Entry.EVENT_CREATOR, creatorId);
+
+        // Get relation
+        EventList.EventGroupRelation relation =
+            eventList.getEventGroupRelationByEventId(eventId);
+
+        if (relation != null) {
+            values.put(EventsSchema.Entry.GROUP_ID, relation.getGroupId());
+        } else {
+            values.putNull(EventsSchema.Entry.GROUP_ID);
+        }
+
         if (description != null) {
             values.put(EventsSchema.Entry.EVENT_DESCRIPTION, description);
         } else {
@@ -217,6 +232,7 @@ public class Serializer {
         values.put(EventLocationSchema.Entry.LOCATION_MEETING_DATE, meetingTime);
         values.put(EventLocationSchema.Entry.LOCATION_LATITUDE, latitude);
         values.put(EventLocationSchema.Entry.LOCATION_LONGITUDE, longitude);
+
         if (category != null) {
             values.put(EventLocationSchema.Entry.LOCATION_CATEGORY, category);
         } else {
@@ -282,7 +298,7 @@ public class Serializer {
         return jsonUser;
     }
 
-    public static JSONObject makeContactGroupRelationJSON(ContactPokoList.ContactGroupRelation relation)
+    public static JSONObject makeContactGroupRelationJSON(ContactList.ContactGroupRelation relation)
         throws JSONException {
         JSONObject jsonRelation = new JSONObject();
         jsonRelation.put("contactUserId", relation.getContactUserId());
@@ -295,7 +311,7 @@ public class Serializer {
         JSONObject jsonGroup = new JSONObject();
         JSONArray jsonMembers = new JSONArray();
 
-        UserPokoList userList = group.getMembers();
+        UserList userList = group.getMembers();
         ArrayList<User> members = userList.getList();
 
         jsonGroup.put("groupId", group.getGroupId());

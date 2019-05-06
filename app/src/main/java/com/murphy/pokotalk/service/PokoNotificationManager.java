@@ -14,11 +14,14 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.widget.RemoteViews;
 
+import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.activity.main.MainActivity;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
+import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.User;
@@ -73,13 +76,13 @@ public class PokoNotificationManager {
         int newMessageNum = DataCollection.getInstance().getTotalNewMessageNumber();
         PokoLock.getDataLockInstance().releaseReadLock();
 
-        int notificationId, prioirty;
+        int notificationId, priority;
         // Find priority and channel
-        if (channel == PokoTalkApp.CHANNEL_1_ID) {
-            prioirty = NotificationCompat.PRIORITY_HIGH;
+        if (channel.equals(PokoTalkApp.CHANNEL_1_ID)) {
+            priority = NotificationCompat.PRIORITY_HIGH;
             notificationId = NOTIFICATION_ID_CHANNEL1;
         } else {
-            prioirty = NotificationCompat.PRIORITY_HIGH;
+            priority = NotificationCompat.PRIORITY_HIGH;
             notificationId = NOTIFICATION_ID_CHANNEL2;
         }
 
@@ -96,14 +99,14 @@ public class PokoNotificationManager {
                     setContentIntent(pendingIntent).
                     setLargeIcon(bitmap).
                     // Add priority for compatibility with Android 7.1 or lower
-                            setPriority(prioirty).
+                    setPriority(priority).
                     setAutoCancel(true);
         } else {
             // Configure notification
             builder.setDefaults(Notification.DEFAULT_SOUND).
                     setSmallIcon(R.drawable.pokotalk_icon_small).
                     // Add priority for compatibility with Android 7.1 or lower
-                    setPriority(prioirty).
+                    setPriority(priority).
                     setAutoCancel(true);
         }
 
@@ -112,6 +115,69 @@ public class PokoNotificationManager {
         }
         //setCustomContentView(remoteViews).
         //setCustomBigContentView(remoteViews);
+
+        // Give notification to manager and notify.
+        notificationManagerCompat.notify(notificationId, builder.build());
+    }
+
+    public void notifyEventStarted(Context context, String channel, PokoEvent event) {
+        EventList eventList = DataCollection.getInstance().getEventList();
+        EventList.EventGroupRelation relation =
+                eventList.getEventGroupRelationByEventId(event.getEventId());
+
+        // Create an Intent for the activity you want to start
+        Intent intent = new Intent(context, MainActivity.class);
+        intent.putExtra("opcode", MainActivity.START_GROUP_CHAT);
+        intent.putExtra("groupId", relation == null ? null : relation.getGroupId());
+
+        // Create the TaskStackBuilder and add the intent, which inflates the back stack
+        TaskStackBuilder stackBuilder = TaskStackBuilder.create(context);
+        stackBuilder.addNextIntentWithParentStack(intent);
+
+        // Get the PendingIntent containing the entire back stack
+        PendingIntent pendingIntent =
+                stackBuilder.getPendingIntent(0, PendingIntent.FLAG_UPDATE_CURRENT);
+
+        int notificationId, priority;
+        // Find priority and channel
+        if (channel.equals(PokoTalkApp.CHANNEL_1_ID)) {
+            priority = NotificationCompat.PRIORITY_HIGH;
+            notificationId = NOTIFICATION_ID_CHANNEL1;
+        } else {
+            priority = NotificationCompat.PRIORITY_HIGH;
+            notificationId = NOTIFICATION_ID_CHANNEL2;
+        }
+
+        // Create a notification builder.
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, channel);
+
+        // Make title and content string
+        String format = context.getString(R.string.event_started_notification_title_format);
+        String content = context.getString(R.string.event_started_notification_content);
+        String title = String.format(Constants.locale, format, event.getEventName());
+
+        // Get icon
+        Bitmap iconBitmap = BitmapFactory.decodeResource(context.getResources(), R.drawable.user);
+
+        if (channel.equals(PokoTalkApp.CHANNEL_1_ID)) {
+            // Configure notification
+            builder.setStyle(new NotificationCompat.BigTextStyle().bigText(content)).
+                    setSmallIcon(R.drawable.pokotalk_icon_small).
+                    setContentTitle(title).
+                    setContentText(content).
+                    setContentIntent(pendingIntent).
+                    setLargeIcon(iconBitmap).
+                    // Add priority for compatibility with Android 7.1 or lower
+                    setPriority(priority).
+                    setAutoCancel(true);
+        } else {
+            // Configure notification
+            builder.setDefaults(Notification.DEFAULT_SOUND).
+                    setSmallIcon(R.drawable.pokotalk_icon_small).
+                    // Add priority for compatibility with Android 7.1 or lower
+                    setPriority(priority).
+                    setAutoCancel(true);
+        }
 
         // Give notification to manager and notify.
         notificationManagerCompat.notify(notificationId, builder.build());

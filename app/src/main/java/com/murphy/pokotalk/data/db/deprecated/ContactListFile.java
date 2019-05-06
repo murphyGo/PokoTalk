@@ -7,7 +7,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -15,7 +15,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class ContactListFile extends PokoSequencialAccessFile<Contact> {
-    protected ContactPokoList contactList;
+    protected ContactList contactList;
 
     public ContactListFile() {
         super();

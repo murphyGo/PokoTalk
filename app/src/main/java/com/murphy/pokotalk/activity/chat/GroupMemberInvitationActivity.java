@@ -17,8 +17,8 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.view.MemberCandidateItem;
 import com.murphy.pokotalk.view.MemberSelectedItem;
@@ -68,8 +68,8 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
 
         /* Filter contact that is already a member */
         ArrayList<Contact> contactList = DataCollection.getInstance().getContactList().getList();
-        ContactPokoList nonMemberContactList = new ContactPokoList();
-        UserPokoList groupMemberList = group.getMembers();
+        ContactList nonMemberContactList = new ContactList();
+        UserList groupMemberList = group.getMembers();
         for (Contact contact : contactList) {
             if (groupMemberList.getItemByKey(groupMemberList.getKey(contact)) == null) {
                 nonMemberContactList.add(contact);
@@ -83,7 +83,7 @@ public class GroupMemberInvitationActivity extends AppCompatActivity {
             try {
                 candidateListAdapter = new MemberCandidateListAdapter(this);
                 candidateListAdapter.setViewCreationCallback(candidateCreationCallback);
-                ContactPokoList contactListUI = (ContactPokoList) candidateListAdapter.getPokoList();
+                ContactList contactListUI = (ContactList) candidateListAdapter.getPokoList();
                 contactListUI.copyFromPokoList(nonMemberContactList);
                 candidateListView.setAdapter(candidateListAdapter);
             } finally {

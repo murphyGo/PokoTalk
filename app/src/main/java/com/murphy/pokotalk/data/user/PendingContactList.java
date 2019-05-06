@@ -2,8 +2,8 @@ package com.murphy.pokotalk.data.user;
 
 import com.murphy.pokotalk.data.list.ItemPokoList;
 
-public class PendingContactPokoList extends ItemPokoList<Integer, PendingContact> {
-    public PendingContactPokoList() {
+public class PendingContactList extends ItemPokoList<Integer, PendingContact> {
+    public PendingContactList() {
         super();
     }
 

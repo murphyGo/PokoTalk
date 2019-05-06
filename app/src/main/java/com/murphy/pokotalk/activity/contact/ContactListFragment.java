@@ -19,7 +19,7 @@ import com.murphy.pokotalk.adapter.contact.ContactListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
@@ -67,14 +67,14 @@ public class ContactListFragment extends Fragment {
 
             try {
                 // Get contact list
-                ContactPokoList contactList = DataCollection.getInstance().getContactList();
+                ContactList contactList = DataCollection.getInstance().getContactList();
 
                 // Create contact list adapter
                 contactListAdapter = new ContactListAdapter(getContext());
                 contactListAdapter.setViewCreationCallback(contactCreationCallback);
 
                 // Copy contact list
-                ContactPokoList contactListUI = (ContactPokoList) contactListAdapter.getPokoList();
+                ContactList contactListUI = (ContactList) contactListAdapter.getPokoList();
                 contactListUI.copyFromPokoList(contactList);
 
                 // Set adapter
@@ -152,8 +152,8 @@ public class ContactListFragment extends Fragment {
                 @Override
                 public void run() {
                     /* Refresh contact list */
-                    ContactPokoList contactList = DataCollection.getInstance().getContactList();
-                    ContactPokoList adapterList = (ContactPokoList) contactListAdapter.getPokoList();
+                    ContactList contactList = DataCollection.getInstance().getContactList();
+                    ContactList adapterList = (ContactList) contactListAdapter.getPokoList();
                     adapterList.copyFromPokoList(contactList);
                     contactListAdapter.notifyDataSetChanged();
                 }
@@ -175,7 +175,7 @@ public class ContactListFragment extends Fragment {
                 public void run() {
                     /* Refresh contact list */
                     if (contact != null) {
-                        ContactPokoList contactList = (ContactPokoList) contactListAdapter.getPokoList();
+                        ContactList contactList = (ContactList) contactListAdapter.getPokoList();
                         contactList.updateItem(contact);
                         contactListAdapter.notifyDataSetChanged();
                     }
@@ -200,11 +200,11 @@ public class ContactListFragment extends Fragment {
                 public void run() {
                     /* Refresh contact list */
                     if (userId != null) {
-                        ContactPokoList contactList = (ContactPokoList) contactListAdapter.getPokoList();
+                        ContactList contactList = (ContactList) contactListAdapter.getPokoList();
                         contactList.removeItemByKey(userId);
                     }
                     if (pendingContact != null) {
-                        ContactPokoList contactList = (ContactPokoList) contactListAdapter.getPokoList();
+                        ContactList contactList = (ContactList) contactListAdapter.getPokoList();
                         contactList.removeItemByKey(pendingContact.getUserId());
                     }
 

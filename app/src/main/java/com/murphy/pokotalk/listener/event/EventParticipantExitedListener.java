@@ -10,7 +10,7 @@ import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -44,7 +44,7 @@ public class EventParticipantExitedListener extends PokoServer.PokoListener {
                 return;
             }
 
-            UserPokoList participants = event.getParticipants();
+            UserList participants = event.getParticipants();
             User participant = participants.removeItemByKey(userId);
             if (participant == null) {
                 Log.e("POKO ERROR", "Participant cannot exit since there is no such user");

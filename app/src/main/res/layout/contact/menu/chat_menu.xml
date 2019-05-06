@@ -2,13 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/chat_share_location"
+        android:title="@string/chat_slide_menu_share_location"
+        android:icon="@drawable/location_pin"/>
+
+    <item
         android:id="@+id/invite_contacts"
-        android:title="친구 초대"
+        android:title="@string/chat_slide_menu_invite_friends"
         android:icon="@drawable/invite_contact"/>
 
     <item
         android:id="@+id/exit_group"
-        android:title="채팅방 나가기"
+        android:title="@string/chat_slide_menu_exit"
         android:icon="@drawable/leave"/>
 
 </menu>

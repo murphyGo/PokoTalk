@@ -6,13 +6,12 @@ import android.util.Log;
 
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
-import com.murphy.pokotalk.data.event.EventList;
-import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
+import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
-import com.murphy.pokotalk.server.parser.PokoParser;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -34,20 +33,31 @@ public class EventStartedListener extends PokoServer.PokoListener {
         JSONObject jsonObject = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
         EventList eventList = collection.getEventList();
+
         try {
-            PokoEvent paredEvent = PokoParser.parseEvent(jsonObject);
+            if (!jsonObject.has("eventId") || !jsonObject.has("groupId")) {
+                return;
+            }
+
+            // Get event id and group id
+            int eventId = jsonObject.getInt("eventId");
+            int groupId = jsonObject.getInt("groupId");
 
             // Get event
-            PokoEvent event = eventList.getItemByKey(paredEvent.getEventId());
+            PokoEvent event = eventList.getItemByKey(eventId);
             if (event == null) {
                 Log.e("POKO ERROR", "Can't start event since there is no such event.");
                 return;
             }
 
-            // Update event state
+            // Update event state and group
             event.setState(PokoEvent.EVENT_STARTED);
 
+            // Put event group relation
+            collection.getEventList().putEventGroupRelation(eventId, groupId);
+
             putData("event", event);
+            putData("groupId", groupId);
         } catch (JSONException e) {
             Log.e("POKO ERROR", "Bad event started json data");
         }
@@ -67,8 +77,9 @@ public class EventStartedListener extends PokoServer.PokoListener {
         @Override
         protected void doJob(HashMap<String, Object> data) {
             PokoEvent event = (PokoEvent) data.get("event");
+            Integer groupId = (Integer) data.get("groupId");
 
-            if (event == null) {
+            if (event == null || groupId == null) {
                 return;
             }
 
@@ -83,6 +94,10 @@ public class EventStartedListener extends PokoServer.PokoListener {
                 // Update event ack data
                 if (PokoDatabaseHelper.updateEventStarted(db, event, PokoEvent.EVENT_STARTED) == 0) {
                     Log.e("POKO", "Failed to update event started, no such event");
+                }
+
+                if (PokoDatabaseHelper.updateEventGroup(db, event, groupId) == 0) {
+                    Log.e("POKO", "Failed to update event group, no such event");
                 }
 
                 db.setTransactionSuccessful();

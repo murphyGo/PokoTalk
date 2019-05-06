@@ -3,19 +3,22 @@ package com.murphy.pokotalk.server.parser;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.Session;
+import com.murphy.pokotalk.data.db.json.Parser;
+import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.event.PokoEvent;
-import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
+import com.murphy.pokotalk.data.locationShare.LocationShare;
+import com.murphy.pokotalk.data.locationShare.MeetingLocation;
 import com.murphy.pokotalk.data.user.Contact;
-import com.murphy.pokotalk.data.user.ContactPokoList;
+import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
+import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.data.user.Stranger;
-import com.murphy.pokotalk.data.user.StrangerPokoList;
+import com.murphy.pokotalk.data.user.StrangerList;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.naver.maps.geometry.LatLng;
 
 import org.json.JSONArray;
@@ -38,7 +41,7 @@ public class PokoParser {
     public static Contact parseContact(JSONObject jsonObject) throws JSONException {
         DataCollection collection = DataCollection.getInstance();
         Contact result = new Contact();
-        ContactPokoList contactList = collection.getContactList();
+        ContactList contactList = collection.getContactList();
 
         result.setUserId(jsonObject.getInt("userId"));
         result.setEmail(jsonObject.getString("email"));
@@ -118,7 +121,7 @@ public class PokoParser {
         if (jsonObject.has("members") && !jsonObject.isNull("members")) {
             JSONArray jsonMembers = jsonObject.getJSONArray("members");
 
-            UserPokoList members = result.getMembers();
+            UserList members = result.getMembers();
             for (int i = 0; i < jsonMembers.length(); i++) {
                 JSONObject jsonMember = jsonMembers.getJSONObject(i);
 
@@ -149,10 +152,10 @@ public class PokoParser {
         // Get lists
         PokoMessage result = new PokoMessage();
         DataCollection collection = DataCollection.getInstance();
-        ContactPokoList contactList = collection.getContactList();
-        PendingContactPokoList invitedList = collection.getInvitedContactList();
-        PendingContactPokoList invitingList = collection.getInvitingContactList();
-        StrangerPokoList strangerList = collection.getStrangerList();
+        ContactList contactList = collection.getContactList();
+        PendingContactList invitedList = collection.getInvitedContactList();
+        PendingContactList invitingList = collection.getInvitingContactList();
+        StrangerList strangerList = collection.getStrangerList();
 
         result.setMessageId(jsonObject.getInt("messageId"));
         result.setImportanceLevel(
@@ -241,6 +244,7 @@ public class PokoParser {
 
     public static PokoEvent parseEvent(JSONObject jsonObject) throws JSONException {
         DataCollection collection = DataCollection.getInstance();
+        EventList eventList = collection.getEventList();
         PokoEvent event = new PokoEvent();
         event.setEventId(jsonObject.getInt("eventId"));
         event.setEventName(jsonObject.getString("name"));
@@ -264,17 +268,14 @@ public class PokoParser {
         }
         if (jsonObject.has("groupId") && !jsonObject.isNull("groupId")) {
             int groupId = jsonObject.getInt("groupId");
-            Group group = DataCollection.getInstance().getGroupList().getItemByKey(groupId);
-            if (group != null) {
-                event.setGroup(group);
-            }
+            eventList.putEventGroupRelation(event.getEventId(), groupId);
         } else {
-            event.setGroup(null);
+            eventList.removeEventGroupRelationByEventId(event.getEventId());
         }
         if (jsonObject.has("participants") && !jsonObject.isNull("participants")) {
             JSONArray jsonParticipants = jsonObject.getJSONArray("participants");
 
-            UserPokoList participants = event.getParticipants();
+            UserList participants = event.getParticipants();
             for (int i = 0; i < jsonParticipants.length(); i++) {
                 JSONObject jsonParticipant = (JSONObject) jsonParticipants.get(i);
 
@@ -372,7 +373,65 @@ public class PokoParser {
         }
 
         return location;
-     }
+    }
+    public static LocationShare parseLocationShare(JSONObject jsonObject) throws JSONException {
+        DataCollection collection = DataCollection.getInstance();
+
+        if (!jsonObject.has("user") || !jsonObject.has("lat")
+                || !jsonObject.has("lng") || !jsonObject.has("number")
+                || !jsonObject.has("timestamp")) {
+            throw new JSONException("No fields");
+        }
+
+        // Get user json object
+        JSONObject userObject = jsonObject.getJSONObject("user");
+
+        if (!userObject.has("userId")) {
+            throw new JSONException("No user data");
+        }
+
+        // Get user id and find user
+        int userId = userObject.getInt("userId");
+        User user = collection.getUserById(userId);
+
+        if (user == null) {
+            throw new JSONException("Can not find user");
+        }
+
+        // Create location share object
+        LocationShare result = new LocationShare();
+
+        // Parse data
+        float lat = (float) jsonObject.getDouble("lat");
+        float lng = (float) jsonObject.getDouble("lng");
+        int number = jsonObject.getInt("number");
+        Calendar calendar = Parser.epochInMillsToCalendar(jsonObject.getLong("timestamp"));
+
+        // Set data
+        result.setLatLng(new LatLng(lat, lng));
+        result.setNumber(number);
+        result.setCalendar(calendar);
+        result.setUser(user);
+
+        return result;
+    }
+
+    public static MeetingLocation parseLocationShareMeetingLocation(
+            JSONObject jsonObject) throws JSONException {
+        if (!jsonObject.has("locationName") || !jsonObject.has("description")
+                || !jsonObject.has("lat") || !jsonObject.has("lng")) {
+            throw new JSONException("No fields");
+        }
+
+        // Parse data
+        String name = jsonObject.getString("locationName");
+        String description = jsonObject.getString("description");
+        float lat = (float) jsonObject.getDouble("lat");
+        float lng = (float) jsonObject.getDouble("lng");
+
+        return new MeetingLocation(name, description, new LatLng(lat, lng));
+    }
+
 
     public static Calendar parseDateString(String dateStr) throws ParseException {
         SimpleDateFormat lastSeenFormat = new SimpleDateFormat(Constants.serverDateFormat, Locale.KOREA);

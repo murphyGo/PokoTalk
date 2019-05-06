@@ -1,9 +1,8 @@
 package com.murphy.pokotalk.data.event;
 
 import com.murphy.pokotalk.data.Item;
-import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 
 import java.util.Calendar;
 
@@ -12,12 +11,11 @@ public class PokoEvent extends Item {
     protected User creator;
     protected String eventName;
     protected String description;
-    protected UserPokoList participants;
+    protected UserList participants;
     protected Calendar eventDate;
     protected int state;
     protected int ack;
     protected EventLocation location;
-    protected Group group;
 
     // Event state
     public static final int EVENT_UPCOMING = 0;
@@ -29,8 +27,7 @@ public class PokoEvent extends Item {
     public static final int ACK_SEEN_STARTED = 4;
 
     public PokoEvent() {
-        participants = new UserPokoList();
-        group = null;
+        participants = new UserList();
         location = null;
     }
 
@@ -42,7 +39,6 @@ public class PokoEvent extends Item {
         setParticipants(event.getParticipants());
         setEventDate(event.getEventDate());
         setState(event.getState());
-        setGroup(event.getGroup());
         setAck(event.getAck());
 
         EventLocation location = getLocation();
@@ -86,11 +82,11 @@ public class PokoEvent extends Item {
         this.description = description;
     }
 
-    public UserPokoList getParticipants() {
+    public UserList getParticipants() {
         return participants;
     }
 
-    public void setParticipants(UserPokoList participants) {
+    public void setParticipants(UserList participants) {
         this.participants = participants;
     }
 
@@ -108,14 +104,6 @@ public class PokoEvent extends Item {
 
     public void setState(int state) {
         this.state = state;
-    }
-
-    public Group getGroup() {
-        return group;
-    }
-
-    public void setGroup(Group group) {
-        this.group = group;
     }
 
     public EventLocation getLocation() {

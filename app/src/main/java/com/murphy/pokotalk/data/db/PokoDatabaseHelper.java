@@ -15,13 +15,13 @@ import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 
 public class PokoDatabaseHelper {
 
     public static void insertOrUpdateEventData(SQLiteDatabase db, PokoEvent event) {
         // Get participants
-        UserPokoList participantList = event.getParticipants();
+        UserList participantList = event.getParticipants();
 
         // Insert or update event data
         ContentValues eventValues = Serializer.obtainEventValues(event);
@@ -47,7 +47,7 @@ public class PokoDatabaseHelper {
 
     public static void insertOrUpdateGroupData(SQLiteDatabase db, Group group) {
         // Insert or update group data
-        UserPokoList memberList = group.getMembers();
+        UserList memberList = group.getMembers();
         MessageList messageList = group.getMessageList();
 
         // Insert or update group data
@@ -197,6 +197,23 @@ public class PokoDatabaseHelper {
                                       PokoEvent event, int started) {
         ContentValues values = new ContentValues();
         values.put(EventsSchema.Entry.EVENT_STARTED, Integer.toString(started));
+
+        // Create selection args for where clause.
+        String[] selectionArgs = {Integer.toString(event.getEventId())};
+
+        return update(db, PokoDatabaseQuery.updateEventByEventId, values, selectionArgs);
+    }
+
+    // Update started field of event to 'started'
+    public static long updateEventGroup(SQLiteDatabase db, PokoEvent event, int groupId) {
+        ContentValues values = new ContentValues();
+
+
+        if (groupId >= 0) {
+            values.put(EventsSchema.Entry.GROUP_ID, Integer.toString(groupId));
+        } else {
+            values.putNull(EventsSchema.Entry.GROUP_ID);
+        }
 
         // Create selection args for where clause.
         String[] selectionArgs = {Integer.toString(event.getEventId())};

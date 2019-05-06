@@ -48,6 +48,10 @@ import com.murphy.pokotalk.listener.group.ExitGroupListener;
 import com.murphy.pokotalk.listener.group.GetGroupListListener;
 import com.murphy.pokotalk.listener.group.MembersExitListener;
 import com.murphy.pokotalk.listener.group.MembersInvitedListener;
+import com.murphy.pokotalk.listener.locationShare.ExitRealtimeLocationShareListener;
+import com.murphy.pokotalk.listener.locationShare.JoinRealtimeLocationShareListener;
+import com.murphy.pokotalk.listener.locationShare.RealtimeLocationShareBroadcastListener;
+import com.murphy.pokotalk.listener.locationShare.UpdateRealtimeLocationListener;
 import com.murphy.pokotalk.listener.session.AccountRegisteredListener;
 import com.murphy.pokotalk.listener.session.PasswordLoginListener;
 import com.murphy.pokotalk.listener.session.SessionLoginListener;
@@ -536,6 +540,38 @@ public class PokoServer extends ServerSocket {
         }
     }
 
+    public void sendJoinRealtimeLocationShare(int eventId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("eventId", eventId);
+            socket.emit(Constants.joinRealtimeLocationShareName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendExitRealtimeLocationShare(int eventId) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("eventId", eventId);
+            socket.emit(Constants.exitRealtimeLocationShareName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void sendUpdateRealtimeLocation(int eventId, double lat, double lng) {
+        try {
+            JSONObject jsonData = new JSONObject();
+            jsonData.put("eventId", eventId);
+            jsonData.put("lat", lat);
+            jsonData.put("lng", lng);
+            socket.emit(Constants.updateRealtimeLocationName, jsonData);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void sendLogout() {
         socket.emit(Constants.logoutName);
     }
@@ -599,6 +635,10 @@ public class PokoServer extends ServerSocket {
         socket.on(Constants.startDownloadName, new StartDownloadListener(context));
         socket.on(Constants.downloadName, new DownloadListener(context));
         socket.on(Constants.updateProfileImageName, new UpdateProfileImageListener(context));
+        socket.on(Constants.joinRealtimeLocationShareName, new JoinRealtimeLocationShareListener(context));
+        socket.on(Constants.exitRealtimeLocationShareName, new ExitRealtimeLocationShareListener(context));
+        socket.on(Constants.updateRealtimeLocationName, new UpdateRealtimeLocationListener(context));
+        socket.on(Constants.realtimeLocationShareBroadcastName, new RealtimeLocationShareBroadcastListener(context));
     }
 
     /* Getter and Setters */

@@ -392,6 +392,9 @@ public class ContentService extends Service {
             transferManager.uploadJob(uploadId);
 
             Log.v("POKO", "Send every bytes");
+
+            // Stop upload thread
+            stopThread();
         }
 
         @Override

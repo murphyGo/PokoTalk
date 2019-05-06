@@ -29,6 +29,7 @@ import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.db.PokoDatabaseManager;
 import com.murphy.pokotalk.data.db.PokoSessionDatabase;
 import com.murphy.pokotalk.data.db.PokoUserDatabase;
+import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -135,6 +136,7 @@ public class PokoTalkApp extends Application
 
         // Attach callbacks
         server.attachActivityCallback(Constants.newMessageName, newMessageCallback);
+        server.attachActivityCallback(Constants.eventStartedName, eventStartedCallback);
 
         Log.v("POKO", "APP START");
     }
@@ -468,6 +470,26 @@ public class PokoTalkApp extends Application
 
         }
     };
+
+    private ActivityCallback eventStartedCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            // Get group and message data
+            PokoEvent event = (PokoEvent) getData("event");
+
+            if (event != null) {
+                // Notify the user that the event has started
+                notificationManager.notifyEventStarted(
+                        getApplicationContext(), PokoTalkApp.CHANNEL_1_ID, event);
+            }
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+
+        }
+    };
+
 
     /* Getters and Setters */
     public RequestQueue getVolleyRequestQueue() {

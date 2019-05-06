@@ -19,7 +19,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.PendingContact;
-import com.murphy.pokotalk.data.user.PendingContactPokoList;
+import com.murphy.pokotalk.data.user.PendingContactList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -28,9 +28,9 @@ import com.murphy.pokotalk.view.PendingContactItem;
 public class InvitedPendingContactFragment extends Fragment {
     private PokoServer server;
     private ListView listView;
-    private PendingContactPokoList invitedList;
+    private PendingContactList invitedList;
     private PendingContactListAdapter invitedListAdapter;
-    private PendingContactPokoList pendingContactList;
+    private PendingContactList pendingContactList;
     private Listener listener;
 
     public interface Listener {
@@ -68,11 +68,11 @@ public class InvitedPendingContactFragment extends Fragment {
             try {
                 invitedListAdapter = new PendingContactListAdapter(getContext());
                 invitedListAdapter.setViewCreationCallback(invitedContactCreationCallback);
-                PendingContactPokoList invitedListUI = (PendingContactPokoList) invitedListAdapter.getPokoList();
+                PendingContactList invitedListUI = (PendingContactList) invitedListAdapter.getPokoList();
                 invitedListUI.copyFromPokoList(invitedList);
                 listView.setAdapter(invitedListAdapter);
                 invitedListAdapter.setInvited(true);
-                pendingContactList = (PendingContactPokoList) invitedListAdapter.getPokoList();
+                pendingContactList = (PendingContactList) invitedListAdapter.getPokoList();
             } finally {
                 PokoLock.getDataLockInstance().releaseWriteLock();
             }

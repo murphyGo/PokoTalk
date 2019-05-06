@@ -8,6 +8,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.PopupMenu;
 import android.widget.TextView;
@@ -17,9 +18,10 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.event.EventParticipantListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
+import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.event.EventLocation;
 import com.murphy.pokotalk.data.event.PokoEvent;
-import com.murphy.pokotalk.data.user.UserPokoList;
+import com.murphy.pokotalk.data.user.UserList;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
@@ -30,12 +32,15 @@ public class EventDetailActivity extends AppCompatActivity
         implements PopupMenu.OnMenuItemClickListener{
     private PokoServer server;
     private PokoEvent event;
+    private EventList.EventGroupRelation relation;
     private Button backButtonView;
     private ImageView topMenuView;
     private TextView eventNameView;
     private TextView eventDateView;
     private TextView eventLocationView;
     private TextView eventDescriptionView;
+    private LinearLayout eventStartedLayout;
+    private Button eventStartButton;
     private ListView participantListView;
 
     private EventParticipantListAdapter participantListAdapter;
@@ -75,8 +80,24 @@ public class EventDetailActivity extends AppCompatActivity
         eventLocationView = findViewById(R.id.eventDetailLocation);
         eventDescriptionView = findViewById(R.id.eventDetailEventDescription);
         participantListView = findViewById(R.id.eventDetailParticipantList);
+        eventStartedLayout = findViewById(R.id.eventDetailStartedLayout);
+        eventStartButton = findViewById(R.id.eventDetailStartButton);
+
+        // Get event group relation
+        EventList eventList = DataCollection.getInstance().getEventList();
+        relation = eventList.getEventGroupRelationByEventId(eventId);
+
+        if (relation != null) {
+            // Show start layout
+            eventStartedLayout.setVisibility(View.VISIBLE);
+        } else {
+            // Event is not started, hide start layout
+            eventStartedLayout.setVisibility(View.GONE);
+        }
 
         // Set event listeners
+        eventStartButton.setOnClickListener(eventStartButtonClickListener);
+
         backButtonView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -130,22 +151,22 @@ public class EventDetailActivity extends AppCompatActivity
 
         // Create adapter
         participantListAdapter = new EventParticipantListAdapter(this);
-        UserPokoList participantList = (UserPokoList) participantListAdapter.getPokoList();
+        UserList participantList = (UserList) participantListAdapter.getPokoList();
         participantList.copyFromPokoList(event.getParticipants());
         participantListView.setAdapter(participantListAdapter);
 
         // Send event exit request to server
         server = PokoServer.getInstance();
         server.attachActivityCallback(Constants.eventExitName, eventExitCallback);
+        server.attachActivityCallback(Constants.eventStartedName, eventStartedCallback);
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
-        if (server != null) {
-            server.detachActivityCallback(Constants.eventExitName, eventExitCallback);
-        }
+        server.detachActivityCallback(Constants.eventExitName, eventExitCallback);
+        server.detachActivityCallback(Constants.eventStartedName, eventStartedCallback);
     }
 
     // Event exit callback
@@ -165,6 +186,45 @@ public class EventDetailActivity extends AppCompatActivity
         public void onError(Status status, Object... args) {
             Toast.makeText(getApplicationContext(),
                     "오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    // Event start callback
+    private ActivityCallback eventStartedCallback = new ActivityCallback() {
+        @Override
+        public void onSuccess(Status status, Object... args) {
+            PokoEvent startedEvent = (PokoEvent) getData("event");
+
+            // Check if started event is this event
+            if (startedEvent != null && startedEvent == event) {
+                // Check if the event has started
+                if (event.getState() == PokoEvent.EVENT_STARTED
+                        && relation != null) {
+                    // Show event start layout
+                    eventStartedLayout.setVisibility(View.VISIBLE);
+                }
+            }
+        }
+
+        @Override
+        public void onError(Status status, Object... args) {
+            Toast.makeText(getApplicationContext(),
+                    "오류가 발생했습니다.", Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private View.OnClickListener eventStartButtonClickListener = new View.OnClickListener() {
+        @Override
+        public void onClick(View v) {
+            if (event != null && relation != null) {
+                // Set result and put group id
+                Intent intent = new Intent();
+                intent.putExtra("groupId", relation.getGroupId());
+                setResult(RESULT_OK, intent);
+
+                // Finish this activity
+                finish();
+            }
         }
     };
 

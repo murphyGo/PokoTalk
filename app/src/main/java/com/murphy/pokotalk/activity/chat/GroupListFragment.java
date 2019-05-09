@@ -21,8 +21,8 @@ import com.murphy.pokotalk.adapter.group.GroupListAdapter;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
-import com.murphy.pokotalk.data.group.GroupPokoListUI;
+import com.murphy.pokotalk.data.group.GroupList;
+import com.murphy.pokotalk.data.group.GroupListUI;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
@@ -72,14 +72,14 @@ public class GroupListFragment extends Fragment {
 
             try {
                 // Get group list
-                GroupPokoList groupList = DataCollection.getInstance().getGroupList();
+                GroupList groupList = DataCollection.getInstance().getGroupList();
                 
                 // Create group list adapter
                 groupListAdapter = new GroupListAdapter(getContext());
                 groupListAdapter.setViewCreationCallback(groupCreationCallback);
                 
                 // Copy group list
-                GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                 groupListUI.copyFromPokoList(groupList);
                 
                 // Set adapter
@@ -182,7 +182,7 @@ public class GroupListFragment extends Fragment {
                 @Override
                 public void run() {
                     if (group != null) {
-                        GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.updateItem(group);
                         groupListAdapter.notifyDataSetChanged();
                     }
@@ -202,8 +202,8 @@ public class GroupListFragment extends Fragment {
             getActivity().runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    GroupPokoList groupList = DataCollection.getInstance().getGroupList();
-                    GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                    GroupList groupList = DataCollection.getInstance().getGroupList();
+                    GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                     groupListUI.copyFromPokoList(groupList);
                     groupListUI.addEveryContactChatGroupThatHasMessage();
                     groupListUI.sortItemsByKey();
@@ -227,7 +227,7 @@ public class GroupListFragment extends Fragment {
                 @Override
                 public void run() {
                     if (group != null) {
-                        GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.updateItem(group);
                         groupListAdapter.notifyDataSetChanged();
                     }
@@ -250,7 +250,7 @@ public class GroupListFragment extends Fragment {
                 @Override
                 public void run() {
                     if (groupId != null) {
-                        GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.removeItemByKey(groupId);
                         groupListAdapter.notifyDataSetChanged();
                     }
@@ -273,7 +273,7 @@ public class GroupListFragment extends Fragment {
                 @Override
                 public void run() {
                     if (group != null) {
-                        GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.addContactChatGroupIfHasMessage(group);
                         groupListUI.moveItemSortedByKey(group);
                         groupListAdapter.notifyDataSetChanged();
@@ -297,7 +297,7 @@ public class GroupListFragment extends Fragment {
                 @Override
                 public void run() {
                     if (group != null) {
-                        GroupPokoListUI groupListUI = (GroupPokoListUI) groupListAdapter.getPokoList();
+                        GroupListUI groupListUI = (GroupListUI) groupListAdapter.getPokoList();
                         groupListUI.addContactChatGroupIfHasMessage(group);
                         groupListUI.moveItemSortedByKey(group);
                         groupListAdapter.notifyDataSetChanged();

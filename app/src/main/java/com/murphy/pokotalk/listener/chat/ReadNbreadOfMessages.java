@@ -10,7 +10,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
@@ -36,7 +36,7 @@ public class ReadNbreadOfMessages extends PokoServer.PokoListener {
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
-        GroupPokoList groupList = collection.getGroupList();
+        GroupList groupList = collection.getGroupList();
         try {
             JSONArray jsonNbNotReads = data.getJSONArray("messages");
             int groupId = data.getInt("groupId");

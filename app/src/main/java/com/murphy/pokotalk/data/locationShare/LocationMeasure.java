@@ -207,4 +207,15 @@ public class LocationMeasure {
         locationRequest = null;
         locationCallback = null;
     }
+
+    public synchronized static void clear() {
+        // Clear rooms
+        if (rooms != null) {
+            rooms.clear();
+            rooms = null;
+        }
+
+        // Stop measure
+        stopMeasure();
+    }
 }

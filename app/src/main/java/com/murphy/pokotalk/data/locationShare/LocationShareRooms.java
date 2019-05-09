@@ -19,4 +19,11 @@ public class LocationShareRooms extends ItemPokoList<Integer, LocationShareRoom>
     public Integer getKey(LocationShareRoom locationShareRoom) {
         return locationShareRoom.getEventId();
     }
+
+    public static synchronized void clear() {
+        if (instance != null) {
+            // Remove instance
+            instance = null;
+        }
+    }
 }

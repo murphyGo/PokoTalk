@@ -2,7 +2,7 @@ package com.murphy.pokotalk.data;
 
 import com.murphy.pokotalk.data.event.EventList;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.data.user.PendingContact;
@@ -16,7 +16,7 @@ public class DataCollection {
     private PendingContactList invitedContactList;
     private PendingContactList invitingContactList;
     private StrangerList strangerList;
-    private GroupPokoList groupList;
+    private GroupList groupList;
     private EventList eventList;
     private static DataCollection instance;
 
@@ -25,7 +25,7 @@ public class DataCollection {
         invitedContactList = new PendingContactList();
         invitingContactList = new PendingContactList();
         strangerList = new StrangerList();
-        groupList = new GroupPokoList();
+        groupList = new GroupList();
         eventList = new EventList();
     }
 
@@ -166,7 +166,7 @@ public class DataCollection {
 
     public int getTotalNewMessageNumber() {
         int result = 0;
-        GroupPokoList groupList = getGroupList();
+        GroupList groupList = getGroupList();
 
         for (Group group : groupList.getList()) {
             result += group.getNbNewMessages();
@@ -190,7 +190,7 @@ public class DataCollection {
 
     public StrangerList getStrangerList() { return strangerList; }
 
-    public GroupPokoList getGroupList() {
+    public GroupList getGroupList() {
         return groupList;
     }
 

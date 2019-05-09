@@ -43,7 +43,7 @@ import com.murphy.pokotalk.data.PokoLock;
 import com.murphy.pokotalk.data.Session;
 import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -453,7 +453,7 @@ public class MainActivity extends FragmentActivity
     @Override
     public void startGroupChat(int groupId) {
         // Get group list
-        GroupPokoList groupPokoList = collection.getGroupList();
+        GroupList groupPokoList = collection.getGroupList();
 
         // Find group
         Group group = groupPokoList.getItemByKey(groupId);
@@ -537,7 +537,8 @@ public class MainActivity extends FragmentActivity
                 // Get application
                 PokoTalkApp app = PokoTalkApp.getInstance();
 
-                // Logout user
+                // Logout user,
+                // NOTE: main thread may block here
                 app.logoutUser();
 
                 // Restart main activity
@@ -556,7 +557,7 @@ public class MainActivity extends FragmentActivity
     public void startContactChat(Contact contact) {
         Group contactChatGroup = null;
         ContactList contactList = collection.getContactList();
-        GroupPokoList groupList = collection.getGroupList();
+        GroupList groupList = collection.getGroupList();
         ContactList.ContactGroupRelation relation =
                 contactList.getContactGroupRelationByUserId(contact.getUserId());
         if (relation != null) {

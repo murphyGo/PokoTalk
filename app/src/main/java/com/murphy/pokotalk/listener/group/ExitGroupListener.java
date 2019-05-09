@@ -8,7 +8,8 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.event.EventList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 
@@ -32,12 +33,17 @@ public class ExitGroupListener extends PokoServer.PokoListener {
         try {
             JSONObject data = (JSONObject) args[0];
             DataCollection collection = DataCollection.getInstance();
-            GroupPokoList groupList = collection.getGroupList();
+            GroupList groupList = collection.getGroupList();
+            EventList eventList = collection.getEventList();
             int groupId = data.getInt("groupId");
 
+            // Remove group
             if (groupList.removeItemByKey(groupId) == null) {
                 Log.e("POKO ERROR", "No such group to remove with this group id");
             }
+
+            // Remove event group relation
+            eventList.removeEventGroupRelationByGroupId(groupId);
 
             putData("groupId", groupId);
         } catch (JSONException e) {

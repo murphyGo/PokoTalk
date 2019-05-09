@@ -6,7 +6,7 @@ import android.util.Log;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 
@@ -108,7 +108,7 @@ public class FileManager {
     }
 
     public boolean loadLastMessages() {
-        GroupPokoList groupList = DataCollection.getInstance().getGroupList();
+        GroupList groupList = DataCollection.getInstance().getGroupList();
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {
@@ -156,7 +156,7 @@ public class FileManager {
 
 
     public boolean saveMessages() {
-        GroupPokoList groupList = DataCollection.getInstance().getGroupList();
+        GroupList groupList = DataCollection.getInstance().getGroupList();
         ArrayList<Group> groups = groupList.getList();
 
         for (Group group : groups) {

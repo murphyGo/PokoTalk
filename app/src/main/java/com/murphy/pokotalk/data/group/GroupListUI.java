@@ -11,11 +11,11 @@ import java.util.HashMap;
  * It sorts group in latest message order.
  * Also it does not show contact chat with no message.
  */
-public class GroupPokoListUI extends SortingPokoList<Integer, Group> {
+public class GroupListUI extends SortingPokoList<Integer, Group> {
     protected ContactList contactList;
     protected HashMap<Integer, Group> contactChatGroupWithNoMessage;
 
-    public GroupPokoListUI() {
+    public GroupListUI() {
         super();
         contactList = DataCollection.getInstance().getContactList();
         contactChatGroupWithNoMessage = new HashMap<>();

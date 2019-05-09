@@ -282,6 +282,10 @@
     내 위치로
     </string>
 
+    <string name="chat_location_share_member_location">
+    친구 위치로
+    </string>
+
     <string name="chat_location_share_meeting_position">
     만날 장소로
     </string>
@@ -300,6 +304,10 @@
 
     <string name="location_share_reconnect">
     서버와 연결이 불안정하여 재접속합니다.
+    </string>
+
+    <string name="location_share_select_user_title">
+    친구 위치로 이동
     </string>
 
     <string name="chat_slide_menu_invite_friends">

@@ -6,13 +6,13 @@ import android.view.ViewGroup;
 
 import com.murphy.pokotalk.adapter.PokoListAdapter;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoListUI;
+import com.murphy.pokotalk.data.group.GroupListUI;
 import com.murphy.pokotalk.view.GroupItem;
 
 public class GroupListAdapter extends PokoListAdapter<Group> {
     public GroupListAdapter(Context context) {
         super(context);
-        setPokoList(new GroupPokoListUI());
+        setPokoList(new GroupListUI());
     }
 
     @Override

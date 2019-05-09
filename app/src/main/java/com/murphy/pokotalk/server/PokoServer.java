@@ -540,10 +540,13 @@ public class PokoServer extends ServerSocket {
         }
     }
 
-    public void sendJoinRealtimeLocationShare(int eventId) {
+    public void sendJoinRealtimeLocationShare(int eventId, Integer number) {
         try {
             JSONObject jsonData = new JSONObject();
             jsonData.put("eventId", eventId);
+            if (number != null) {
+                jsonData.put("number", number);
+            }
             socket.emit(Constants.joinRealtimeLocationShareName, jsonData);
         } catch (JSONException e) {
             e.printStackTrace();

@@ -23,7 +23,7 @@ public class EventList extends ItemPokoList<Integer, PokoEvent> {
         return event.getEventId();
     }
 
-    public void putEventGroupRelation(int eventId, int groupId) {
+    public synchronized void putEventGroupRelation(int eventId, int groupId) {
         EventGroupRelation relation = new EventGroupRelation();
         relation.groupId = groupId;
         relation.eventId = eventId;
@@ -31,15 +31,15 @@ public class EventList extends ItemPokoList<Integer, PokoEvent> {
         eventGroupMapGroupId.put(groupId, relation);
     }
 
-    public EventGroupRelation getEventGroupRelationByEventId(int eventId) {
+    public synchronized EventGroupRelation getEventGroupRelationByEventId(int eventId) {
         return eventGroupMapEventId.get(eventId);
     }
 
-    public EventGroupRelation getEventGroupRelationByGroupId(int groupId) {
+    public synchronized EventGroupRelation getEventGroupRelationByGroupId(int groupId) {
         return eventGroupMapGroupId.get(groupId);
     }
 
-    public List<EventGroupRelation> getEventGroupRelations() {
+    public synchronized List<EventGroupRelation> getEventGroupRelations() {
         List<EventGroupRelation> arrayList = new ArrayList<>(eventGroupMapEventId.size());
         for (int i = 0; i < eventGroupMapEventId.size(); i++)
             arrayList.add(eventGroupMapEventId.valueAt(i));
@@ -47,7 +47,7 @@ public class EventList extends ItemPokoList<Integer, PokoEvent> {
         return arrayList;
     }
 
-    public EventGroupRelation removeEventGroupRelationByEventId(int eventId) {
+    public synchronized EventGroupRelation removeEventGroupRelationByEventId(int eventId) {
         EventGroupRelation relation = eventGroupMapEventId.get(eventId);
 
         if (relation == null)
@@ -55,10 +55,11 @@ public class EventList extends ItemPokoList<Integer, PokoEvent> {
 
         eventGroupMapEventId.remove(eventId);
         eventGroupMapGroupId.remove(relation.getGroupId());
+
         return relation;
     }
 
-    public EventGroupRelation removeEventGroupRelationByGroupId(int groupId) {
+    public synchronized EventGroupRelation removeEventGroupRelationByGroupId(int groupId) {
         EventGroupRelation relation = eventGroupMapGroupId.get(groupId);
 
         if (relation == null)
@@ -66,6 +67,7 @@ public class EventList extends ItemPokoList<Integer, PokoEvent> {
 
         eventGroupMapGroupId.remove(groupId);
         eventGroupMapEventId.remove(relation.getEventId());
+
         return relation;
     }
 

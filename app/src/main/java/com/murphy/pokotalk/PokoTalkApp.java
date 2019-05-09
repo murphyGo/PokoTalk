@@ -32,6 +32,8 @@ import com.murphy.pokotalk.data.db.PokoUserDatabase;
 import com.murphy.pokotalk.data.event.PokoEvent;
 import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.PokoMessage;
+import com.murphy.pokotalk.data.locationShare.LocationMeasure;
+import com.murphy.pokotalk.data.locationShare.LocationShareRooms;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
@@ -287,37 +289,48 @@ public class PokoTalkApp extends Application
         server.sendLogout();
         server.disconnect();
 
-        // Reset session
-        Session session = Session.getInstance();
-        session.setSessionId(null);
-        session.setUser(null);
-
-        // Remove session data
-        PokoSessionDatabase database = PokoSessionDatabase.getInstance(this);
-        SQLiteDatabase db = database.getWritableDatabase();
-        PokoDatabaseHelper.deleteAllSessionData(db);
-        db.close();
-
         // Disable database job
         PokoDatabaseManager.getInstance().disable();
-
-        /** From here, socket will not receive an event anymore.
-         *  Also, no database job is processing anymore. */
 
         // We simulate like app data is loaded but data not exists
         appDataLoaded = true;
         appDataLoadState = LOAD_NO_DATA;
 
-        try {
-            PokoLock.getDataLockInstance().acquireWriteLock();
+        while (true) {
+            try {
+                PokoLock.getDataLockInstance().acquireWriteLock();
 
-            // Reset application data
-            DataCollection.reset();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        } finally {
-            PokoLock.getDataLockInstance().releaseWriteLock();
+                /** From here, socket will not receive an event anymore,
+                 *  no socket events are processing from here.
+                 *  Also, no database job is processing anymore. */
+
+                // Remove session data
+                PokoSessionDatabase database = PokoSessionDatabase.getInstance(this);
+                SQLiteDatabase db = database.getWritableDatabase();
+                PokoDatabaseHelper.deleteAllSessionData(db);
+                db.close();
+
+                // Reset session
+                Session session = Session.getInstance();
+                session.setSessionId(null);
+                session.setUser(null);
+
+                // Reset application data
+                DataCollection.reset();
+
+                break;
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } finally {
+                PokoLock.getDataLockInstance().releaseWriteLock();
+            }
         }
+
+        // Clear location share rooms
+        LocationShareRooms.clear();
+
+        // Clear location measure
+        LocationMeasure.clear();
 
         // Reconnect to server with new socket
         server.connect(this);

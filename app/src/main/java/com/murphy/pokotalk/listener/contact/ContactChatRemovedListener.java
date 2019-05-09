@@ -9,7 +9,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.ContactList;
 import com.murphy.pokotalk.server.PokoServer;
@@ -35,7 +35,7 @@ public class ContactChatRemovedListener extends PokoServer.PokoListener {
         JSONObject data = (JSONObject) args[0];
         DataCollection collection = DataCollection.getInstance();
         ContactList contactList = collection.getContactList();
-        GroupPokoList groupList = collection.getGroupList();
+        GroupList groupList = collection.getGroupList();
 
         try {
             int userId = data.getInt("userId");

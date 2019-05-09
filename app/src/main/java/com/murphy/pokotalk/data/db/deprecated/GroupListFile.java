@@ -5,7 +5,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.json.Parser;
 import com.murphy.pokotalk.data.db.json.Serializer;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +13,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 
 public class GroupListFile extends PokoSequencialAccessFile<Group> {
-    protected GroupPokoList groupList;
+    protected GroupList groupList;
 
     public GroupListFile() {
         super();

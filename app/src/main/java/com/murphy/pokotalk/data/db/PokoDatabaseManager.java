@@ -17,7 +17,7 @@ import com.murphy.pokotalk.data.db.schema.EventParticipantsSchema;
 import com.murphy.pokotalk.data.db.schema.GroupMembersSchema;
 import com.murphy.pokotalk.data.db.schema.SessionSchema;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.data.user.Contact;
@@ -243,7 +243,7 @@ public class PokoDatabaseManager {
     public static void loadGroupData(Context context) throws Exception {
         User user = Session.getInstance().getUser();
         DataCollection collection = DataCollection.getInstance();
-        GroupPokoList groupList = collection.getGroupList();
+        GroupList groupList = collection.getGroupList();
 
         PokoUserDatabase database = PokoUserDatabase.getInstance(context, user.getUserId());
 

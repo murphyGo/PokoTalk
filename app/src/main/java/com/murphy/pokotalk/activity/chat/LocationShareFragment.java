@@ -1,18 +1,23 @@
 package com.murphy.pokotalk.activity.chat;
 
 import android.Manifest;
+import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -29,11 +34,9 @@ import com.murphy.pokotalk.server.ActivityCallback;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.server.Status;
 import com.naver.maps.geometry.LatLng;
-import com.naver.maps.map.CameraPosition;
 import com.naver.maps.map.CameraUpdate;
-import com.naver.maps.map.MapFragment;
+import com.naver.maps.map.MapView;
 import com.naver.maps.map.NaverMap;
-import com.naver.maps.map.NaverMapOptions;
 import com.naver.maps.map.OnMapReadyCallback;
 import com.naver.maps.map.Symbol;
 import com.naver.maps.map.overlay.InfoWindow;
@@ -44,67 +47,59 @@ import com.naver.maps.map.util.MarkerIcons;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class LocationShareActivity extends AppCompatActivity
+public class LocationShareFragment extends Fragment
         implements OnMapReadyCallback,
-                    LocationShareSelectUserDialog.Listener {
-    private AppCompatActivity activity;
+        LocationShareSelectUserDialog.Listener {
     private PokoServer server;
-    private int eventId;
-    private Button backspaceButton;
+    private int eventId = -1;
+    private Handler handler;
     private Button myPositionButton;
     private Button userPositionButton;
     private Button meetingLocationButton;
+    private MapView mapLayout;
     private LocationShareRoom room;
     private boolean locationFinePermission;
     private boolean locationCoarsePermission;
-    private MapFragment fragment;
     private NaverMap naverMap;
     private InfoWindow meetingLocationWindow;
     private View locationInfoView;
     private HashMap<String, UserPosition> markers;
     private OverlayImage[] icons = {MarkerIcons.BLUE,
-                                    MarkerIcons.GRAY,
-                                    MarkerIcons.GREEN,
-                                    MarkerIcons.LIGHTBLUE,
-                                    MarkerIcons.PINK,
-                                    MarkerIcons.RED,
-                                    MarkerIcons.YELLOW,};
+            MarkerIcons.GRAY,
+            MarkerIcons.GREEN,
+            MarkerIcons.LIGHTBLUE,
+            MarkerIcons.PINK,
+            MarkerIcons.RED,
+            MarkerIcons.YELLOW,};
 
+    public void setEventId(int eventId) {
+        this.eventId = eventId;
+    }
+
+    @Nullable
     @Override
-    protected void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.location_share_activity);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        // Inflate view
+        View view = inflater.inflate(R.layout.location_share_fragment, null, false);
 
-        activity = this;
-
-        // Get intent
-        Intent intent = getIntent();
-
-        // Get event id
-        eventId = intent.getIntExtra("eventId", -1);
+        FragmentActivity activity = getActivity();
+        Context context = getContext();
 
         // Event id should exist
-        if (eventId < 0) {
-            finish();
-            return;
+        if (activity == null || context == null || eventId < 0) {
+            return null;
         }
 
         // Initialize data structures
         markers = new HashMap<>();
 
         // Find views
-        backspaceButton = findViewById(R.id.locationShareBackspaceButton);
-        myPositionButton = findViewById(R.id.locationShareMyPositionButton);
-        userPositionButton = findViewById(R.id.locationShareUserPositionButton);
-        meetingLocationButton = findViewById(R.id.locationShareMeetingPositionButton);
+        myPositionButton = view.findViewById(R.id.locationShareMyPositionButton);
+        userPositionButton = view.findViewById(R.id.locationShareUserPositionButton);
+        meetingLocationButton = view.findViewById(R.id.locationShareMeetingPositionButton);
+        mapLayout = view.findViewById(R.id.locationShareMapLayout);
 
         // Add event listeners
-        backspaceButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finishActivity();
-            }
-        });
         myPositionButton.setOnClickListener(myLocationButtonListener);
         userPositionButton.setOnClickListener(userLocationButtonListener);
         meetingLocationButton.setOnClickListener(meetingLocationButtonListener);
@@ -116,21 +111,21 @@ public class LocationShareActivity extends AppCompatActivity
         room = helper.getRoom(eventId);
 
         // Check for permissions
-        locationFinePermission = ContextCompat.checkSelfPermission(this,
+        locationFinePermission = ContextCompat.checkSelfPermission(context,
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
 
-        locationCoarsePermission = ContextCompat.checkSelfPermission(this,
+        locationCoarsePermission = ContextCompat.checkSelfPermission(context,
                 Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
 
         if (!locationFinePermission || locationCoarsePermission) {
             // Request for permission
             requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
-            Manifest.permission.ACCESS_COARSE_LOCATION}, Constants.LOCATION_PERMISSION);
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, Constants.LOCATION_PERMISSION);
         } else {
             // Start measure location
-            room.startMeasure(getApplicationContext(), this);
+            room.startMeasure(context, activity);
         }
 
         // Get server
@@ -147,21 +142,18 @@ public class LocationShareActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.exitRealtimeLocationShareName, exitListener);
         server.attachActivityCallback(Constants.updateRealtimeLocationName, updateListener);
         server.attachActivityCallback(Constants.realtimeLocationShareBroadcastName, broadcastListener);
-
-        // Create map fragment and add
-        fragment = MapFragment.newInstance(createMapOption());
-        fragment.setArguments(new Bundle());
-        getSupportFragmentManager().
-                beginTransaction().
-                add(R.id.locationShareMapLayout, fragment).
-                commit();
-
+        
         // Get NaverMap instance asynchronously
-        fragment.getMapAsync(this);
+        mapLayout.getMapAsync(this);
+        
+        // Make handler
+        handler = handler;
+        
+        return view;
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         super.onDestroy();
 
         // Detach listeners
@@ -170,33 +162,9 @@ public class LocationShareActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.exitRealtimeLocationShareName, exitListener);
         server.detachActivityCallback(Constants.updateRealtimeLocationName, updateListener);
         server.detachActivityCallback(Constants.realtimeLocationShareBroadcastName, broadcastListener);
-    }
 
-    @Override
-    public void onBackPressed() {
-        finishActivity();
-    }
-
-    private void finishActivity() {
         // Exit location share
         server.sendExitRealtimeLocationShare(eventId);
-
-        // Finish activity
-        finish();
-    }
-
-    protected NaverMapOptions createMapOption() {
-        NaverMapOptions options = new NaverMapOptions()
-                .camera(new CameraPosition
-                        (new LatLng(37.621049, 126.839024), 8))
-                .mapType(NaverMap.MapType.Basic)
-                .enabledLayerGroups(NaverMap.LAYER_GROUP_TRANSIT)
-                .symbolScale(1.5f)
-                .indoorLevelPickerEnabled(true)
-                .tiltGesturesEnabled(false)
-                .rotateGesturesEnabled(false);
-
-        return options;
     }
 
     @UiThread
@@ -230,10 +198,17 @@ public class LocationShareActivity extends AppCompatActivity
         if (meetingLocationWindow != null) {
             return;
         }
+        
+        // Get context
+        Context context = getContext();
+        
+        if (context == null) {
+            return;
+        }
 
         // Make location information window
         meetingLocationWindow = new InfoWindow();
-        meetingLocationWindow.setAdapter(new InfoWindow.DefaultViewAdapter(getApplicationContext()) {
+        meetingLocationWindow.setAdapter(new InfoWindow.DefaultViewAdapter(context) {
             @NonNull
             @Override
             protected View getContentView(@NonNull InfoWindow infoWindow) {
@@ -330,8 +305,16 @@ public class LocationShareActivity extends AppCompatActivity
     }
 
     private View getLocationInfoView(MeetingLocation location) {
+        // Get context
+        Context context = getContext();
+
+        if (context == null) {
+            return null;
+        }
+        
         if (locationInfoView == null) {
-            LayoutInflater inflater = (LayoutInflater) getSystemService(LAYOUT_INFLATER_SERVICE);
+            LayoutInflater inflater = (LayoutInflater) context.getSystemService(
+                    Context.LAYOUT_INFLATER_SERVICE);
             locationInfoView = inflater.inflate(R.layout.event_location_information,
                     null, false);
         }
@@ -378,10 +361,17 @@ public class LocationShareActivity extends AppCompatActivity
     private View.OnClickListener userLocationButtonListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
+            // Get context
+            FragmentActivity activity = getActivity();
+
+            if (activity == null) {
+                return;
+            }
+            
             //Start user selection dialog
             LocationShareSelectUserDialog dialog = new LocationShareSelectUserDialog();
             dialog.setMarkers((HashMap<String, UserPosition>) markers.clone());
-            dialog.show(getSupportFragmentManager(), "user selection");
+            dialog.show(activity.getSupportFragmentManager(), "user selection");
         }
     };
 
@@ -416,12 +406,20 @@ public class LocationShareActivity extends AppCompatActivity
     private ActivityCallback sessionLoginListener = new ActivityCallback() {
         @Override
         public void onSuccess(Status status, Object... args) {
-            runOnUiThread(new Runnable() {
+            // Get context
+            final Context context = getContext();
+            final FragmentActivity activity = getActivity();
+
+            if (activity == null || context == null) {
+                return;
+            }
+            
+            handler.post(new Runnable() {
                 @Override
                 public void run() {
                     // Connection is lost and reconnected,
                     // join location share again
-                    Toast.makeText(getApplicationContext(), R.string.location_share_reconnect,
+                    Toast.makeText(context, R.string.location_share_reconnect,
                             Toast.LENGTH_SHORT).show();
 
                     if (room != null) {
@@ -440,7 +438,7 @@ public class LocationShareActivity extends AppCompatActivity
                         }
 
                         // Measure again
-                        room.startMeasure(getApplicationContext(), activity);
+                        room.startMeasure(context, activity);
                     }
                 }
             });
@@ -457,11 +455,18 @@ public class LocationShareActivity extends AppCompatActivity
         public void onSuccess(Status status, Object... args) {
             Integer id = (Integer) getData("eventId");
 
+            // Get context
+            final Context context = getContext();
+
+            if (context == null) {
+                return;
+            }
+
             if (id != null && id == eventId) {
-                runOnUiThread(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(getApplicationContext(), R.string.location_share_joined,
+                        Toast.makeText(context, R.string.location_share_joined,
                                 Toast.LENGTH_SHORT).show();
 
                         if (naverMap != null) {
@@ -488,11 +493,18 @@ public class LocationShareActivity extends AppCompatActivity
         public void onSuccess(Status status, Object... args) {
             Integer id = (Integer) getData("eventId");
 
+            // Get context
+            final Context context = getContext();
+
+            if (context == null) {
+                return;
+            }
+
             if (id != null && id == eventId) {
-                runOnUiThread(new Runnable() {
+                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(getApplicationContext(), R.string.location_share_exited,
+                        Toast.makeText(context, R.string.location_share_exited,
                                 Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -529,7 +541,7 @@ public class LocationShareActivity extends AppCompatActivity
             if (id != null && id == eventId) {
                 Log.v("POKO", "USER LOCATION DATA UPDATED");
 
-                runOnUiThread(new Runnable() {
+                handler.post(new Runnable() {
                     @Override
                     public void run() {
                         // Show users position
@@ -546,10 +558,18 @@ public class LocationShareActivity extends AppCompatActivity
     };
 
     @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        // Get context
+        final Context context = getContext();
+        final FragmentActivity activity = getActivity();
+
+        if (activity == null || context == null) {
+            return;
+        }
+
         if (requestCode == Constants.RequestCode.LOCATION_SETTING.value) {
-            if (requestCode == RESULT_OK) {
-                room.startMeasure(getApplicationContext(), this);
+            if (requestCode == Activity.RESULT_OK) {
+                room.startMeasure(context, activity);
             }
         } else {
             super.onActivityResult(requestCode, resultCode, data);
@@ -559,6 +579,14 @@ public class LocationShareActivity extends AppCompatActivity
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
+        // Get context
+        final Context context = getContext();
+        final FragmentActivity activity = getActivity();
+
+        if (activity == null || context == null) {
+            return;
+        }
+
         if (requestCode == Constants.LOCATION_PERMISSION) {
             // Check permission granted
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -581,7 +609,7 @@ public class LocationShareActivity extends AppCompatActivity
 
                 if (locationFinePermission && locationCoarsePermission) {
                     // Start measure
-                    room.startMeasure(getApplicationContext(), this);
+                    room.startMeasure(context, activity);
                 }
             }
         } else {

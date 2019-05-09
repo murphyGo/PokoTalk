@@ -9,7 +9,7 @@ import com.murphy.pokotalk.data.DataCollection;
 import com.murphy.pokotalk.data.db.PokoAsyncDatabaseJob;
 import com.murphy.pokotalk.data.db.PokoDatabaseHelper;
 import com.murphy.pokotalk.data.group.Group;
-import com.murphy.pokotalk.data.group.GroupPokoList;
+import com.murphy.pokotalk.data.group.GroupList;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.PokoMessage;
 import com.murphy.pokotalk.server.PokoServer;
@@ -36,7 +36,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
     @Override
     public void callSuccess(Status status, Object... args) {
         JSONObject data = (JSONObject) args[0];
-        GroupPokoList list = DataCollection.getInstance().getGroupList();
+        GroupList list = DataCollection.getInstance().getGroupList();
         try {
             list.startUpdateList();
             JSONArray groups = data.getJSONArray("groups");
@@ -88,7 +88,7 @@ public class GetGroupListListener extends PokoServer.PokoListener {
     static class DatabaseJob extends PokoAsyncDatabaseJob {
         @Override
         protected void doJob(HashMap<String, Object> data) {
-            GroupPokoList groupList = DataCollection.getInstance().getGroupList();
+            GroupList groupList = DataCollection.getInstance().getGroupList();
             Log.v("POKO", "START TO WRITE group list DATA");
 
             /* Get database to write */

@@ -124,23 +124,29 @@ public class LocationShareHelper {
                 // Get location data
                 LocationShareData data = room.getLocationData();
 
-                LocationShare share = new LocationShare();
-                share.setUser(user);
-                share.setNumber(myNumber);
+                // Make new my location
+                LocationShare newMyLocation = new LocationShare();
+
+                // Set data
+                newMyLocation.setUser(user);
+                newMyLocation.setNumber(myNumber);
+
+                // My location should survive on list update
+                newMyLocation.setSurviveOnListUpdate(true);
 
                 // Get my location
-                LocationShare myLocation = data.getItemByKey(data.getKey(share));
+                LocationShare myLocation = room.getMyLocation();
 
-                if (myLocation == null) {
-                    // Put my location
-                    data.updateItem(share);
-
-                    // Set my location
-                    room.setMyLocation(share);
-                } else {
-                    // Set my location
-                    room.setMyLocation(myLocation);
+                if (myLocation != null) {
+                    // Remove old my location
+                    data.removeItemByKey(data.getKey(myLocation));
                 }
+
+                // Put my location
+                data.updateItem(newMyLocation);
+
+                // Set my location
+                room.setMyLocation(newMyLocation);
             } catch (JSONException e) {
                 e.printStackTrace();
             }

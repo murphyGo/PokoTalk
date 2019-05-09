@@ -35,9 +35,13 @@ public class EventExitListener extends PokoServer.PokoListener {
             EventList eventList = collection.getEventList();
             int eventId = data.getInt("eventId");
 
+            // Remove event
             if (eventList.removeItemByKey(eventId) == null) {
                 Log.e("POKO ERROR", "No such event to remove with this event id");
             }
+
+            // Remove event group relation
+            eventList.removeEventGroupRelationByEventId(eventId);
 
             putData("eventId", eventId);
         } catch (JSONException e) {

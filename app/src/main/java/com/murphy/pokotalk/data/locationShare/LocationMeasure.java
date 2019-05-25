@@ -96,6 +96,7 @@ public class LocationMeasure {
             return;
         }
 
+        Log.v("POKO", "POST STARTMEASURE");
         // Make location callback
         locationCallback = new LocationCallback() {
             @Override

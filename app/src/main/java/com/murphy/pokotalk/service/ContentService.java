@@ -8,6 +8,7 @@ import android.os.IBinder;
 import android.util.Log;
 import android.util.SparseArray;
 
+import com.murphy.pokotalk.PokoTalkApp;
 import com.murphy.pokotalk.content.ContentManager;
 import com.murphy.pokotalk.content.ContentStream;
 import com.murphy.pokotalk.content.ContentTransferManager;
@@ -413,6 +414,9 @@ public class ContentService extends Service {
 
         @Override
         protected void onIntent(Intent intent) {
+            // Get application
+            PokoTalkApp app = PokoTalkApp.getInstance();
+
             // Get content name
             final String contentName = intent.getStringExtra("contentName");
 
@@ -505,9 +509,9 @@ public class ContentService extends Service {
                     // Create binary file
                     PokoBinaryFile file = new PokoBinaryFile();
 
-                    // Set content name
-                    file.setFileName(fileName);
+                    // Set content name and file name
                     file.setContentName(contentName);
+                    file.setFileName(fileName);
 
                     // Read data
                     try {

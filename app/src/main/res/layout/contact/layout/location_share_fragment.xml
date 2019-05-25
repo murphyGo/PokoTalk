@@ -13,7 +13,6 @@
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="0"
             android:padding="20dp"
             android:focusableInTouchMode="true">
 
@@ -21,7 +20,8 @@
                 android:id="@+id/locationShareDescription"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/chat_location_share_description"/>
+                android:text="@string/chat_location_share_description"
+                android:textColor="@color/white"/>
 
             <LinearLayout
                 android:id="@+id/locationShareButtonLayout"

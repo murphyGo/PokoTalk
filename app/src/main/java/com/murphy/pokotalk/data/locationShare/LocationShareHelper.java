@@ -27,7 +27,7 @@ public class LocationShareHelper {
         return instance;
     }
 
-    private LocationShareRoom getRoomFromRooms(int eventId) {
+    public synchronized LocationShareRoom getRoom(int eventId) {
         // Get rooms
         LocationShareRooms rooms = LocationShareRooms.getInstance();
 
@@ -37,7 +37,7 @@ public class LocationShareHelper {
         return room;
     }
 
-    public synchronized LocationShareRoom getRoom(int eventId) {
+    public synchronized LocationShareRoom getRoomOrCreateIfNotExists(int eventId) {
         // Get rooms
         LocationShareRooms rooms = LocationShareRooms.getInstance();
 
@@ -70,7 +70,7 @@ public class LocationShareHelper {
 
     public synchronized void updateLocations(int eventId, JSONArray locations, Calendar date) {
         // Get room
-        LocationShareRoom room = getRoomFromRooms(eventId);
+        LocationShareRoom room = getRoom(eventId);
 
         if (room != null) {
             LocationShareData locationShareData = room.getLocationData();
@@ -104,7 +104,7 @@ public class LocationShareHelper {
     public synchronized void setRoomJoined(int eventId, int myNumber,
                                                              JSONObject jsonObject) {
         // Get room
-        LocationShareRoom room = getRoomFromRooms(eventId);
+        LocationShareRoom room = getRoom(eventId);
 
         // Get me
         Contact user = Session.getInstance().getUser();
@@ -153,9 +153,9 @@ public class LocationShareHelper {
         }
     }
 
-    public synchronized void removeRoom(int eventId) {
+    public synchronized void stopRoom(int eventId) {
         // Get room
-        LocationShareRoom room = getRoomFromRooms(eventId);
+        LocationShareRoom room = getRoom(eventId);
 
         if (room != null) {
             // Set exited
@@ -163,12 +163,6 @@ public class LocationShareHelper {
 
             // Stop measuring
             room.stopMeasure();
-
-            // Get rooms
-            LocationShareRooms rooms = LocationShareRooms.getInstance();
-
-            // Remove room from room list
-            rooms.removeItemByKey(rooms.getKey(room));
         }
     }
 }

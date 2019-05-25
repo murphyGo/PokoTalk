@@ -32,8 +32,8 @@ public class ExitRealtimeLocationShareListener extends PokoServer.PokoListener {
 
                 Log.v("POKO ERROR", "Exited location share " + eventId);
 
-                // Remove room
-                LocationShareHelper.getInstance().removeRoom(eventId);
+                // Stop room
+                LocationShareHelper.getInstance().stopRoom(eventId);
 
                 putData("eventId", eventId);
             }

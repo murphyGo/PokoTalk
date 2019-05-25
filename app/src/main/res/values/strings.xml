@@ -234,6 +234,10 @@
     파일 공유 메시지가 아닙니다.
     </string>
 
+    <string name="camera_failed">
+    카메라 실행에 실패했습니다.
+    </string>
+
     <string name="chat_file_load_fail">
     파일을 로드하는 데 실패했습니다.
     </string>
@@ -260,6 +264,10 @@
 
     <string name="chat_file_share_message_size_too_big">
     파일 사이즈가 너무 큽니다.
+    </string>
+
+    <string name="chat_file_share_message_activity_not_found">
+    죄송합니다. 파일을 실행할 수 있는 앱을 찾지 못하였습니다.
     </string>
 
     <string name="event_started_notification_title_format">
@@ -294,6 +302,10 @@
     친구 위치로
     </string>
 
+    <string name="location_share_already_joined">
+    위치 공유가 켜져 있습니다.
+    </string>
+
     <string name="location_share_joined">
     위치 공유를 시작합니다.
     </string>
@@ -321,4 +333,13 @@
     <string name="chat_slide_menu_exit">
     나가기
     </string>
+
+    <string name="chat_message_option_title">
+    메시지 옵션
+    </string>
+
+    <string name="chat_message_copy">
+    클립보드에 복사되었습니다.
+    </string>
 </resources>
+

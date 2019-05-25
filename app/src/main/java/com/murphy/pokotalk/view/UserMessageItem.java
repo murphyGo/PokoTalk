@@ -6,6 +6,7 @@ import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -39,8 +40,12 @@ public abstract class UserMessageItem extends MessageItem {
     protected TextView nbNotReadUserView;
     protected TextView timeView;
     protected RelativeLayout fileShareLayout;
+    protected RelativeLayout afterPictureLayout;
     protected TextView fileNameView;
     protected ContentManager.ImageContentLoadCallback userImageLocateCallback;
+
+    private static int parentWidthPixel = -1;
+    private static float maxContentRatio = 0.75f;
 
     public UserMessageItem(Context context) {
         super(context);
@@ -60,6 +65,24 @@ public abstract class UserMessageItem extends MessageItem {
         timeView = view.findViewById(R.id.time);
         fileShareLayout = view.findViewById(R.id.messageFileShareLayout);
         fileNameView = view.findViewById(R.id.messageFileName);
+        afterPictureLayout = view.findViewById(R.id.messageAfterPicture);
+
+        // Measure content layout size
+        if (parentWidthPixel < 0) {
+            final ViewTreeObserver vto = afterPictureLayout.getViewTreeObserver();
+            final ViewTreeObserver.OnGlobalLayoutListener layoutListener =
+                    new ViewTreeObserver.OnGlobalLayoutListener() {
+                @Override
+                public void onGlobalLayout() {
+                    afterPictureLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
+
+                    // Get measured width
+                    parentWidthPixel = afterPictureLayout.getMeasuredWidth();
+                }
+            };
+
+            vto.addOnGlobalLayoutListener(layoutListener);
+        }
     }
 
     public String getNickname() {
@@ -102,6 +125,18 @@ public abstract class UserMessageItem extends MessageItem {
         }
     }
 
+    protected void adjustContentWidth() {
+        // Adjust content width so that content does not overflow in horizontal
+        int contentPixel = contentWrapperView.getWidth();
+
+        int maxWithInPixel = (int) (parentWidthPixel * maxContentRatio);
+        Log.v("POKO", "PARENT" + parentWidthPixel);
+        Log.v("POKO", "MAX " + maxWithInPixel + " CUR, " + contentPixel);
+        if (contentPixel > maxWithInPixel) {
+            contentWrapperView.getLayoutParams().width = maxWithInPixel;
+        }
+    }
+
     public void setNickname(String nickname) {
         this.nickname = nickname;
         nicknameView.setText(nickname);
@@ -117,7 +152,7 @@ public abstract class UserMessageItem extends MessageItem {
         }
 
         if (img != null) {
-            if (img == "null") {
+            if (img.equals("null")) {
                 Log.e("POKO", "BAD, image of name string null");
             }
 

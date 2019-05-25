@@ -1,8 +1,12 @@
 package com.murphy.pokotalk.activity.chat;
 
+import android.Manifest;
 import android.content.ActivityNotFoundException;
+import android.content.ClipData;
+import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.content.res.Configuration;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -15,6 +19,8 @@ import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.NavigationView;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -28,7 +34,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.webkit.MimeTypeMap;
 import android.widget.Button;
+import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -36,6 +44,7 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.kyleduo.switchbutton.SwitchButton;
 import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.adapter.ViewCreationCallback;
@@ -58,6 +67,9 @@ import com.murphy.pokotalk.data.group.Group;
 import com.murphy.pokotalk.data.group.MessageList;
 import com.murphy.pokotalk.data.group.MessageListUI;
 import com.murphy.pokotalk.data.group.PokoMessage;
+import com.murphy.pokotalk.data.locationShare.LocationShare;
+import com.murphy.pokotalk.data.locationShare.LocationShareHelper;
+import com.murphy.pokotalk.data.locationShare.LocationShareRoom;
 import com.murphy.pokotalk.data.user.Contact;
 import com.murphy.pokotalk.data.user.User;
 import com.murphy.pokotalk.data.user.UserList;
@@ -77,7 +89,8 @@ public class ChatActivity extends AppCompatActivity
         implements PopupMenu.OnMenuItemClickListener,
         GroupExitWarningDialog.Listener,
         NavigationView.OnNavigationItemSelectedListener,
-        ChatAttachOptionFragment.Listener {
+        ChatAttachOptionFragment.Listener,
+        ChatMessageOptionDialog.Listener {
     private int groupId;
     private PokoServer server;
     private DataCollection collection;
@@ -91,14 +104,18 @@ public class ChatActivity extends AppCompatActivity
     private Button attachOptionButton;
     private Button sendMessageButton;
     private Button locationShareButton;
+    private SwitchButton locationShareToggleButton;
     private DrawerLayout drawerLayout;
     private LinearLayout slideMenuLayout;
+    private FrameLayout locationShareLayout;
+    private LocationShareFragment locationShareFragment = null;
     private NavigationView navigationView;
     private ActionBarDrawerToggle slideMenuToggle;
     private MessageListAdapter messageListAdapter;
     private GroupMemberListAdapter memberListAdapter;
     private Group group;
     private PokoEvent event;
+    private LocationShareRoom room = null;
     private ChatAttachOptionFragment attachOptionFragment;
     private int sendId;
     private Session session;
@@ -106,6 +123,8 @@ public class ChatActivity extends AppCompatActivity
     private Integer lastMessageIdAtFirst = null;
     public static final int slideMenuWidthDP = 250;
     public static final int MESSAGE_LOAD_NUM = 20;
+
+    public static final int locationShareWidthDP = 400;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -126,21 +145,27 @@ public class ChatActivity extends AppCompatActivity
         sendMessageButton = findViewById(R.id.sendMessageButton);
         drawerLayout = findViewById(R.id.drawerLayout);
         locationShareButton = findViewById(R.id.chatLocationShareButton);
+        locationShareToggleButton = findViewById(R.id.chatLocationShareToggle);
+        locationShareLayout = findViewById(R.id.chatLocationShareLayout);
+        locationShareLayout.setVisibility(View.GONE);
 
         Intent intent = getIntent();
         if (intent == null) {
             creationError("비정상적인 접근입니다.");
+            return;
         }
 
         groupId = intent.getIntExtra("groupId", -1);
 
         if (groupId < 0) {
             creationError("그룹 ID 오류");
+            return;
         }
 
         group = DataCollection.getInstance().getGroupList().getItemByKey(groupId);
         if (group == null) {
             creationError("해당 그룹이 없습니다.");
+            return;
         }
 
         // Get event list
@@ -188,13 +213,6 @@ public class ChatActivity extends AppCompatActivity
         navigationView = slideMenuLayout.findViewById(R.id.chatSlideMenu);
         navigationView.setNavigationItemSelectedListener(this);
 
-        if (event == null) {
-            // Hide location share menu
-            locationShareButton.setVisibility(View.GONE);
-            MenuItem item = navigationView.getMenu().findItem(R.id.chat_share_location);
-            item.setVisible(false);
-        }
-
         try {
             PokoLock.getDataLockInstance().acquireWriteLock();
             try {
@@ -238,6 +256,7 @@ public class ChatActivity extends AppCompatActivity
         sendMessageButton.setOnClickListener(messageSendButtonListener);
         attachOptionButton.setOnClickListener(attachOptionButtonListener);
         locationShareButton.setOnClickListener(locationShareClickListener);
+        locationShareToggleButton.setOnCheckedChangeListener(locationShareToggleListener);
 
         /* Do not show attach option layout at first */
         attachOptionLayout.setVisibility(View.GONE);
@@ -254,6 +273,23 @@ public class ChatActivity extends AppCompatActivity
         server.attachActivityCallback(Constants.membersInvitedName, membersInvitedListener);
         server.attachActivityCallback(Constants.membersExitName, memberExitListener);
         server.attachActivityCallback(Constants.exitGroupName, exitGroupListener);
+
+        if (event != null) {
+            // Get room for location share
+            room = LocationShareHelper.getInstance()
+                    .getRoomOrCreateIfNotExists(event.getEventId());
+
+            if (room != null) {
+                // Add listener
+                room.addListener(roomStateChangeListener);
+            }
+        } else {
+            // Hide location share menu
+            locationShareButton.setVisibility(View.GONE);
+            locationShareToggleButton.setVisibility(View.GONE);
+            MenuItem item = navigationView.getMenu().findItem(R.id.chat_share_location);
+            item.setVisible(false);
+        }
 
         /* Read new messages after last acked message from server */
         requestUnackedMessages();
@@ -275,6 +311,7 @@ public class ChatActivity extends AppCompatActivity
 
     @Override
     protected void onDestroy() {
+        // Detach server event listeners
         server.detachActivityCallback(Constants.sessionLoginName, sessionLoginListener);
         server.detachActivityCallback(Constants.sendMessageName, addMessageListener);
         server.detachActivityCallback(Constants.readMessageName, readMessageListener);
@@ -287,6 +324,11 @@ public class ChatActivity extends AppCompatActivity
         server.detachActivityCallback(Constants.membersExitName, memberExitListener);
         server.detachActivityCallback(Constants.exitGroupName, exitGroupListener);
 
+        if (room != null) {
+            // Remove listener
+            room.removeListener(roomStateChangeListener);
+        }
+
         super.onDestroy();
     }
 
@@ -294,8 +336,10 @@ public class ChatActivity extends AppCompatActivity
     @Override
     public void onBackPressed() {
         /* if drawer is opened, close drawer */
-        if (drawerLayout.isDrawerOpen(Gravity.RIGHT)) {
-            drawerLayout.closeDrawer(Gravity.RIGHT);
+        if (drawerLayout.isDrawerOpen(Gravity.END)) {
+            drawerLayout.closeDrawer(Gravity.END);
+        } else if (drawerLayout.isDrawerOpen(Gravity.START)) {
+            drawerLayout.closeDrawer(Gravity.START);
         } else {
             closeChatting();
         }
@@ -456,6 +500,27 @@ public class ChatActivity extends AppCompatActivity
         @Override
         public void onClick(View v) {
             startLocationShareActivity();
+        }
+    };
+
+    private SwitchButton.OnCheckedChangeListener locationShareToggleListener =
+            new SwitchButton.OnCheckedChangeListener() {
+        @Override
+        public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+            if (event != null && room != null) {
+                if (isChecked) {
+                    // Get my location
+                    LocationShare myLocation = room.getMyLocation();
+
+                    if (myLocation != null) {
+                        server.sendJoinRealtimeLocationShare(event.getEventId(), myLocation.getNumber());
+                    } else {
+                        server.sendJoinRealtimeLocationShare(event.getEventId(), null);
+                    }
+                } else {
+                    server.sendExitRealtimeLocationShare(event.getEventId());
+                }
+            }
         }
     };
 
@@ -718,6 +783,59 @@ public class ChatActivity extends AppCompatActivity
         }
     };
 
+    private LocationShareRoom.RoomStateChangeListener roomStateChangeListener =
+            new LocationShareRoom.RoomStateChangeListener() {
+                @Override
+                public void initialState(boolean joined) {
+                    if (joined) {
+                        Toast.makeText(getApplicationContext(), R.string.location_share_already_joined,
+                                Toast.LENGTH_SHORT).show();
+
+                        if (checkPermissionAndRequestIfNot()) {
+                            // Make location share fragment if not exist
+                            makeLocationShareFragment(false);
+
+                            if (room != null) {
+                                room.startMeasure(getApplicationContext(), ChatActivity.this);
+                            }
+                        }
+                    }
+
+                    locationShareToggleButton.setChecked(joined);
+                }
+
+                @Override
+                public void onStateChange(boolean joined) {
+                    if (joined) {
+                        Toast.makeText(getApplicationContext(), R.string.location_share_joined,
+                                Toast.LENGTH_SHORT).show();
+
+                        if (checkPermissionAndRequestIfNot()) {
+                            // Make location share fragment if not exist
+                            makeLocationShareFragment(true);
+
+                            if (room != null) {
+                                room.startMeasure(getApplicationContext(), ChatActivity.this);
+                            }
+                        }
+                    } else {
+                        Toast.makeText(getApplicationContext(), R.string.location_share_exited,
+                                Toast.LENGTH_SHORT).show();
+
+                        // Close drawer if opened
+                        if (drawerLayout.isDrawerOpen(Gravity.START)) {
+                            drawerLayout.closeDrawer(Gravity.START);
+                        }
+
+                        if (room != null) {
+                            room.stopMeasure();
+                        }
+                    }
+
+                    locationShareToggleButton.setChecked(joined);
+                }
+            };
+
     /* View creation callbacks */
     private ViewCreationCallback<PokoMessage> messageViewCreationCallback =
             new ViewCreationCallback<PokoMessage>() {
@@ -746,21 +864,45 @@ public class ChatActivity extends AppCompatActivity
                         }
                     }
 
-                    // Add long click listener
-                    view.setOnLongClickListener(messageLongClickListener);
+                    switch (messageType) {
+                        case PokoMessage.TYPE_IMAGE:
+                        case PokoMessage.TYPE_TEXT_MESSAGE:
+                        case PokoMessage.TYPE_FILE_SHARE:
+                        case PokoMessage.TYPE_MEMBER_EXIT:
+                        case PokoMessage.TYPE_MEMBER_JOIN: {
+                            // Add long click listener
+                            view.setOnLongClickListener(
+                                    new MessageLongClickListener(ChatActivity.this, item));
+
+                            break;
+                        }
+                    }
                 }
             };
 
     // Message long click listener
-    private View.OnLongClickListener messageLongClickListener = new View.OnLongClickListener() {
+    static class MessageLongClickListener implements View.OnLongClickListener {
+        private FragmentActivity activity;
+        private PokoMessage message;
+
+        public MessageLongClickListener(FragmentActivity activity, PokoMessage message) {
+            this.activity = activity;
+            this.message = message;
+        }
+
         @Override
         public boolean onLongClick(View v) {
-            return false;
+            // Show menu
+            ChatMessageOptionDialog dialog = new ChatMessageOptionDialog();
+            dialog.setMessage(message);
+            dialog.show(activity.getSupportFragmentManager(), "Message menu");
+
+            return true;
         }
-    };
+    }
 
     // Image message click listener
-    static class  ImageMessageClickListener implements View.OnClickListener {
+    static class ImageMessageClickListener implements View.OnClickListener {
         private Context context;
         private PokoMessage message;
 
@@ -784,10 +926,11 @@ public class ChatActivity extends AppCompatActivity
         }
     }
 
-    // Image message click listener
+    // File share message click listener
     static class FileShareMessageClickListener implements View.OnClickListener {
         private Context context;
         private PokoMessage message;
+        private ChatActivity activity;
 
         public FileShareMessageClickListener(Context context, PokoMessage message) {
             this.context = context;
@@ -817,6 +960,13 @@ public class ChatActivity extends AppCompatActivity
                 final String contentName = jsonObject.getString("contentName");
                 final String fileName = jsonObject.getString("fileName");
 
+                String fileUriPath;
+                if (jsonObject.has("fileUri")) {
+                    fileUriPath = jsonObject.getString("fileUri");
+                } else {
+                    fileUriPath = null;
+                }
+
                 if (contentName == null || fileName == null) {
                     return;
                 }
@@ -827,7 +977,24 @@ public class ChatActivity extends AppCompatActivity
                 // Get MIME file type
                 final String MIMEType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension);
 
+                // Check if file uri exists
+                if (fileUriPath != null) {
+                    // This case is when the file is uploaded by user,
+                    // We know its location so we do not locate it
+
+                    // Parse content uri
+                    Uri contentUri = Uri.parse(fileUriPath);
+
+                    // View file
+                    viewFileShareContent(contentUri, MIMEType);
+
+                    return;
+                }
+
+                // This case is when the file is uploaded by other user,
+                // including other sessions of same user
                 Toast.makeText(context, content, Toast.LENGTH_SHORT).show();
+
                 // Locate file
                 ContentManager.getInstance().locateBinary(context, contentName, fileName,
                         new ContentManager.BinaryContentLoadCallback() {
@@ -858,22 +1025,32 @@ public class ChatActivity extends AppCompatActivity
                                         context.getApplicationContext()
                                                 .getPackageName() + ".provider", new File(uri.getPath()));
 
-                                // Make intent to start file
-                                Intent intent = new Intent(Intent.ACTION_VIEW);
-                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                                intent.setDataAndType(binaryUri, MIMEType);
-                                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-
-                                try {
-                                    // Execute binary file
-                                    context.startActivity(intent);
-                                } catch (ActivityNotFoundException e) {
-                                    e.printStackTrace();
-                                }
+                                // View file
+                                viewFileShareContent(binaryUri, MIMEType);
                             }
                         });
             } catch (JSONException e) {
                 e.printStackTrace();
+            }
+        }
+
+        private void viewFileShareContent(Uri uri, String mimeType) {
+            // Make intent to start file
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.setDataAndType(uri, mimeType);
+            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            try {
+                // Execute binary file
+                context.startActivity(intent);
+            } catch (ActivityNotFoundException e) {
+                e.printStackTrace();
+
+                // Show message
+                Toast.makeText(context,
+                        R.string.chat_file_share_message_activity_not_found,
+                        Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -943,7 +1120,9 @@ public class ChatActivity extends AppCompatActivity
     }
 
     @Override
-    public void onBinaryAttachedToMessage(final String fileName, final ContentStream contentStream) {
+    public void onBinaryAttachedToMessage(final Uri fileUri,
+                                          final String fileName,
+                                          final ContentStream contentStream) {
         // Get file size
         int fileSize = contentStream.getSize();
 
@@ -969,19 +1148,9 @@ public class ChatActivity extends AppCompatActivity
                     @Override
                     public void onSuccess(String contentName) {
                         try {
-                            // Put image binary data to store as file
-                            ContentService.putFileUri(contentName, contentStream.getUri());
-
-                            // Start service to save content as a file
-                            Intent intent = new Intent(getApplicationContext(), ContentService.class);
-                            intent.putExtra("command", ContentService.CMD_STORE_CONTENT);
-                            intent.putExtra("fileName", fileName);
-                            intent.putExtra("contentName", contentName);
-                            intent.putExtra("contentType", ContentTransferManager.TYPE_BINARY);
-                            startService(intent);
-
                             // Make json content
                             JSONObject jsonObject = new JSONObject();
+                            jsonObject.put("fileUri", fileUri.toString());
                             jsonObject.put("fileName", fileName);
                             jsonObject.put("contentName", contentName);
 
@@ -1008,12 +1177,81 @@ public class ChatActivity extends AppCompatActivity
 
         Log.v("POKO", "SEND BINARY MESSAGE upload send id " + fileId + ", send id " + sendId);
 
-        // Send image message
+        // Send binary message
         server.sendNewFileShareMessage(group.getGroupId(), sendId, fileId,
                 PokoMessage.IMPORTANCE_NORMAL, fileName);
 
         // Add sent but not completed message list
         group.getMessageList().addSentMessage(message);
+    }
+
+    // Message long click option selected
+    @Override
+    public void onMessageOptionSelected(PokoMessage message, int option) {
+        switch (option) {
+            case ChatMessageOptionDialog.OPTION_COPY: {
+                String copyContent = null;
+
+                switch (message.getMessageType()) {
+                    case PokoMessage.TYPE_TEXT_MESSAGE: {
+                        // Copy text message
+                        copyContent = message.getContent();
+                        break;
+                    }
+
+                    case PokoMessage.TYPE_MEMBER_JOIN:
+                    case PokoMessage.TYPE_MEMBER_EXIT: {
+                        // Copy special content
+                        copyContent = message.getSpecialContent();
+                        break;
+                    }
+
+                    case PokoMessage.TYPE_FILE_SHARE: {
+                        try {
+                            JSONObject jsonObject = new JSONObject(message.getContent());
+
+                            // Copy file name
+                            copyContent = jsonObject.getString("fileName");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    }
+
+                    case PokoMessage.TYPE_IMAGE: {
+                        try {
+                            JSONObject jsonObject = new JSONObject(message.getContent());
+
+                            // Copy contet name
+                            // TODO: Copy image binary content
+                            copyContent = jsonObject.getString("contentName");
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                        break;
+                    }
+
+                    default: {
+                        // Message type is unknown
+                        copyContent = "Unknown";
+
+                        break;
+                    }
+                }
+
+                // Copy copy content
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("PokoTalk", copyContent);
+                clipboard.setPrimaryClip(clip);
+
+                // Show toast message
+                Toast.makeText(getApplicationContext(),
+                        R.string.chat_message_copy, Toast.LENGTH_SHORT).show();
+            }
+            default: {
+
+            }
+        }
     }
 
     @Override
@@ -1040,6 +1278,9 @@ public class ChatActivity extends AppCompatActivity
             }
             case R.id.chat_share_location: {
                 startLocationShareActivity();
+                if (drawerLayout.isDrawerOpen(Gravity.END)) {
+                    drawerLayout.closeDrawer(Gravity.END);
+                }
                 break;
             }
             default:
@@ -1049,6 +1290,76 @@ public class ChatActivity extends AppCompatActivity
         }
 
         return true;
+    }
+
+    private boolean checkPermissionAndRequestIfNot() {
+        // Check for permissions
+        boolean locationFinePermission = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+
+        boolean locationCoarsePermission = ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+
+        if (!locationFinePermission || !locationCoarsePermission) {
+            // Request for permission
+            requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION}, Constants.LOCATION_PERMISSION);
+
+            return false;
+        } else {
+            return true;
+        }
+    }
+
+    // Show location share fragment
+    private void makeLocationShareFragment(final boolean show) {
+        if (event == null || locationShareLayout == null) {
+            return;
+        }
+
+        if (locationShareFragment != null) {
+            // Show location share
+            if (!drawerLayout.isDrawerOpen(Gravity.START)) {
+                drawerLayout.openDrawer(Gravity.START);
+            }
+            return;
+        }
+
+        // Create container layout
+        DrawerLayout.LayoutParams params = new DrawerLayout.LayoutParams
+                (DrawerLayout.LayoutParams.MATCH_PARENT, DrawerLayout.LayoutParams.MATCH_PARENT);
+        params.gravity = Gravity.START;
+        locationShareLayout.setLayoutParams(params);
+
+        // Disable closing drawer by dragging
+        drawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED,
+                locationShareLayout);
+
+        // Create fragment
+        locationShareFragment = new LocationShareFragment();
+        locationShareFragment.setEventId(event.getEventId());
+
+        // Add fragment to container
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.chatLocationShareLayout, locationShareFragment)
+                .commit();
+
+        // Make layout visible
+        locationShareLayout.setVisibility(View.VISIBLE);
+
+        // Set layout visible asynchronously,
+        // we sleep 0.25 second to give time to drawer is settled down
+        new Handler(Looper.getMainLooper()).postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                // Show location share
+                if (show && !drawerLayout.isDrawerOpen(Gravity.START)) {
+                    drawerLayout.openDrawer(Gravity.START);
+                }
+            }
+        }, 250);
     }
 
     /* Group exit dialog listener */
@@ -1133,12 +1444,16 @@ public class ChatActivity extends AppCompatActivity
 
     private void startLocationShareActivity() {
         if (event != null) {
-            // Make intent
-            Intent intent = new Intent(getApplicationContext(), LocationShareActivity.class);
-            intent.putExtra("eventId", event.getEventId());
+            if (locationShareFragment != null) {
+                drawerLayout.openDrawer(Gravity.START);
+            } else if (checkPermissionAndRequestIfNot()) {
+                // Make location share fragment if not exist
+                makeLocationShareFragment(true);
 
-            // Start location share activity
-            startActivity(intent);
+                if (room != null) {
+                    room.startMeasure(getApplicationContext(), ChatActivity.this);
+                }
+            }
         }
     }
 
@@ -1271,6 +1586,53 @@ public class ChatActivity extends AppCompatActivity
                 // Not first read anymore
                 ChatActivity.this.firstRead = false;
             }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        boolean locationFinePermission = false;
+        boolean locationCoarsePermission = false;
+
+        if (requestCode == Constants.LOCATION_PERMISSION) {
+            // Check permission granted
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                for (int i = 0; i < permissions.length; i++) {
+                    if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                        continue;
+                    }
+
+                    switch (permissions[i]) {
+                        case Manifest.permission.ACCESS_FINE_LOCATION: {
+                            locationFinePermission = true;
+                            break;
+                        }
+                        case Manifest.permission.ACCESS_COARSE_LOCATION: {
+                            locationCoarsePermission = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (locationFinePermission) {
+                    Log.v("POKO", "FINE PERMISSSION");
+                }
+
+                if (locationCoarsePermission) {
+                    Log.v("POKO", "COARSE PERMISSSION");
+                }
+                if (locationFinePermission && locationCoarsePermission) {
+                    Log.v("POKO", "PERMISSION GRANTED, sTART MEASURE");
+                    // Make location share fragment and show
+                    makeLocationShareFragment(true);
+
+                    // Start measure
+                    room.startMeasure(getApplicationContext(), this);
+                }
+            }
+        } else {
+            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
 }

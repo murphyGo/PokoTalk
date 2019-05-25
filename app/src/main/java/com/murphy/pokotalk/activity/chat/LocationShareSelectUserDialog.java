@@ -24,23 +24,16 @@ public class LocationShareSelectUserDialog extends AppCompatDialogFragment {
     private ListView userListView;
     private LocationShareUserSelectAdapter adapter;
 
-    @Override
-    public void onAttach(Context context) {
-        super.onAttach(context);
-        try {
-            listener = (Listener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString() +
-                    "must implement GroupOptionDialogListener");
-        }
-    }
-
     public interface Listener {
         void onSelectUserPosition(String key);
     }
 
     public void setMarkers(HashMap<String, UserPosition> markers) {
         this.markers = markers;
+    }
+
+    public void setListener(Listener listener) {
+        this.listener = listener;
     }
 
     @Override
@@ -87,7 +80,9 @@ public class LocationShareSelectUserDialog extends AppCompatDialogFragment {
                         @Override
                         public void onClick(View v) {
                             // Start callback
-                            listener.onSelectUserPosition(item.getKey());
+                            if (listener != null) {
+                                listener.onSelectUserPosition(item.getKey());
+                            }
 
                             // Finish dialog
                             dismiss();

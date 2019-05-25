@@ -232,7 +232,7 @@ public class EventDetailActivity extends AppCompatActivity
     private String getDateString() {
         Calendar date = event.getEventDate();
         int year = date.get(Calendar.YEAR);
-        int month = date.get(Calendar.MONTH + 1);
+        int month = date.get(Calendar.MONTH) + 1;
         int day = date.get(Calendar.DAY_OF_MONTH);
         int amPm = date.get(Calendar.AM_PM);
         int hour = date.get(Calendar.HOUR);

@@ -9,6 +9,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public abstract class ContentFile {
     protected String fullFilePath;
@@ -16,8 +18,8 @@ public abstract class ContentFile {
     protected String fileName;
 
     protected File file;
-    protected FileInputStream fileInputStream;
-    protected FileOutputStream fileOutputStream;
+    protected InputStream fileInputStream;
+    protected OutputStream fileOutputStream;
 
     public ContentFile() {
         fullFilePath = null;

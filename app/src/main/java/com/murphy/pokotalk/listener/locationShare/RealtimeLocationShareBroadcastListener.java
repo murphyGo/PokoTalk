@@ -38,8 +38,7 @@ public class RealtimeLocationShareBroadcastListener extends PokoServer.PokoListe
                 Calendar calendar = Parser.epochInMillsToCalendar(
                         jsonObject.getLong("timestamp"));
 
-                Log.v("POKO ERROR", "Get location broadcast " + eventId);
-
+                // Update locations
                 LocationShareHelper.getInstance().updateLocations(eventId, locations, calendar);
 
                 putData("eventId", eventId);

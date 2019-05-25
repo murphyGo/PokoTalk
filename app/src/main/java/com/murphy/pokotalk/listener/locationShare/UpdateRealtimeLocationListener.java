@@ -29,8 +29,6 @@ public class UpdateRealtimeLocationListener extends PokoServer.PokoListener {
             if (jsonObject.has("eventId")) {
                 int eventId = jsonObject.getInt("eventId");
 
-                Log.v("POKO ERROR", "Updated location " + eventId);
-
                 putData("eventId", eventId);
             }
         } catch (JSONException e) {

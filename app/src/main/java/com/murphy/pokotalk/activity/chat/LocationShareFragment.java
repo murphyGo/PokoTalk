@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.graphics.PointF;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.UiThread;
@@ -108,7 +109,7 @@ public class LocationShareFragment extends Fragment
         LocationShareHelper helper = LocationShareHelper.getInstance();
 
         // Get location share room
-        room = helper.getRoom(eventId);
+        room = helper.getRoomOrCreateIfNotExists(eventId);
 
         // Check for permissions
         locationFinePermission = ContextCompat.checkSelfPermission(context,
@@ -119,7 +120,7 @@ public class LocationShareFragment extends Fragment
                 Manifest.permission.ACCESS_COARSE_LOCATION)
                 == PackageManager.PERMISSION_GRANTED;
 
-        if (!locationFinePermission || locationCoarsePermission) {
+        if (!locationFinePermission || !locationCoarsePermission) {
             // Request for permission
             requestPermissions(new String[] {Manifest.permission.ACCESS_FINE_LOCATION,
                     Manifest.permission.ACCESS_COARSE_LOCATION}, Constants.LOCATION_PERMISSION);
@@ -147,7 +148,7 @@ public class LocationShareFragment extends Fragment
         mapLayout.getMapAsync(this);
         
         // Make handler
-        handler = handler;
+        handler = new Handler(Looper.getMainLooper());
         
         return view;
     }
@@ -162,9 +163,6 @@ public class LocationShareFragment extends Fragment
         server.detachActivityCallback(Constants.exitRealtimeLocationShareName, exitListener);
         server.detachActivityCallback(Constants.updateRealtimeLocationName, updateListener);
         server.detachActivityCallback(Constants.realtimeLocationShareBroadcastName, broadcastListener);
-
-        // Exit location share
-        server.sendExitRealtimeLocationShare(eventId);
     }
 
     @UiThread
@@ -371,6 +369,7 @@ public class LocationShareFragment extends Fragment
             //Start user selection dialog
             LocationShareSelectUserDialog dialog = new LocationShareSelectUserDialog();
             dialog.setMarkers((HashMap<String, UserPosition>) markers.clone());
+            dialog.setListener(LocationShareFragment.this);
             dialog.show(activity.getSupportFragmentManager(), "user selection");
         }
     };
@@ -466,9 +465,6 @@ public class LocationShareFragment extends Fragment
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        Toast.makeText(context, R.string.location_share_joined,
-                                Toast.LENGTH_SHORT).show();
-
                         if (naverMap != null) {
                             // Show meeting position
                             showMeetingPositionOnMap();
@@ -501,13 +497,7 @@ public class LocationShareFragment extends Fragment
             }
 
             if (id != null && id == eventId) {
-                 handler.post(new Runnable() {
-                    @Override
-                    public void run() {
-                        Toast.makeText(context, R.string.location_share_exited,
-                                Toast.LENGTH_SHORT).show();
-                    }
-                });
+
             }
         }
 
@@ -615,5 +605,53 @@ public class LocationShareFragment extends Fragment
         } else {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+        mapLayout.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        mapLayout.onStart();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mapLayout.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        mapLayout.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        mapLayout.onStop();
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mapLayout.onDestroy();
+    }
+
+    @Override
+    public void onSaveInstanceState(@NonNull Bundle outState) {
+        super.onSaveInstanceState(outState);
+        mapLayout.onSaveInstanceState(outState);
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapLayout.onLowMemory();
     }
 }

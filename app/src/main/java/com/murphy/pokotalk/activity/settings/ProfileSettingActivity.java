@@ -8,7 +8,6 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
@@ -22,12 +21,15 @@ import com.murphy.pokotalk.Constants;
 import com.murphy.pokotalk.R;
 import com.murphy.pokotalk.content.ContentManager;
 import com.murphy.pokotalk.content.ContentTransferManager;
+import com.murphy.pokotalk.content.PictureTaker;
 import com.murphy.pokotalk.content.image.ImageEncoder;
 import com.murphy.pokotalk.content.image.ImageProcessor;
 import com.murphy.pokotalk.server.PokoServer;
 import com.murphy.pokotalk.service.ContentService;
 
+import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 
 public class ProfileSettingActivity extends AppCompatActivity
@@ -36,6 +38,7 @@ public class ProfileSettingActivity extends AppCompatActivity
     private Button galleryButton;
     private Button cameraButton;
     private AppCompatActivity activity;
+    private PictureTaker pictureTaker;
     private String[] cameraPermissionString = {Manifest.permission.CAMERA};
 
     @Override
@@ -62,6 +65,27 @@ public class ProfileSettingActivity extends AppCompatActivity
         cameraButton.setOnClickListener(cameraButtonClickListener);
     }
 
+    private void startTakingPicture() {
+        // Take picture
+        try {
+            pictureTaker = new PictureTaker(getApplicationContext());
+            pictureTaker.setActivity(this);
+
+            int result = pictureTaker.startCameraIntent(
+                    Constants.RequestCode.PROFILE_CAMERA.value);
+
+            if (result < 0) {
+                // No camera application available, show message
+                Toast.makeText(getApplicationContext(), R.string.no_camera_app_message,
+                        Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            // Failed
+            Toast.makeText(getApplicationContext(), R.string.camera_failed,
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private View.OnClickListener galleryButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -83,14 +107,7 @@ public class ProfileSettingActivity extends AppCompatActivity
 
             if (cameraPermission) {
                 // Start camera intent to capture profile image
-                Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                if (intent.resolveActivity(getPackageManager()) != null) {
-                    startActivityForResult(intent, Constants.RequestCode.PROFILE_CAMERA.value);
-                } else {
-                    // No camera application available, show message
-                    Toast.makeText(getApplicationContext(), R.string.no_camera_app_message,
-                            Toast.LENGTH_SHORT).show();
-                }
+                startTakingPicture();
             } else {
                 // Request for camera permission
                 if (ActivityCompat.shouldShowRequestPermissionRationale(
@@ -134,28 +151,38 @@ public class ProfileSettingActivity extends AppCompatActivity
 
                     // Start image edit activity
                     Intent intent = new Intent(getApplicationContext(), ImageEditionActivity.class);
-                    ImageEditionActivity.image =  adjustedImage;
+                    ImageEditionActivity.image = adjustedImage;
                     startActivityForResult(intent, Constants.RequestCode.IMAGE_EDITION.value);
                 }
             } catch (FileNotFoundException e) {
                 e.printStackTrace();
             }
         } else if (requestCode == Constants.RequestCode.PROFILE_CAMERA.value) {
-            if (data == null) {
+            if (pictureTaker == null) {
                 return;
             }
 
-            // Get extras
-            Bundle extras = data.getExtras();
-            if (extras != null) {
-                // Get bitmap image
-                Bitmap image = (Bitmap) extras.get("data");
+            // Add image to gallery
+            pictureTaker.scanPictureFile();
 
-                // Start image edit activity
-                Intent intent = new Intent(getApplicationContext(), ImageEditionActivity.class);
-                ImageEditionActivity.image = image;
-                startActivityForResult(intent, Constants.RequestCode.IMAGE_EDITION.value);
-            }
+            // Get content resolver
+            ContentResolver resolver = getContentResolver();
+
+            // Make file and uri
+            File file = new File (pictureTaker.getAbsolutePath());
+            Uri uri = Uri.fromFile(file);
+
+            // Get image
+            Bitmap image = BitmapFactory.decodeFile(file.getAbsolutePath());
+
+            // Get bitmap with adjusted orientation
+            Bitmap adjustedImage = ImageProcessor.adjustOrientation(
+                    getApplicationContext(), resolver, image, uri);
+
+            // Start image edit activity
+            Intent intent = new Intent(getApplicationContext(), ImageEditionActivity.class);
+            ImageEditionActivity.image = adjustedImage;
+            startActivityForResult(intent, Constants.RequestCode.IMAGE_EDITION.value);
         } else if (requestCode == Constants.RequestCode.IMAGE_EDITION.value) {
             if (resultCode == RESULT_OK && data != null) {
                 // Get image
@@ -233,14 +260,7 @@ public class ProfileSettingActivity extends AppCompatActivity
             if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 if (permissions.length > 0 && permissions[0] == Manifest.permission.CAMERA) {
                     // Camera permission granted, start camera
-                    Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-                    if (intent.resolveActivity(getPackageManager()) != null) {
-                        startActivityForResult(intent, Constants.RequestCode.PROFILE_CAMERA.value);
-                    } else {
-                        // No camera application available, show message
-                        Toast.makeText(this, R.string.no_camera_app_message,
-                                Toast.LENGTH_SHORT).show();
-                    }
+                    startTakingPicture();
                 }
             }
         } else {

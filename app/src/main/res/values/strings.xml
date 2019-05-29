@@ -266,6 +266,10 @@
     파일 사이즈가 너무 큽니다.
     </string>
 
+    <string name="chat_file_share_security_error">
+    보안 에러로 파일을 실행할 수 없습니다.
+    </string>
+
     <string name="chat_file_share_message_activity_not_found">
     죄송합니다. 파일을 실행할 수 있는 앱을 찾지 못하였습니다.
     </string>

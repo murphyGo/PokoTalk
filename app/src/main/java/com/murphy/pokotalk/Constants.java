@@ -7,7 +7,7 @@ public class Constants {
     public static final String[] serverURLs = {"https://192.168.0.2",
             "https://172.30.1.6", "https://221.155.4.132", "https://220.67.71.90"};
     public static final int serverPort = 4000;
-    public static final String serverURL = serverURLs[0] + ":" + serverPort;    /* Server Address */
+    public static final String serverURL = serverURLs[3] + ":" + serverPort;    /* Server Address */
     public static final String serverDateFormat = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     public static final Locale locale = Locale.KOREA;
     public static final TimeZone timeZone = TimeZone.getTimeZone("Asia/Seoul");

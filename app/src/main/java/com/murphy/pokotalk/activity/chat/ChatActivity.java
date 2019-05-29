@@ -1051,6 +1051,13 @@ public class ChatActivity extends AppCompatActivity
                 Toast.makeText(context,
                         R.string.chat_file_share_message_activity_not_found,
                         Toast.LENGTH_SHORT).show();
+            } catch (SecurityException e) {
+                e.printStackTrace();
+
+                // Show message
+                Toast.makeText(context,
+                        R.string.chat_file_share_security_error,
+                        Toast.LENGTH_SHORT).show();
             }
         }
     }

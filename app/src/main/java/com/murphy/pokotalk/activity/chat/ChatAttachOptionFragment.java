@@ -151,6 +151,11 @@ public class ChatAttachOptionFragment extends Fragment {
             // Add openable category
             target.addCategory(Intent.CATEGORY_OPENABLE);
 
+            // We do not have permissions yet so do not grant permission
+//            target.addFlags(Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+//            target.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+//            target.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+
             // Get choose menu title
             String title = getString(R.string.select_attach_file_title);
 
@@ -222,6 +227,11 @@ public class ChatAttachOptionFragment extends Fragment {
                 if (fileUri == null) {
                     return;
                 }
+
+                // Take persistable permission
+                context.getContentResolver().takePersistableUriPermission(fileUri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION |
+                        Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
 
                 // Get content resolver
                 ContentResolver resolver = context.getContentResolver();

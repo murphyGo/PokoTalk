@@ -91,6 +91,7 @@ public class ChatActivity extends AppCompatActivity
         NavigationView.OnNavigationItemSelectedListener,
         ChatAttachOptionFragment.Listener,
         ChatMessageOptionDialog.Listener {
+    private Context context;
     private int groupId;
     private PokoServer server;
     private DataCollection collection;
@@ -131,6 +132,7 @@ public class ChatActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.chat_layout);
 
+        context = this;
         collection = DataCollection.getInstance();
 
         sendId = 0;
@@ -853,13 +855,13 @@ public class ChatActivity extends AppCompatActivity
                         case PokoMessage.TYPE_IMAGE: {
                             // Add click listener for image message
                             view.setOnClickListener(
-                                    new ImageMessageClickListener(getApplicationContext(), item));
+                                    new ImageMessageClickListener(context, item));
                             break;
                         }
                         case PokoMessage.TYPE_FILE_SHARE: {
                             // Add click listener for file share message
                             view.setOnClickListener(
-                                    new FileShareMessageClickListener(getApplicationContext(), item));
+                                    new FileShareMessageClickListener(context, item));
                             break;
                         }
                     }

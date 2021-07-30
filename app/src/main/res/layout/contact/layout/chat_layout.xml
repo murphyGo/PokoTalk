@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape"
+        android:gravity="center_vertical"
+        android:padding="10dp">
+
+        <Button
+            android:id="@+id/backspaceButton"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            style="@style/BackButton" />
+
+        <TextView
+            android:id="@+id/groupName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toEndOf="@id/backspaceButton"
+            android:layout_centerVertical="true"
+            android:text="그룹 이름"
+            android:textSize="20sp"
+            android:maxLines="1"/>
+
+        <Button
+            android:id="@+id/chatLocationShareButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_toStartOf="@id/chatLocationShareToggle"
+            android:layout_centerVertical="true"
+            android:background="@drawable/location_pin"/>
+
+        <com.kyleduo.switchbutton.SwitchButton
+            android:id="@+id/chatLocationShareToggle"
+            android:layout_width="50dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="10dp"
+            android:layout_toStartOf="@id/slideMenuButton"
+            android:layout_centerVertical="true"/>
+
+        <android.support.v7.widget.Toolbar
+            android:id="@+id/slideMenuButton"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="@null">
+        </android.support.v7.widget.Toolbar>
+
+    </RelativeLayout>
+
+    <android.support.v4.widget.DrawerLayout
+        android:id="@+id/drawerLayout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:focusableInTouchMode="true">
+
+            <com.murphy.pokotalk.view.ListViewDetectable
+                android:id="@+id/messageList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:background="@drawable/chat_background2"
+                android:divider="@null"/>
+
+            <HorizontalScrollView
+                android:id="@+id/chatAttachOptionLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fillViewport="true"
+                android:padding="20dp"/>
+
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_weight="0"
+                android:background="@drawable/shape2">
+
+                <Button
+                    android:id="@+id/chatAttachOptionButton"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:padding="0dp"
+                    android:layout_margin="0dp"
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/clip_icon"/>
+
+                <EditText
+                    android:id="@+id/messageInputText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@id/chatAttachOptionButton"
+                    android:layout_toStartOf="@id/sendMessageButton"
+                    android:layout_centerVertical="true"
+                    android:hint="@string/chat_message_box_hint"/>
+
+
+                <Button
+                    android:id="@+id/sendMessageButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:padding="0dp"
+                    android:layout_margin="0dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:text="@string/chat_send_button">
+
+                </Button>
+
+            </RelativeLayout>
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/chatLocationShareLayout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+
+    </android.support.v4.widget.DrawerLayout>
+</LinearLayout>
+

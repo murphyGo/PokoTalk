@@ -1,3 +1,349 @@
 <resources>
-    <string name="app_name">PokoTalk</string>
+    <string name="app_name">포코톡</string>
+    <string name="tab_contact_list">친구</string>
+    <string name="tab_group_list">채팅</string>
+    <string name="tab_event_list">이벤트</string>
+    <string name="tab_settings">설정</string>
+
+    <string name="pending_contact_add_toast">
+        %s에게 친구 요청을 보냈습니다!
+    </string>
+
+    <string name="pending_contact_list_invited">
+        친구 요청
+    </string>
+
+    <string name="pending_contact_list_inviting">
+        내가 보낸 요청
+    </string>
+
+    <string name="logout_title">
+        로그아웃
+    </string>
+
+    <string name="logout_beware">
+        로그아웃 하시겠습니까?
+        데이터는 그대로 보존되며 언제든 다시 로그인하여 이용하실 수 있습니다.
+    </string>
+
+    <string name="logout_positive_button">
+        로그아웃 하기
+    </string>
+
+    <string name="cancel">
+        취소
+    </string>
+
+    <string name="profile_title">
+        프로필 수정
+    </string>
+
+    <string name="profile_message">
+        프로필 사진을 변경해 나의 모습을 표현해주세요.
+        다음 방식 중 한가지를 선택해 프로필 사진을 만들 수 있습니다.
+    </string>
+
+    <string name="profile_gallery_option">
+        갤러리에서 가져오기
+    </string>
+
+    <string name="profile_camera_option">
+        프로필 사진 촬영하기
+    </string>
+
+    <string name="permission_title">
+        접근 권한
+    </string>
+
+    <string name="camera_permission_rationale">
+        카메라로 사진을 찍어오기 위해서는 접근 권한이 필요합니다.
+        권한을 허용하시면 카메라 사용이 가능합니다!
+    </string>
+
+    <string name="permission_got_it">
+        확인
+    </string>
+
+    <string name="permission_deny_it">
+        거부
+    </string>
+
+    <string name="image_edition_title">
+        이미지 편집
+    </string>
+
+    <string name="image_edition_notice">
+        이 이미지로 최종 선택하시려면 확인 버튼을 눌려주세요.
+        이미지 크기가 너무 큰 경우 자동으로 조절됩니다.
+    </string>
+
+    <string name="image_edition_button">
+        이미지 선택
+    </string>
+
+    <string name="no_camera_app_message">
+        실행 가능한 카메라 앱이 없습니다.
+    </string>
+
+    <string name="profile_upload_error">
+        죄송합니다. 오류로 인해 프로필 사진 변경에 실패하였습니다.
+    </string>
+
+    <string name="drawer_open">open</string>
+    <string name="drawer_close">close</string>
+    <string name="group_exit_warning_message">채팅방에서 나가시면 채팅 목록에서 방이 사라지며,
+    지워진 채팅 내용은 다시 복구하기 어렵습니다.</string>
+
+    <string name="event_location_selection_description">
+        이벤트 약속 장소를 선택해 주세요.
+    </string>
+
+    <string name="event_location_selection_button">
+        이 장소로 선택하기
+    </string>
+
+    <string name="event_creation_no_name">
+        이벤트 이름을 입력해 주세요.
+    </string>
+
+    <string name="event_creation_no_date">
+        날짜를 설정해 주세요.
+    </string>
+
+    <string name="event_creation_no_time">
+        시간을 설정해 주세요.
+    </string>
+
+    <string name="event_creation_no_location">
+        시간을 설정해 주세요.
+    </string>
+
+    <string name="event_creation_date">
+        날짜
+    </string>
+
+    <string name="year">
+        년
+    </string>
+
+    <string name="month">
+        월
+    </string>
+
+    <string name="day">
+        일
+    </string>
+
+    <string name="event_creation_time">
+        시간
+    </string>
+
+    <string name="hour">
+        시
+    </string>
+
+    <string name="minute">
+        분
+    </string>
+
+    <string name="event_creation_location_hint">
+        이벤트 장소
+    </string>
+
+    <string name="event_creation_participant">
+        초대할 친구를 모두 선택해 주세요.
+    </string>
+
+    <string name="event_creation_button">
+        이벤트 만들기
+    </string>
+
+    <string name="event_location_title">
+        이벤트 장소
+    </string>
+
+    <string name="event_detail_top_title">
+        이벤트 정보
+    </string>
+
+    <string name="event_detail_participants">
+        참여자
+    </string>
+
+    <string name="event_detail_menu_exit">
+        나가기
+    </string>
+
+    <string name="event_detail_started">
+        이 이벤트가 시작되었습니다! 채팅에 참가하여 친구들과 대화를 나눠보세요.
+    </string>
+
+    <string name="event_detail_started_button">
+        채팅하러 가기
+    </string>
+
+    <string name="settings_profile_image">
+    프로필 사진 변경
+    </string>
+
+    <string name="settings_logout">
+    로그아웃
+    </string>
+
+    <string name="settings_app_info">
+    앱 정보
+    </string>
+
+    <string name="settings_user_hello_format">
+    안녕하세요. %s님
+    </string>
+
+    <string name="chat_send_button">
+    보내기
+    </string>
+
+    <string name="chat_message_box_hint">
+    메시지를 입력하세요
+    </string>
+
+    <string name="chat_attach_image_not_found">
+    메시지를 입력하세요
+    </string>
+
+    <string name="chat_locate_image_failed">
+    이미지를 불러올 수 없습니다&#8230;
+    </string>
+
+    <string name="group_image_summary">
+        사진
+    </string>
+
+    <string name="group_file_share_summary">
+        파일
+    </string>
+
+    <string name="image_processing_error">
+    이미지 처리 오류가 발생했습니다.
+    </string>
+
+    <string name="chat_not_image_message">
+    사진 메시지가 아닙니다.
+    </string>
+
+    <string name="chat_not_file_message">
+    파일 공유 메시지가 아닙니다.
+    </string>
+
+    <string name="camera_failed">
+    카메라 실행에 실패했습니다.
+    </string>
+
+    <string name="chat_file_load_fail">
+    파일을 로드하는 데 실패했습니다.
+    </string>
+
+    <string name="image_show_loading">
+    이미지를 불러오고 있습니다.
+    </string>
+
+    <string name="image_show_fail">
+    이미지를 불러오는 데 실패했습니다.
+    </string>
+
+    <string name="select_attach_file_title">
+    업로드할 파일을 선택해 주세요.
+    </string>
+
+    <string name="chat_file_share_message_prefix">
+    파일 공유 :
+    </string>
+
+    <string name="chat_file_share_message_file_name_error">
+    파일 이름을 읽을 수 없습니다.
+    </string>
+
+    <string name="chat_file_share_message_size_too_big">
+    파일 사이즈가 너무 큽니다.
+    </string>
+
+    <string name="chat_file_share_security_error">
+    보안 에러로 파일을 실행할 수 없습니다.
+    </string>
+
+    <string name="chat_file_share_message_activity_not_found">
+    죄송합니다. 파일을 실행할 수 있는 앱을 찾지 못하였습니다.
+    </string>
+
+    <string name="event_started_notification_title_format">
+    %s 이벤트 시작됨
+    </string>
+
+    <string name="event_started_notification_content">
+    이벤트가 시작되었습니다! 친구들과 채팅창에서 대화를 나눠보세요.
+    </string>
+
+    <string name="chat_location_share_title">
+    실시간 위치 공유
+    </string>
+
+    <string name="chat_location_share_description">
+    내 위치와 친구들의 위치, 그리고 만날 장소가 실시간으로 지도에 표시됩니다.
+    </string>
+
+    <string name="chat_location_share_my_position">
+    내 위치로
+    </string>
+
+    <string name="chat_location_share_member_location">
+    친구 위치로
+    </string>
+
+    <string name="chat_location_share_meeting_position">
+    만날 장소로
+    </string>
+
+    <string name="chat_location_share_contact_position">
+    친구 위치로
+    </string>
+
+    <string name="location_share_already_joined">
+    위치 공유가 켜져 있습니다.
+    </string>
+
+    <string name="location_share_joined">
+    위치 공유를 시작합니다.
+    </string>
+
+    <string name="location_share_exited">
+    위치 공유가 끝났습니다.
+    </string>
+
+    <string name="location_share_reconnect">
+    서버와 연결이 불안정하여 재접속합니다.
+    </string>
+
+    <string name="location_share_select_user_title">
+    친구 위치로 이동
+    </string>
+
+    <string name="chat_slide_menu_invite_friends">
+    친구 초대
+    </string>
+
+    <string name="chat_slide_menu_share_location">
+    위치 공유
+    </string>
+
+    <string name="chat_slide_menu_exit">
+    나가기
+    </string>
+
+    <string name="chat_message_option_title">
+    메시지 옵션
+    </string>
+
+    <string name="chat_message_copy">
+    클립보드에 복사되었습니다.
+    </string>
 </resources>
+

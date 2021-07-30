@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <LinearLayout
+        android:id="@+id/messageLayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layoutDirection="ltr"
+        android:orientation="horizontal">
+
+        <de.hdodenhof.circleimageview.CircleImageView
+            android:id="@+id/userImage"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_weight="0"
+            android:padding="10dp"
+            android:src="@drawable/user"
+            app:civ_border_color="#000000"
+            app:civ_border_width="1dp" />
+
+        <RelativeLayout
+            android:id="@+id/messageAfterPicture"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_weight="0"
+            android:paddingTop="6dp">
+
+            <TextView
+                android:id="@+id/userName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginBottom="2dp"
+                android:textAlignment="textStart"
+                android:text="실험자"
+                android:textStyle="bold"
+                android:textSize="18sp"/>
+
+            <TextView
+                android:id="@+id/time"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/userName"
+                android:layout_toEndOf="@id/userName"
+                android:layout_marginBottom="2dp"
+                android:layout_marginLeft="6dp"
+                android:layout_marginRight="6dp"
+                android:textAlignment="textStart"
+                android:text="11:59"
+                android:textStyle="normal"
+                android:textSize="13sp"/>
+
+            <FrameLayout
+                android:id="@+id/messageContentWrapper"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_below="@id/userName">
+
+                <TextView
+                    android:id="@+id/messageContent"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxWidth="250dp"
+                    android:text="그립읍니다"
+                    android:textSize="16sp"
+                    android:background="@drawable/text_message"/>
+
+                <ImageView
+                    android:id="@+id/messageImageView"
+                    android:visibility="gone"
+                    android:layout_width="wrap_content"
+                    android:layout_height="160dp"
+                    android:layout_marginTop="2dp"
+                    android:maxWidth="250dp"
+                    android:maxHeight="160dp"
+                    android:adjustViewBounds="true"
+                    android:src="@null"
+                    android:background="@drawable/text_message"/>
+
+                <RelativeLayout
+                    android:id="@+id/messageFileShareLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/text_message"
+                    android:layoutDirection="ltr">
+
+                    <TextView
+                        android:id="@+id/messageFileNamePrefix"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginEnd="8dp"
+                        android:text="@string/chat_file_share_message_prefix"
+                        android:textSize="16sp" />
+
+                    <TextView
+                        android:id="@+id/messageFileName"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxWidth="160dp"
+                        android:layout_alignTop="@id/messageFileNamePrefix"
+                        android:layout_toEndOf="@id/messageFileNamePrefix"
+                        android:text="afew.jpg"
+                        android:textColor="@color/blue"
+                        android:textSize="16sp" />
+
+                </RelativeLayout>
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/nbNotReadUser"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@id/messageContentWrapper"
+                android:layout_toEndOf="@id/messageContentWrapper"
+                android:padding="5dp"
+                android:text="1"
+                android:textStyle="bold"/>
+
+        </RelativeLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

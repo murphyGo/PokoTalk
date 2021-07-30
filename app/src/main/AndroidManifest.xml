@@ -2,20 +2,91 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.murphy.pokotalk">
 
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!--위치정보활용시 추가--><uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <!--위치정보활용시 추가--><uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+    <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <!--WIFI 상태활용시 추가--><uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+
     <application
+        android:name=".PokoTalkApp"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/pokotalk_icon"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainActivity">
+
+        <provider
+            android:name="android.support.v4.content.FileProvider"
+            android:authorities="${applicationId}.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths"/>
+        </provider>
+
+        <activity android:name=".activity.main.WelcomeActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name=".activity.main.MainActivity"
+            android:parentActivityName=".activity.main.WelcomeActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".activity.main.LoginActivity"
+            android:parentActivityName=".activity.main.MainActivity"/>
+        <activity android:name=".activity.main.RegisterActivity"
+            android:parentActivityName=".activity.main.LoginActivity"/>
+        <activity android:name=".activity.contact.PendingContactActivity"
+            android:parentActivityName=".activity.main.MainActivity"/>
+        <activity android:name=".activity.chat.GroupAddActivity"
+            android:parentActivityName=".activity.main.MainActivity"/>
+        <activity android:name=".activity.chat.ChatActivity"
+            android:parentActivityName=".activity.main.MainActivity"/>
+        <activity android:name=".activity.chat.GroupMemberInvitationActivity"
+            android:parentActivityName=".activity.chat.ChatActivity"/>
+        <activity android:name=".activity.chat.ChatImageShowActivity"
+            android:parentActivityName=".activity.chat.ChatActivity"/>
+        <activity android:name=".activity.event.EventCreationActivity"
+            android:parentActivityName=".activity.main.MainActivity"/>
+        <activity android:name=".activity.event.EventLocationSelectionActivity"/>
+        <activity android:name=".activity.event.EventDetailActivity"/>
+        <activity android:name=".activity.settings.ProfileSettingActivity"/>
+        <activity android:name=".activity.settings.ImageEditionActivity"/>
+        <activity android:name=".activity.settings.DownloadTestActivity"/>
+        <activity android:name=".activity.chat.LocationShareActivity"/>
+
+        <service
+            android:name=".service.PokoTalkService"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.BIND_JOB_SERVICE"/>
+
+        <service
+            android:name=".service.ContentService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver android:name=".service.BootBroadCastReceiver"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

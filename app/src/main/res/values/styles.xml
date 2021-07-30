@@ -1,11 +1,96 @@
 <resources>
 
     <!-- Base application theme. -->
-    <style name="AppTheme" parent="Theme.AppCompat.Light.DarkActionBar">
+    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="colorPrimary">@color/colorPrimary</item>
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
+        <item name="android:actionModeCloseButtonStyle">@style/NoCloseButtonActionModeStyle</item>
     </style>
 
+    <style name="NoCloseButtonActionModeStyle" parent="android:style/Widget.ActionButton.CloseMode">
+        <item name="android:visibility">gone</item>
+    </style>
+
+    <style name="Title" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">32sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="TopButton" parent="Base.Widget.AppCompat.Button">
+        <item name="android:layout_width">20dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_margin">5dp</item>
+        <item name="android:background">@null</item>
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="BackButton" parent="TextAppearance.AppCompat.Button">
+        <item name="android:layout_width">30dp</item>
+        <item name="android:layout_height">30dp</item>
+        <item name="android:layout_alignParentStart">true</item>
+        <item name="android:layout_centerVertical">true</item>
+        <item name="android:background">@drawable/backspace</item>
+        <item name="android:textSize">20sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="TopBar" parent="TextAppearance.AppCompat">
+        <item name="android:padding">10dp</item>
+    </style>
+
+
+    <style name="AppText" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="TextIcon">
+        <item name="android:layout_width">20sp</item>
+        <item name="android:layout_height">20sp</item>
+    </style>
+
+    <style name="AppBigText" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">24sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="AppSmallText" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="AppButton" parent="TextAppearance.AppCompat.Button">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="AppPrimaryButton" parent="TextAppearance.AppCompat.Button">
+        <item name="android:background">@color/colorPrimary</item>
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="AppTableButton" parent="TextAppearance.AppCompat.Button">
+        <item name="android:textSize">18sp</item>
+        <item name="android:textColor">@color/gray</item>
+        <item name="android:layout_margin">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:padding">0dp</item>
+        <item name="android:background">@null</item>
+    </style>
+
+    <style name="EventTime" parent="TextAppearance.AppCompat">
+        <item name="android:textSize">32sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
+
+    <style name="eventCreationDateTimeText" parent="TextAppearance.AppCompat">
+        <item name="android:textAlignment">textEnd</item>
+        <item name="android:layout_margin">8dp</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/gray</item>
+    </style>
 </resources>
